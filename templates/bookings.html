@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Booking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-inner">
+            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
+            <div class="nav-links">
+                <a href="{{ url_for('home') }}">Search Flights</a>
+                <a href="{{ url_for('bookings') }}">Manage Booking</a>
+                {% if session.get('user_email') == 'admin@airgo.com' %}
+                    <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Manage Booking</h1>
+        <p class="subtitle">View your bookings, update extras, upgrade cabin, request changes, and more</p>
+
+        <div class="card points-summary-card">
+            <h2>Total Points</h2>
+            <div class="total-points">{{ total_points }}</div>
+            <div class="tier-label">Current Tier: {{ tier_info.current_tier }}</div>
+
+            {% if tier_info.next_tier %}
+                <div class="tier-progress-wrapper">
+                    <div class="tier-progress-bar">
+                        <div class="tier-progress-fill" style="width: {{ tier_info.progress_percent }}%;"></div>
+                    </div>
+                    <p class="small-text">{{ tier_info.points_to_next }} points to {{ tier_info.next_tier }}</p>
+                </div>
+            {% else %}
+                <p class="small-text">You are already at the highest tier.</p>
+            {% endif %}
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if bookings %}
+            {% for booking in bookings %}
+                <div class="card manage-card">
+                    <p class="booking-meta">{{ booking.airline }} • {{ booking.ticket_class }} • {{ booking.trip_type|replace("_", " ")|title }}</p>
+                    <h2>{{ booking.departure_city }} ({{ booking.departure_code }}) → {{ booking.destination_city }} ({{ booking.destination_code }})</h2>
+
+                    <p><strong>Booking Reference:</strong> {{ booking.booking_reference }}</p>
+                    <p><strong>Passenger:</strong> {{ booking.first_name }} {{ booking.last_name }}</p>
+                    <p><strong>Email:</strong> {{ booking.email }}</p>
+                    <p><strong>Route:</strong> {{ booking.departure_airport }} → {{ booking.destination_airport }}</p>
+                    <p><strong>Flight Date:</strong> {{ booking.flight_date }}</p>
+                    <p><strong>Time:</strong> {{ booking.departure_time }} - {{ booking.arrival_time }}</p>
+                    <p><strong>Seat:</strong> {{ booking.seat }}</p>
+                    <p><strong>Meal:</strong> {{ booking.meal_choice }}</p>
+                    <p><strong>Flight Status:</strong> {{ booking.flight_status }}</p>
+                    <p><strong>Total Paid:</strong> £{{ booking.price }}</p>
+                    <p><strong>Change Request Status:</strong> {{ booking.change_status }}</p>
+
+                    {% if booking.change_request %}
+                        <div class="manage-note">
+                            <strong>Latest Request:</strong> {{ booking.change_request }}
+                        </div>
+                    {% endif %}
+
+                    <div class="points-badge">+{{ booking.points_earned }} points</div>
+
+                    <div class="manage-grid">
+                        <div class="manage-box">
+                            <h3>Update Meal Preference</h3>
+                            <form action="{{ url_for('update_meal', booking_id=booking.id) }}" method="POST">
+                                <label for="meal_choice_{{ booking.id }}">Meal Choice</label>
+                                <select id="meal_choice_{{ booking.id }}" name="meal_choice" required>
+                                    {% for meal in common_meal_options %}
+                                        <option value="{{ meal }}" {% if booking.meal_choice == meal %}selected{% endif %}>{{ meal }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn">Save Meal Choice</button>
+                            </form>
+                        </div>
+
+                        <div class="manage-box">
+                            <h3>Upgrade Cabin</h3>
+                            {% if booking.available_upgrades %}
+                                <form action="{{ url_for('upgrade_booking', booking_id=booking.id) }}" method="POST">
+                                    <label for="new_class_{{ booking.id }}">Available Upgrades</label>
+                                    <select id="new_class_{{ booking.id }}" name="new_class" required>
+                                        {% for upgrade_class, extra_cost in booking.available_upgrades.items() %}
+                                            <option value="{{ upgrade_class }}">{{ upgrade_class }} (+£{{ extra_cost }})</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn secondary-btn">Upgrade Cabin</button>
+                                </form>
+                            {% else %}
+                                <p>No upgrade options available for this booking.</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="manage-box">
+                            <h3>Travel Extras</h3>
+                            <form action="{{ url_for('update_extras', booking_id=booking.id) }}" method="POST" class="manage-form">
+                                <label for="extra_baggage_{{ booking.id }}">Extra Checked Bags (£{{ extra_prices.extra_baggage }} each)</label>
+                                <input type="number" id="extra_baggage_{{ booking.id }}" name="extra_baggage" min="0" value="{{ booking.extra_baggage }}">
+
+                                <label class="checkbox-row">
+                                    <input type="checkbox" name="priority_boarding" {% if booking.priority_boarding %}checked{% endif %}>
+                                    Priority Boarding (+£{{ extra_prices.priority_boarding }})
+                                </label>
+
+                                <label class="checkbox-row">
+                                    <input type="checkbox" name="wifi_package" {% if booking.wifi_package %}checked{% endif %}>
+                                    Wi-Fi Package (+£{{ extra_prices.wifi_package }})
+                                </label>
+
+                                <label class="checkbox-row">
+                                    <input type="checkbox" name="lounge_access" {% if booking.lounge_access %}checked{% endif %}>
+                                    Lounge Access (+£{{ extra_prices.lounge_access }})
+                                </label>
+
+                                <div class="manage-note">
+                                    <strong>Current extras total:</strong> £{{ booking.extras_total }}
+                                </div>
+
+                                <button type="submit" class="btn">Save Extras</button>
+                            </form>
+                        </div>
+
+                        <div class="manage-box">
+                            <h3>Request Flight Change</h3>
+                            <form action="{{ url_for('request_change', booking_id=booking.id) }}" method="POST" class="manage-form">
+                                <label for="requested_route_{{ booking.id }}">Requested New Route</label>
+                                <input type="text" id="requested_route_{{ booking.id }}" name="requested_route" placeholder="e.g. Dubai to New York">
+
+                                <label for="requested_date_{{ booking.id }}">Requested New Date</label>
+                                <input type="date" id="requested_date_{{ booking.id }}" name="requested_date">
+
+                                <label for="request_reason_{{ booking.id }}">Reason</label>
+                                <input type="text" id="request_reason_{{ booking.id }}" name="request_reason" placeholder="e.g. personal schedule change">
+
+                                <button type="submit" class="btn secondary-btn">Submit Change Request</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <a href="{{ url_for('boarding_pass', booking_id=booking.id) }}" class="btn">View Boarding Pass</a>
+                    </div>
+
+                    <form action="{{ url_for('cancel_booking', booking_id=booking.id) }}" method="POST">
+                        <button type="submit" class="btn danger-btn">Cancel Booking</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="card">
+                <p>You do not have any bookings yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-inner">
+            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
+            <div class="nav-links">
+                <a href="{{ url_for('home') }}">Search Flights</a>
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
+                    {% if session.get('user_email') == 'admin@airgo.com' %}
+                        <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('signup') }}">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card confirmation-card">
+            <h1>Booking Confirmed</h1>
+            <p class="success-message">Your flight has been booked successfully</p>
+
+            <p><strong>Booking Reference:</strong> {{ booking_reference }}</p>
+            <p><strong>Passenger:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
+            <p><strong>Email:</strong> {{ passenger.email }}</p>
+            <p><strong>Flight:</strong> {{ flight.airline }}</p>
+            <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+            <p><strong>Departure Time:</strong> {{ flight.departure_time }}</p>
+            <p><strong>Arrival Time:</strong> {{ flight.arrival_time }}</p>
+            <p><strong>Ticket Class:</strong> {{ flight.class }}</p>
+            <p><strong>Meal:</strong> {{ passenger.meal_choice }}</p>
+            <p><strong>Seat:</strong> {{ selected_seat }}</p>
+            <p><strong>Total Paid:</strong> £{{ flight.price }}</p>
+
+            <div class="points-badge">+{{ points_earned }} points earned</div>
+
+            <div class="card benefits-box left-text">
+                <h2>What’s Included</h2>
+                <ul class="benefits-list">
+                    <li><strong>Baggage:</strong> {{ benefits.baggage }}</li>
+                    <li><strong>Meal:</strong> {{ benefits.meal }}</li>
+                    <li><strong>Seat Selection:</strong> {{ benefits.seat_selection }}</li>
+                    <li><strong>Lounge:</strong> {{ benefits.lounge }}</li>
+                    <li><strong>Flexibility:</strong> {{ benefits.flexibility }}</li>
+                </ul>
+            </div>
+
+            <div class="button-group">
+                <a href="{{ url_for('home') }}" class="btn">Book Another Flight</a>
+                <a href="{{ url_for('bookings') }}" class="btn secondary-btn">Manage My Bookings</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

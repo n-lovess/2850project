@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-inner">
+            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
+            <div class="nav-links">
+                <a href="{{ url_for('home') }}">Search Flights</a>
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('signup') }}">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Payment</h1>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card summary-card">
+            <h2>Booking Summary</h2>
+            <p><strong>Passenger:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
+            <p><strong>Email:</strong> {{ passenger.email }}</p>
+            <p><strong>Flight:</strong> {{ flight.airline }}</p>
+            <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+            <p><strong>Class:</strong> {{ flight.class }}</p>
+            <p><strong>Meal:</strong> {{ passenger.meal_choice }}</p>
+            <p><strong>Seat:</strong> {{ selected_seat }}</p>
+            <p><strong>Total Price:</strong> £{{ flight.price }}</p>
+        </div>
+
+        <div class="card">
+            <form method="POST" class="form-grid">
+                <div class="full-width">
+                    <label for="card_name">Name on Card</label>
+                    <input type="text" id="card_name" name="card_name" required>
+                </div>
+
+                <div class="full-width">
+                    <label for="card_number">Card Number</label>
+                    <input type="text" id="card_number" name="card_number" maxlength="16" required>
+                </div>
+
+                <div>
+                    <label for="expiry_date">Expiry Date</label>
+                    <input type="month" id="expiry_date" name="expiry_date" required>
+                </div>
+
+                <div>
+                    <label for="cvv">CVV</label>
+                    <input type="password" id="cvv" name="cvv" maxlength="4" required>
+                </div>
+
+                <div class="full-width">
+                    <button type="submit" class="btn">Complete Booking</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

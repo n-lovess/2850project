@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boarding Pass - AirGo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-inner">
+            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
+            <div class="nav-links">
+                <a href="{{ url_for('home') }}">Search Flights</a>
+                <a href="{{ url_for('bookings') }}">Manage Booking</a>
+                {% if session.get('user_email') == 'admin@airgo.com' %}
+                    <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="boarding-pass">
+            <div class="boarding-pass-header">
+                <div>
+                    <h1>AirGo Boarding Pass</h1>
+                    <p class="subtitle">Electronic travel document</p>
+                </div>
+                <div class="boarding-badge">{{ booking.flight_status }}</div>
+            </div>
+
+            <div class="boarding-grid">
+                <div class="boarding-box">
+                    <span class="boarding-label">Passenger</span>
+                    <span class="boarding-value">{{ booking.first_name }} {{ booking.last_name }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">Booking Ref</span>
+                    <span class="boarding-value">{{ booking.booking_reference }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">From</span>
+                    <span class="boarding-value">{{ booking.departure_city }} ({{ booking.departure_code }})</span>
+                    <span class="small-text">{{ booking.departure_airport }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">To</span>
+                    <span class="boarding-value">{{ booking.destination_city }} ({{ booking.destination_code }})</span>
+                    <span class="small-text">{{ booking.destination_airport }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">Flight Date</span>
+                    <span class="boarding-value">{{ booking.flight_date }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">Departure</span>
+                    <span class="boarding-value">{{ booking.departure_time }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">Arrival</span>
+                    <span class="boarding-value">{{ booking.arrival_time }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">Class</span>
+                    <span class="boarding-value">{{ booking.ticket_class }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">Seat</span>
+                    <span class="boarding-value">{{ booking.seat }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">Meal</span>
+                    <span class="boarding-value">{{ booking.meal_choice }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">Change Status</span>
+                    <span class="boarding-value">{{ booking.change_status }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">Status</span>
+                    <span class="boarding-value">{{ booking.flight_status }}</span>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <a href="{{ url_for('bookings') }}" class="btn">Back to Manage Booking</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

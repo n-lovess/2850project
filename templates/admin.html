@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AirGo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-inner">
+            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
+            <div class="nav-links">
+                <a href="{{ url_for('home') }}">Search Flights</a>
+                <a href="{{ url_for('bookings') }}">Manage Booking</a>
+                <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <p class="subtitle">Review booking requests and update live flight status</p>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if bookings %}
+            {% for booking in bookings %}
+                <div class="card admin-card">
+                    <p class="booking-meta">{{ booking.airline }} • {{ booking.ticket_class }} • {{ booking.flight_status }}</p>
+                    <h2>{{ booking.departure_city }} ({{ booking.departure_code }}) → {{ booking.destination_city }} ({{ booking.destination_code }})</h2>
+
+                    <p><strong>Account Holder:</strong> {{ booking.account_name }}</p>
+                    <p><strong>Booking Reference:</strong> {{ booking.booking_reference }}</p>
+                    <p><strong>Passenger:</strong> {{ booking.first_name }} {{ booking.last_name }}</p>
+                    <p><strong>Flight Date:</strong> {{ booking.flight_date }}</p>
+                    <p><strong>Current Change Status:</strong> {{ booking.change_status }}</p>
+
+                    {% if booking.change_request %}
+                        <div class="manage-note">
+                            <strong>Change Request:</strong> {{ booking.change_request }}
+                        </div>
+                    {% endif %}
+
+                    {% if booking.requested_route or booking.requested_date %}
+                        <div class="manage-note">
+                            <strong>Requested Route Field:</strong> {{ booking.requested_route or 'No route specified' }}<br>
+                            <strong>Requested Date Field:</strong> {{ booking.requested_date or 'No date specified' }}
+                        </div>
+                    {% endif %}
+
+                    <div class="admin-grid">
+                        <div class="manage-box">
+                            <h3>Update Change Request</h3>
+                            <form action="{{ url_for('admin_update_change_status', booking_id=booking.id) }}" method="POST">
+                                <label for="change_status_{{ booking.id }}">Status</label>
+                                <select id="change_status_{{ booking.id }}" name="change_status" required>
+                                    <option value="Pending" {% if booking.change_status == "Pending" %}selected{% endif %}>Pending</option>
+                                    <option value="Approved" {% if booking.change_status == "Approved" %}selected{% endif %}>Approved</option>
+                                    <option value="Rejected" {% if booking.change_status == "Rejected" %}selected{% endif %}>Rejected</option>
+                                </select>
+                                <button type="submit" class="btn">Save Change Status</button>
+                            </form>
+                        </div>
+
+                        <div class="manage-box">
+                            <h3>Update Flight Status</h3>
+                            <form action="{{ url_for('admin_update_flight_status', booking_id=booking.id) }}" method="POST">
+                                <label for="flight_status_{{ booking.id }}">Flight Status</label>
+                                <select id="flight_status_{{ booking.id }}" name="flight_status" required>
+                                    {% for status in flight_status_options %}
+                                        <option value="{{ status }}" {% if booking.flight_status == status %}selected{% endif %}>{{ status }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn secondary-btn">Save Flight Status</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="card">
+                <p>No bookings found.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

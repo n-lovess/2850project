@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passenger Details</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-inner">
+            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
+            <div class="nav-links">
+                <a href="{{ url_for('home') }}">Search Flights</a>
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('signup') }}">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Passenger Details</h1>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card summary-card">
+            <h2>Selected Flight</h2>
+            <p><strong>Airline:</strong> {{ flight.airline }}</p>
+            <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+            <p><strong>Time:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
+            <p><strong>Class:</strong> {{ flight.class }}</p>
+            <p><strong>Price:</strong> £{{ flight.price }}</p>
+        </div>
+
+        <div class="card benefits-box">
+            <h2>What’s Included With {{ flight.class }}</h2>
+            <ul class="benefits-list">
+                <li><strong>Baggage:</strong> {{ benefits.baggage }}</li>
+                <li><strong>Meal:</strong> {{ benefits.meal }}</li>
+                <li><strong>Seat Selection:</strong> {{ benefits.seat_selection }}</li>
+                <li><strong>Lounge:</strong> {{ benefits.lounge }}</li>
+                <li><strong>Flexibility:</strong> {{ benefits.flexibility }}</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <form method="POST" class="form-grid">
+                <div>
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </div>
+
+                <div>
+                    <label for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </div>
+
+                <div>
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div>
+                    <label for="phone">Phone Number</label>
+                    <input type="text" id="phone" name="phone" required>
+                </div>
+
+                <div class="full-width">
+                    <label for="passport_number">Passport Number</label>
+                    <input type="text" id="passport_number" name="passport_number" required>
+                </div>
+
+                <div class="full-width">
+                    <label for="meal_choice">Meal Preference</label>
+                    <select id="meal_choice" name="meal_choice" required>
+                        {% for meal in meal_options %}
+                            <option value="{{ meal }}">{{ meal }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="full-width">
+                    <button type="submit" class="btn">Continue to Seat Selection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

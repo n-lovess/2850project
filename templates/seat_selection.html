@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seat Selection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-inner">
+            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
+            <div class="nav-links">
+                <a href="{{ url_for('home') }}">Search Flights</a>
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('signup') }}">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Select Your Seat</h1>
+        <p class="subtitle">Choose a seat for your flight</p>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card summary-card">
+            <h2>{{ flight.airline }}</h2>
+            <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+            <p><strong>Time:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
+            <p><strong>Class:</strong> {{ flight.class }}</p>
+        </div>
+
+        <div class="card">
+            <div class="seat-legend">
+                <div class="legend-item"><span class="legend-box available-box"></span>Available</div>
+                <div class="legend-item"><span class="legend-box unavailable-box"></span>Unavailable</div>
+                <div class="legend-item"><span class="legend-box selected-box"></span>Selected</div>
+            </div>
+
+            <form method="POST" id="seatForm">
+                <input type="hidden" name="seat" id="selectedSeatInput">
+
+                <div class="seat-map-wrapper">
+                    {% for row in seat_rows %}
+                        <div class="seat-row">
+                            {% for seat in row[:3] %}
+                                <button type="button" class="seat-btn {% if not seat.available %}unavailable{% endif %}" {% if not seat.available %}disabled{% endif %} data-seat="{{ seat.seat }}">
+                                    {{ seat.seat }}
+                                </button>
+                            {% endfor %}
+
+                            <div class="aisle-gap"></div>
+
+                            {% for seat in row[3:] %}
+                                <button type="button" class="seat-btn {% if not seat.available %}unavailable{% endif %}" {% if not seat.available %}disabled{% endif %} data-seat="{{ seat.seat }}">
+                                    {{ seat.seat }}
+                                </button>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="selected-seat-display">
+                    Selected Seat: <span id="selectedSeatText">None</span>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn">Continue to Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const seatButtons = document.querySelectorAll(".seat-btn:not(.unavailable)");
+        const selectedSeatInput = document.getElementById("selectedSeatInput");
+        const selectedSeatText = document.getElementById("selectedSeatText");
+
+        seatButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+                seatButtons.forEach((btn) => btn.classList.remove("selected"));
+                button.classList.add("selected");
+
+                const seatCode = button.getAttribute("data-seat");
+                selectedSeatInput.value = seatCode;
+                selectedSeatText.textContent = seatCode;
+            });
+        });
+    </script>
+</body>
+</html>
