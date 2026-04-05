@@ -470,6 +470,8 @@ def get_tier_info(total_points):
             current_tier = tier
             if idx + 1 < len(LOYALTY_TIERS):
                 next_tier = LOYALTY_TIERS[idx + 1]
+            else:
+                next_tier = None
 
     if next_tier:
         current_min = current_tier["min_points"]
