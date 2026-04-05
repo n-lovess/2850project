@@ -168,12 +168,29 @@ select {
 }
 
 .flash-message {
-    background-color: #ffe9a8;
-    color: #5a4700;
     padding: 12px 16px;
     border-radius: 8px;
     margin-bottom: 18px;
     font-weight: bold;
+    border: 1px solid transparent;
+}
+
+.flash-error {
+    background-color: #fde8e8;
+    color: #922b21;
+    border-color: #f5b7b1;
+}
+
+.flash-success {
+    background-color: #e9f7ef;
+    color: #1e8449;
+    border-color: #b7e4c7;
+}
+
+.flash-info {
+    background-color: #ffe9a8;
+    color: #5a4700;
+    border-color: #f0db9d;
 }
 
 .button-group {
@@ -625,4 +642,38 @@ select {
     .boarding-pass-header {
         flex-direction: column;
     }
+}
+
+.confirm-tick {
+    width: 70px;
+    height: 70px;
+    background-color: #e9f7ef;
+    color: #1e8449;
+    border: 3px solid #b7e4c7;
+    border-radius: 50%;
+    font-size: 36px;
+    line-height: 70px;
+    margin: 0 auto 20px;
+}
+
+.booking-ref-box {
+    display: inline-block;
+    background-color: #eef4ff;
+    border: 2px dashed #4a69b8;
+    border-radius: 12px;
+    padding: 16px 28px;
+    margin: 16px 0 24px;
+}
+
+.booking-ref-label {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.booking-ref-code {
+    font-size: 28px;
+    font-weight: bold;
+    color: #1f3c88;
+    letter-spacing: 3px;
 }

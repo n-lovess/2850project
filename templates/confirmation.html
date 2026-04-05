@@ -28,10 +28,14 @@
 
     <div class="container">
         <div class="card confirmation-card">
+            <div class="confirm-tick">&#10003;</div>
             <h1>Booking Confirmed</h1>
             <p class="success-message">Your flight has been booked successfully</p>
 
-            <p><strong>Booking Reference:</strong> {{ booking_reference }}</p>
+            <div class="booking-ref-box">
+                <div class="booking-ref-label">Booking Reference</div>
+                <div class="booking-ref-code">{{ booking_reference }}</div>
+            </div>
             <p><strong>Passenger:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
             <p><strong>Email:</strong> {{ passenger.email }}</p>
             <p><strong>Flight:</strong> {{ flight.airline }}</p>

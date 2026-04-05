@@ -588,7 +588,7 @@ def signup():
         password = request.form.get("password", "")
 
         if not full_name or not email or not password:
-            flash("Please fill in all sign up fields.")
+            flash("Please fill in all sign up fields.", "error")
             return render_template("signup.html")
 
         conn = get_db_connection()
@@ -599,7 +599,7 @@ def signup():
 
         if existing_user:
             conn.close()
-            flash("An account with that email already exists.")
+            flash("An account with that email already exists.", "error")
             return render_template("signup.html")
 
         password_hash = generate_password_hash(password)
@@ -616,7 +616,7 @@ def signup():
 
         conn.close()
 
-        flash("Account created successfully.")
+        flash("Account created successfully.", "success")
         return redirect(session.pop("post_login_redirect", url_for("home")))
 
     return render_template("signup.html")
@@ -629,7 +629,7 @@ def login():
         password = request.form.get("password", "")
 
         if not email or not password:
-            flash("Please enter your email and password.")
+            flash("Please enter your email and password.", "error")
             return render_template("login.html")
 
         conn = get_db_connection()
@@ -640,14 +640,14 @@ def login():
         conn.close()
 
         if not user or not check_password_hash(user["password_hash"], password):
-            flash("Invalid email or password.")
+            flash("Invalid email or password.", "error")
             return render_template("login.html")
 
         session["user_id"] = user["id"]
         session["user_name"] = user["full_name"]
         session["user_email"] = user["email"]
 
-        flash("Logged in successfully.")
+        flash("Logged in successfully.", "success")
         return redirect(session.pop("post_login_redirect", url_for("home")))
 
     return render_template("login.html")
@@ -661,11 +661,11 @@ def forgot_password():
         confirm_password = request.form.get("confirm_password", "")
 
         if not email or not new_password or not confirm_password:
-            flash("Please fill in all fields.")
+            flash("Please fill in all fields.", "error")
             return render_template("forgot_password.html")
 
         if new_password != confirm_password:
-            flash("Passwords do not match.")
+            flash("Passwords do not match.", "error")
             return render_template("forgot_password.html")
 
         conn = get_db_connection()
@@ -676,7 +676,7 @@ def forgot_password():
 
         if not user:
             conn.close()
-            flash("No account was found with that email.")
+            flash("No account was found with that email.", "error")
             return render_template("forgot_password.html")
 
         conn.execute("""
@@ -687,7 +687,7 @@ def forgot_password():
         conn.commit()
         conn.close()
 
-        flash("Password updated successfully. You can now log in.")
+        flash("Password updated successfully. You can now log in.", "success")
         return redirect(url_for("login"))
 
     return render_template("forgot_password.html")
@@ -696,7 +696,7 @@ def forgot_password():
 @app.route("/logout")
 def logout():
     session.clear()
-    flash("You have been logged out.")
+    flash("You have been logged out.", "success")
     return redirect(url_for("home"))
 
 
@@ -770,7 +770,7 @@ def results():
     session["search_data"] = search_data
 
     if not matching_flights:
-        flash("No exact matches found. Showing sample flights instead.")
+        flash("No exact matches found. Showing sample flights instead.", "info")
         matching_flights = SAMPLE_FLIGHTS
 
     return render_template(
@@ -786,7 +786,7 @@ def passenger_details(flight_id):
     selected_flight = find_flight_by_id(flight_id)
 
     if not selected_flight:
-        flash("Selected flight was not found.")
+        flash("Selected flight was not found.", "error")
         return redirect(url_for("home"))
 
     meal_options = MEAL_OPTIONS.get(selected_flight["class"], COMMON_MEAL_OPTIONS)
@@ -802,7 +802,7 @@ def passenger_details(flight_id):
         }
 
         if not all(passenger_data.values()):
-            flash("Please fill in all passenger details.")
+            flash("Please fill in all passenger details.", "error")
             return render_template(
                 "passenger_details.html",
                 flight=selected_flight,
@@ -816,7 +816,7 @@ def passenger_details(flight_id):
 
         if not session.get("user_id"):
             session["post_login_redirect"] = url_for("seat_selection")
-            flash("Please log in or sign up to continue your booking.")
+            flash("Please log in or sign up to continue your booking.", "error")
             return redirect(url_for("login"))
 
         return redirect(url_for("seat_selection"))
@@ -835,14 +835,14 @@ def seat_selection():
     passenger_data = session.get("passenger_data")
 
     if not selected_flight or not passenger_data:
-        flash("Please select a flight and enter passenger details first.")
+        flash("Please select a flight and enter passenger details first.", "error")
         return redirect(url_for("home"))
 
     if request.method == "POST":
         selected_seat = request.form.get("seat", "").strip()
 
         if not selected_seat:
-            flash("Please choose a seat before continuing.")
+            flash("Please choose a seat before continuing.", "error")
             seat_rows = generate_seat_map(selected_flight)
             return render_template(
                 "seat_selection.html",
@@ -854,7 +854,7 @@ def seat_selection():
         permanently_unavailable = {"1A", "1F", "2C", "3D", "4B", "5E", "7A", "8F"}
 
         if selected_seat in booked_seats or selected_seat in permanently_unavailable:
-            flash("That seat is no longer available. Please choose another seat.")
+            flash("That seat is no longer available. Please choose another seat.", "error")
             seat_rows = generate_seat_map(selected_flight)
             return render_template(
                 "seat_selection.html",
@@ -881,16 +881,16 @@ def payment():
     search_data = session.get("search_data", {})
 
     if not selected_flight or not passenger_data:
-        flash("Please select a flight and enter passenger details first.")
+        flash("Please select a flight and enter passenger details first.", "error")
         return redirect(url_for("home"))
 
     if not selected_seat:
-        flash("Please choose a seat before payment.")
+        flash("Please choose a seat before payment.", "error")
         return redirect(url_for("seat_selection"))
 
     if not session.get("user_id"):
         session["post_login_redirect"] = url_for("payment")
-        flash("Please log in to complete your booking.")
+        flash("Please log in to complete your booking.", "error")
         return redirect(url_for("login"))
 
     if request.method == "POST":
@@ -902,7 +902,7 @@ def payment():
         }
 
         if not all(payment_data.values()):
-            flash("Please fill in all payment fields.")
+            flash("Please fill in all payment fields.", "error")
             return render_template(
                 "payment.html",
                 flight=selected_flight,
@@ -1009,7 +1009,7 @@ def confirmation():
     points_earned = session.get("points_earned", 0)
 
     if not selected_flight or not passenger_data or not booking_reference:
-        flash("No booking confirmation found.")
+        flash("No booking confirmation found.", "error")
         return redirect(url_for("home"))
 
     return render_template(
@@ -1027,7 +1027,7 @@ def confirmation():
 def bookings():
     if not session.get("user_id"):
         session["post_login_redirect"] = url_for("bookings")
-        flash("Please log in to view and manage your bookings.")
+        flash("Please log in to view and manage your bookings.", "error")
         return redirect(url_for("login"))
 
     conn = get_db_connection()
@@ -1061,12 +1061,12 @@ def bookings():
 @app.route("/update-meal/<int:booking_id>", methods=["POST"])
 def update_meal(booking_id):
     if not session.get("user_id"):
-        flash("Please log in first.")
+        flash("Please log in first.", "error")
         return redirect(url_for("login"))
 
     new_meal = request.form.get("meal_choice", "").strip()
     if not new_meal:
-        flash("Please choose a meal option.")
+        flash("Please choose a meal option.", "error")
         return redirect(url_for("bookings"))
 
     conn = get_db_connection()
@@ -1077,7 +1077,7 @@ def update_meal(booking_id):
 
     if not booking:
         conn.close()
-        flash("Booking not found.")
+        flash("Booking not found.", "error")
         return redirect(url_for("bookings"))
 
     conn.execute("""
@@ -1088,14 +1088,14 @@ def update_meal(booking_id):
     conn.commit()
     conn.close()
 
-    flash("Meal preference updated successfully.")
+    flash("Meal preference updated successfully.", "success")
     return redirect(url_for("bookings"))
 
 
 @app.route("/update-extras/<int:booking_id>", methods=["POST"])
 def update_extras(booking_id):
     if not session.get("user_id"):
-        flash("Please log in first.")
+        flash("Please log in first.", "error")
         return redirect(url_for("login"))
 
     extra_baggage = max(0, int(request.form.get("extra_baggage", 0) or 0))
@@ -1111,7 +1111,7 @@ def update_extras(booking_id):
 
     if not booking:
         conn.close()
-        flash("Booking not found.")
+        flash("Booking not found.", "error")
         return redirect(url_for("bookings"))
 
     old_extras_total = calculate_extras_total(
@@ -1152,14 +1152,14 @@ def update_extras(booking_id):
     conn.commit()
     conn.close()
 
-    flash("Travel extras updated successfully.")
+    flash("Travel extras updated successfully.", "success")
     return redirect(url_for("bookings"))
 
 
 @app.route("/upgrade-booking/<int:booking_id>", methods=["POST"])
 def upgrade_booking(booking_id):
     if not session.get("user_id"):
-        flash("Please log in first.")
+        flash("Please log in first.", "error")
         return redirect(url_for("login"))
 
     new_class = request.form.get("new_class", "").strip()
@@ -1172,7 +1172,7 @@ def upgrade_booking(booking_id):
 
     if not booking:
         conn.close()
-        flash("Booking not found.")
+        flash("Booking not found.", "error")
         return redirect(url_for("bookings"))
 
     current_class = booking["ticket_class"]
@@ -1180,7 +1180,7 @@ def upgrade_booking(booking_id):
 
     if new_class not in valid_upgrades:
         conn.close()
-        flash("That upgrade option is not available.")
+        flash("That upgrade option is not available.", "error")
         return redirect(url_for("bookings"))
 
     extra_cost = valid_upgrades[new_class]
@@ -1201,14 +1201,14 @@ def upgrade_booking(booking_id):
     conn.commit()
     conn.close()
 
-    flash(f"Booking upgraded to {new_class}. Extra cost: £{extra_cost}. You can update your meal choice if needed.")
+    flash(f"Booking upgraded to {new_class}. Extra cost: £{extra_cost}. You can update your meal choice if needed.", "success")
     return redirect(url_for("bookings"))
 
 
 @app.route("/request-change/<int:booking_id>", methods=["POST"])
 def request_change(booking_id):
     if not session.get("user_id"):
-        flash("Please log in first.")
+        flash("Please log in first.", "error")
         return redirect(url_for("login"))
 
     requested_route = request.form.get("requested_route", "").strip()
@@ -1216,7 +1216,7 @@ def request_change(booking_id):
     request_reason = request.form.get("request_reason", "").strip()
 
     if not requested_route and not requested_date and not request_reason:
-        flash("Please enter at least one change request detail.")
+        flash("Please enter at least one change request detail.", "error")
         return redirect(url_for("bookings"))
 
     request_summary = (
@@ -1233,7 +1233,7 @@ def request_change(booking_id):
 
     if not booking:
         conn.close()
-        flash("Booking not found.")
+        flash("Booking not found.", "error")
         return redirect(url_for("bookings"))
 
     conn.execute("""
@@ -1254,14 +1254,14 @@ def request_change(booking_id):
     conn.commit()
     conn.close()
 
-    flash("Flight change request submitted.")
+    flash("Flight change request submitted.", "success")
     return redirect(url_for("bookings"))
 
 
 @app.route("/boarding-pass/<int:booking_id>")
 def boarding_pass(booking_id):
     if not session.get("user_id"):
-        flash("Please log in first.")
+        flash("Please log in first.", "error")
         return redirect(url_for("login"))
 
     conn = get_db_connection()
@@ -1272,7 +1272,7 @@ def boarding_pass(booking_id):
     conn.close()
 
     if not booking:
-        flash("Boarding pass not found.")
+        flash("Boarding pass not found.", "error")
         return redirect(url_for("bookings"))
 
     return render_template("boarding_pass.html", booking=booking)
@@ -1281,7 +1281,7 @@ def boarding_pass(booking_id):
 @app.route("/cancel-booking/<int:booking_id>", methods=["POST"])
 def cancel_booking(booking_id):
     if not session.get("user_id"):
-        flash("Please log in first.")
+        flash("Please log in first.", "error")
         return redirect(url_for("login"))
 
     conn = get_db_connection()
@@ -1292,14 +1292,14 @@ def cancel_booking(booking_id):
     conn.commit()
     conn.close()
 
-    flash("Booking cancelled successfully.")
+    flash("Booking cancelled successfully.", "success")
     return redirect(url_for("bookings"))
 
 
 @app.route("/admin")
 def admin_dashboard():
     if not is_admin():
-        flash("Admin access only.")
+        flash("Admin access only.", "error")
         return redirect(url_for("home"))
 
     conn = get_db_connection()
@@ -1329,12 +1329,12 @@ def admin_dashboard():
 @app.route("/admin/update-change-status/<int:booking_id>", methods=["POST"])
 def admin_update_change_status(booking_id):
     if not is_admin():
-        flash("Admin access only.")
+        flash("Admin access only.", "error")
         return redirect(url_for("home"))
 
     new_status = request.form.get("change_status", "").strip()
     if new_status not in ["Pending", "Approved", "Rejected"]:
-        flash("Invalid change status.")
+        flash("Invalid change status.", "error")
         return redirect(url_for("admin_dashboard"))
 
     conn = get_db_connection()
@@ -1345,7 +1345,7 @@ def admin_update_change_status(booking_id):
 
     if not booking:
         conn.close()
-        flash("Booking not found.")
+        flash("Booking not found.", "error")
         return redirect(url_for("admin_dashboard"))
 
     conn.execute("""
@@ -1360,21 +1360,21 @@ def admin_update_change_status(booking_id):
     conn.commit()
     conn.close()
 
-    flash("Change request status updated.")
+    flash("Change request status updated.", "success")
     return redirect(url_for("admin_dashboard"))
 
 
 @app.route("/admin/update-flight-status/<int:booking_id>", methods=["POST"])
 def admin_update_flight_status(booking_id):
     if not is_admin():
-        flash("Admin access only.")
+        flash("Admin access only.", "error")
         return redirect(url_for("home"))
 
     new_status = request.form.get("flight_status", "").strip()
     valid_statuses = ["Scheduled", "Boarding", "Delayed", "Departed", "Cancelled"]
 
     if new_status not in valid_statuses:
-        flash("Invalid flight status.")
+        flash("Invalid flight status.", "error")
         return redirect(url_for("admin_dashboard"))
 
     conn = get_db_connection()
@@ -1386,7 +1386,7 @@ def admin_update_flight_status(booking_id):
     conn.commit()
     conn.close()
 
-    flash("Flight status updated.")
+    flash("Flight status updated.", "success")
     return redirect(url_for("admin_dashboard"))
 
 

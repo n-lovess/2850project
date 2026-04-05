@@ -30,10 +30,10 @@
         <h1>Welcome to AirGo</h1>
         <p class="subtitle">Book and manage your flights directly with our airline</p>
 
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for message in messages %}
-                    <div class="flash-message">{{ message }}</div>
+                {% for category, message in messages %}
+    <div class="flash-message flash-{{ category }}">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
