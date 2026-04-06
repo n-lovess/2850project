@@ -863,7 +863,7 @@ def seat_selection():
             )
 
         session["selected_seat"] = selected_seat
-        return redirect(url_for("payment"))
+        return redirect(url_for("review_booking"))
 
     seat_rows = generate_seat_map(selected_flight)
     return render_template(
@@ -873,6 +873,24 @@ def seat_selection():
     )
 
 
+@app.route("/review-booking")
+def review_booking():
+    selected_flight = session.get("selected_flight")
+    passenger_data = session.get("passenger_data")
+    selected_seat = session.get("selected_seat")
+    search_data = session.get("search_data", {})
+
+    if not selected_flight or not passenger_data or not selected_seat:
+        flash("Please complete passenger details and seat selection first.", "error")
+        return redirect(url_for("home"))
+
+    return render_template(
+        "review_booking.html",
+        flight=selected_flight,
+        passenger=passenger_data,
+        selected_seat=selected_seat,
+        search_data=search_data
+    )
 @app.route("/payment", methods=["GET", "POST"])
 def payment():
     selected_flight = session.get("selected_flight")

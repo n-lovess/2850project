@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Review Booking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <h1>Review Your Booking</h1>
+
+    <h2>Flight Details</h2>
+    <p>From: {{ flight.from }} → {{ flight.to }}</p>
+    <p>Date: {{ search_data.depart_date }}</p>
+    <p>Departure: {{ flight.departure_time }}</p>
+    <p>Arrival: {{ flight.arrival_time }}</p>
+    <p>Class: {{ flight.class }}</p>
+    <p>Seat: {{ selected_seat }}</p>
+    <p>Price: £{{ flight.price }}</p>
+
+    <h2>Passenger Details</h2>
+    <p>Name: {{ passenger.first_name }} {{ passenger.last_name }}</p>
+    <p>Email: {{ passenger.email }}</p>
+    <p>Passport: {{ passenger.passport_number }}</p>
+
+    <br>
+
+    <a href="{{ url_for('seat_selection') }}">⬅ Back</a>
+    <a href="{{ url_for('payment') }}">Continue to Payment ➡</a>
+
+</div>
+
+</body>
+</html>
