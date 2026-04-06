@@ -792,16 +792,32 @@ def passenger_details(flight_id):
     meal_options = MEAL_OPTIONS.get(selected_flight["class"], COMMON_MEAL_OPTIONS)
 
     if request.method == "POST":
+        assistance_required = request.form.get("assistance_required")
+        assistance_options = request.form.getlist("assistance_options")
+        other_assistance = request.form.get("other_assistance")
+
         passenger_data = {
             "first_name": request.form.get("first_name", "").strip(),
             "last_name": request.form.get("last_name", "").strip(),
             "email": request.form.get("email", "").strip(),
             "phone": request.form.get("phone", "").strip(),
             "passport_number": request.form.get("passport_number", "").strip(),
-            "meal_choice": request.form.get("meal_choice", "").strip()
+            "meal_choice": request.form.get("meal_choice", "").strip(),
+            "assistance_required": assistance_required,
+            "assistance_options": assistance_options,
+            "other_assistance": other_assistance
         }
 
-        if not all(passenger_data.values()):
+        required_fields = [
+            passenger_data["first_name"],
+            passenger_data["last_name"],
+            passenger_data["email"],
+            passenger_data["phone"],
+            passenger_data["passport_number"],
+            passenger_data["meal_choice"]
+        ]
+
+        if not all(required_fields):
             flash("Please fill in all passenger details.", "error")
             return render_template(
                 "passenger_details.html",
@@ -827,7 +843,6 @@ def passenger_details(flight_id):
         benefits=CLASS_BENEFITS.get(selected_flight["class"], {}),
         meal_options=meal_options
     )
-
 
 @app.route("/seat-selection", methods=["GET", "POST"])
 def seat_selection():
