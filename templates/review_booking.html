@@ -18,6 +18,12 @@
     <p>Seat: {{ selected_seat }}</p>
     <p>Price: £{{ flight.price }}</p>
 
+    <div class="booking-card">
+    <h2>Selected Extras</h2>
+    <p><strong>Baggage:</strong> {{ extras.baggage }}</p>
+    <p><strong>Meal:</strong> {{ extras.meal_choice }}</p>
+</div>
+
     <h2>Passenger Details</h2>
     <p>Name: {{ passenger.first_name }} {{ passenger.last_name }}</p>
     <p>Email: {{ passenger.email }}</p>

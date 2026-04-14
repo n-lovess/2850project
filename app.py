@@ -789,7 +789,6 @@ def passenger_details(flight_id):
         flash("Selected flight was not found.", "error")
         return redirect(url_for("home"))
 
-    meal_options = MEAL_OPTIONS.get(selected_flight["class"], COMMON_MEAL_OPTIONS)
 
     if request.method == "POST":
         assistance_required = request.form.get("assistance_required")
@@ -802,7 +801,6 @@ def passenger_details(flight_id):
             "email": request.form.get("email", "").strip(),
             "phone": request.form.get("phone", "").strip(),
             "passport_number": request.form.get("passport_number", "").strip(),
-            "meal_choice": request.form.get("meal_choice", "").strip(),
             "assistance_required": assistance_required,
             "assistance_options": assistance_options,
             "other_assistance": other_assistance
@@ -814,7 +812,6 @@ def passenger_details(flight_id):
             passenger_data["email"],
             passenger_data["phone"],
             passenger_data["passport_number"],
-            passenger_data["meal_choice"]
         ]
 
         if not all(required_fields):
@@ -823,7 +820,6 @@ def passenger_details(flight_id):
                 "passenger_details.html",
                 flight=selected_flight,
                 benefits=CLASS_BENEFITS.get(selected_flight["class"], {}),
-                meal_options=meal_options
             )
 
         session["selected_flight"] = selected_flight
@@ -841,7 +837,6 @@ def passenger_details(flight_id):
         "passenger_details.html",
         flight=selected_flight,
         benefits=CLASS_BENEFITS.get(selected_flight["class"], {}),
-        meal_options=meal_options
     )
 
 @app.route("/seat-selection", methods=["GET", "POST"])
@@ -894,6 +889,7 @@ def review_booking():
     passenger_data = session.get("passenger_data")
     selected_seat = session.get("selected_seat")
     search_data = session.get("search_data", {})
+    extras = session.get("extras", {})
 
     if not selected_flight or not passenger_data or not selected_seat:
         flash("Please complete passenger details and seat selection first.", "error")
