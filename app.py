@@ -900,7 +900,8 @@ def review_booking():
         flight=selected_flight,
         passenger=passenger_data,
         selected_seat=selected_seat,
-        search_data=search_data
+        search_data=search_data,
+        extras=extras
     )
 @app.route("/extras", methods=["GET", "POST"])
 def extras():
