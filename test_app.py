@@ -540,6 +540,85 @@ def test_cannot_cancel_someone_elses_booking(app):
         after = get_booking_count(uid)
         assert before == after
         conn = airgo.get_db_connection()
+        conn.execute("DELETE FROM bookings WHERE user_id = ?", (uid,))
         conn.execute("DELETE FROM users WHERE email = ?", ("otherguy@test.com",))
         conn.commit()
         conn.close()
+
+
+# ==============
+# API Tests
+# ==============
+
+def test_api_get_flights(client):
+    res = client.get("/api/flights")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["error"] is None
+    assert isinstance(data["data"], list)
+    assert len(data["data"]) >= 6
+    assert data["data"][0]["id"] == 1
+
+
+def test_api_get_flight_by_id(client):
+    res = client.get("/api/flights/1")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["error"] is None
+    assert data["data"]["id"] == 1
+    assert data["data"]["from_code"] == "LHR"
+
+
+def test_api_get_flight_not_found(client):
+    res = client.get("/api/flights/99999")
+    assert res.status_code == 404
+    data = res.get_json()
+    assert data["error"] is not None
+    assert data["data"] is None
+
+
+def test_api_bookings_unauthenticated(client):
+    res = client.get("/api/bookings")
+    assert res.status_code == 401
+    data = res.get_json()
+    assert "Unauthorized" in data["error"]
+
+
+def test_api_bookings_authenticated(logged_in):
+    res = logged_in.get("/api/bookings")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["error"] is None
+    assert isinstance(data["data"], list)
+
+
+def test_api_single_booking_not_found(logged_in):
+    res = logged_in.get("/api/bookings/99999")
+    assert res.status_code == 404
+    data = res.get_json()
+    assert data["error"] is not None
+
+
+def test_api_delete_booking_unauthenticated(client):
+    res = client.delete("/api/bookings/1")
+    assert res.status_code == 401
+
+
+def test_api_delete_booking_not_found(logged_in):
+    res = logged_in.delete("/api/bookings/99999")
+    assert res.status_code == 404
+
+
+def test_api_admin_reports_denied_normal_user(logged_in):
+    res = logged_in.get("/api/admin/reports/bookings-per-flight")
+    assert res.status_code == 403
+
+
+def test_api_admin_reports_access_admin(app):
+    with app.test_client() as c:
+        c.post("/login", data={"email": "admin@airgo.com", "password": "admin123"})
+        res = c.get("/api/admin/reports/bookings-per-flight")
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data["error"] is None
+        assert isinstance(data["data"], list)

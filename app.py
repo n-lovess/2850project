@@ -270,6 +270,7 @@ DEFAULT_FLIGHT_STATUS = "Scheduled"
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
+    conn.execute("PRAGMA foreign_keys = ON")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -341,6 +342,47 @@ def init_db():
             generate_password_hash("admin123")
         ))
 
+    # Create flights table if not exists
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS flights (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            airline TEXT NOT NULL,
+            departure_airport TEXT NOT NULL,
+            departure_city TEXT NOT NULL,
+            departure_code TEXT NOT NULL,
+            destination_airport TEXT NOT NULL,
+            destination_city TEXT NOT NULL,
+            destination_code TEXT NOT NULL,
+            departure_time TEXT NOT NULL,
+            arrival_time TEXT NOT NULL,
+            base_price REAL NOT NULL,
+            ticket_class TEXT NOT NULL,
+            seats_left INTEGER NOT NULL DEFAULT 0
+        )
+    """)
+
+    # Check if flights table is empty and seed it
+    flight_count = conn.execute("SELECT COUNT(*) as cnt FROM flights").fetchone()["cnt"]
+    if flight_count == 0:
+        conn.executemany("""
+            INSERT INTO flights (
+                airline, departure_airport, departure_city, departure_code,
+                destination_airport, destination_city, destination_code,
+                departure_time, arrival_time, base_price, ticket_class, seats_left
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, [
+            ("AirGo", "London Heathrow", "London", "LHR", "Paris Charles de Gaulle", "Paris", "CDG", "08:00", "10:15", 120, "Economy", 14),
+            ("AirGo", "London Gatwick", "London", "LGW", "Paris Orly", "Paris", "ORY", "12:30", "14:45", 185, "Premium Economy", 7),
+            ("AirGo", "London Stansted", "London", "STN", "Dubai International", "Dubai", "DXB", "18:20", "03:35", 310, "Business", 3),
+            ("AirGo", "Paris Charles de Gaulle", "Paris", "CDG", "Dubai International", "Dubai", "DXB", "09:45", "18:10", 275, "Economy", 11),
+            ("AirGo", "Dubai International", "Dubai", "DXB", "London Heathrow", "London", "LHR", "14:00", "18:45", 420, "Business", 5),
+            ("AirGo", "London City", "London", "LCY", "John F. Kennedy", "New York", "JFK", "10:00", "13:25", 510, "Premium Economy", 8),
+        ])
+
+    # Add indexes for performance
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_bookings_reference ON bookings(booking_reference)")
+
     conn.commit()
     conn.close()
 
@@ -349,11 +391,38 @@ def generate_booking_reference(length=8):
     return "".join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 
+def db_flight_to_dict(flight):
+    """Convert a database flight row to the dict format used by templates."""
+    if flight is None:
+        return None
+    return {
+        "id": flight["id"],
+        "airline": flight["airline"],
+        "from": flight["departure_airport"],
+        "from_city": flight["departure_city"],
+        "from_code": flight["departure_code"],
+        "to": flight["destination_airport"],
+        "to_city": flight["destination_city"],
+        "to_code": flight["destination_code"],
+        "departure_time": flight["departure_time"],
+        "arrival_time": flight["arrival_time"],
+        "price": flight["base_price"],
+        "class": flight["ticket_class"],
+        "seats_left": flight["seats_left"]
+    }
+
+
 def find_flight_by_id(flight_id):
-    for flight in SAMPLE_FLIGHTS:
-        if flight["id"] == flight_id:
-            return flight
-    return None
+    conn = get_db_connection()
+    flight = conn.execute("""
+        SELECT id, airline, departure_airport, departure_city, departure_code,
+               destination_airport, destination_city, destination_code,
+               departure_time, arrival_time, base_price, ticket_class, seats_left
+        FROM flights
+        WHERE id = ?
+    """, (flight_id,)).fetchone()
+    conn.close()
+    return db_flight_to_dict(flight)
 
 
 def calculate_points(price):
@@ -730,20 +799,32 @@ def results():
     passengers = request.form.get("passengers", "1")
     ticket_class = request.form.get("ticket_class", "Any")
 
+    conn = get_db_connection()
+    all_flights = conn.execute("""
+        SELECT id, airline, departure_airport, departure_city, departure_code,
+               destination_airport, destination_city, destination_code,
+               departure_time, arrival_time, base_price, ticket_class, seats_left
+        FROM flights
+    """).fetchall()
+    conn.close()
+
+    # Convert DB rows to the expected dict format and filter
+    flight_dicts = [db_flight_to_dict(flight) for flight in all_flights]
+    
     matching_flights = [
-        flight for flight in SAMPLE_FLIGHTS
+        flight for flight in flight_dicts
         if matches_airport_search(
             departure,
             flight["from_city"],
             flight["from_code"],
-            flight["airport_group"],
+            "",  # airport_group not in DB for minimal change
             flight["from"]
         )
         and matches_airport_search(
             destination,
             flight["to_city"],
             flight["to_code"],
-            flight["destination_group"],
+            "",  # destination_group not in DB for minimal change
             flight["to"]
         )
     ]
@@ -1421,6 +1502,206 @@ def admin_update_flight_status(booking_id):
 
     flash("Flight status updated.", "success")
     return redirect(url_for("admin_dashboard"))
+
+
+# ==============
+# JSON API
+# ==============
+
+@app.route("/api/flights", methods=["GET"])
+def api_get_flights():
+    conn = get_db_connection()
+    flights = conn.execute("""
+        SELECT id, airline, departure_airport, departure_city, departure_code,
+               destination_airport, destination_city, destination_code,
+               departure_time, arrival_time, base_price, ticket_class, seats_left
+        FROM flights
+    """).fetchall()
+    conn.close()
+    
+    return jsonify({
+        "data": [db_flight_to_dict(flight) for flight in flights],
+        "error": None
+    })
+
+
+@app.route("/api/flights/<int:flight_id>", methods=["GET"])
+def api_get_flight(flight_id):
+    flight = find_flight_by_id(flight_id)
+    
+    if not flight:
+        return jsonify({
+            "data": None,
+            "error": "Flight not found"
+        }), 404
+    
+    return jsonify({
+        "data": flight,
+        "error": None
+    })
+
+
+@app.route("/api/bookings", methods=["GET"])
+def api_get_bookings():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({
+            "data": None,
+            "error": "Unauthorized: Please log in"
+        }), 401
+    
+    conn = get_db_connection()
+    bookings = conn.execute("""
+        SELECT * FROM bookings
+        WHERE user_id = ?
+        ORDER BY id DESC
+    """, (user_id,)).fetchall()
+    conn.close()
+    
+    enriched = [enrich_booking_for_display(b) for b in bookings]
+    
+    return jsonify({
+        "data": enriched,
+        "error": None
+    })
+
+
+@app.route("/api/bookings/<int:booking_id>", methods=["GET"])
+def api_get_booking(booking_id):
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({
+            "data": None,
+            "error": "Unauthorized: Please log in"
+        }), 401
+    
+    conn = get_db_connection()
+    booking = conn.execute("""
+        SELECT * FROM bookings
+        WHERE id = ? AND user_id = ?
+    """, (booking_id, user_id)).fetchone()
+    conn.close()
+    
+    if not booking:
+        return jsonify({
+            "data": None,
+            "error": "Booking not found or access denied"
+        }), 404
+    
+    return jsonify({
+        "data": enrich_booking_for_display(booking),
+        "error": None
+    })
+
+
+@app.route("/api/bookings/<int:booking_id>", methods=["DELETE"])
+def api_delete_booking(booking_id):
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({
+            "data": None,
+            "error": "Unauthorized: Please log in"
+        }), 401
+    
+    conn = get_db_connection()
+    cursor = conn.execute("""
+        DELETE FROM bookings
+        WHERE id = ? AND user_id = ?
+    """, (booking_id, user_id))
+    conn.commit()
+    conn.close()
+    
+    if cursor.rowcount == 0:
+        return jsonify({
+            "data": None,
+            "error": "Booking not found or access denied"
+        }), 404
+    
+    return jsonify({
+        "data": {"status": "cancelled", "booking_id": booking_id},
+        "error": None
+    }), 200
+
+
+# ==============
+# Admin Reports API
+# ==============
+
+@app.route("/api/admin/reports/bookings-per-flight", methods=["GET"])
+def api_admin_bookings_per_flight():
+    if not is_admin():
+        return jsonify({
+            "data": None,
+            "error": "Forbidden: Admin access only"
+        }), 403
+    
+    conn = get_db_connection()
+    rows = conn.execute("""
+        SELECT 
+            departure_code, destination_code,
+            departure_airport, destination_airport,
+            COUNT(*) as booking_count
+        FROM bookings
+        GROUP BY departure_code, destination_code, departure_airport, destination_airport
+        ORDER BY booking_count DESC
+    """).fetchall()
+    conn.close()
+    
+    return jsonify({
+        "data": [dict(row) for row in rows],
+        "error": None
+    })
+
+
+@app.route("/api/admin/reports/popular-routes", methods=["GET"])
+def api_admin_popular_routes():
+    if not is_admin():
+        return jsonify({
+            "data": None,
+            "error": "Forbidden: Admin access only"
+        }), 403
+    
+    conn = get_db_connection()
+    rows = conn.execute("""
+        SELECT 
+            departure_city, destination_city,
+            COUNT(*) as count
+        FROM bookings
+        GROUP BY departure_city, destination_city
+        ORDER BY count DESC
+        LIMIT 10
+    """).fetchall()
+    conn.close()
+    
+    return jsonify({
+        "data": [dict(row) for row in rows],
+        "error": None
+    })
+
+
+@app.route("/api/admin/reports/peak-booking-times", methods=["GET"])
+def api_admin_peak_times():
+    if not is_admin():
+        return jsonify({
+            "data": None,
+            "error": "Forbidden: Admin access only"
+        }), 403
+    
+    conn = get_db_connection()
+    rows = conn.execute("""
+        SELECT 
+            strftime('%H', departure_time) as hour,
+            COUNT(*) as count
+        FROM bookings
+        GROUP BY hour
+        ORDER BY count DESC
+    """).fetchall()
+    conn.close()
+    
+    return jsonify({
+        "data": [dict(row) for row in rows],
+        "error": None
+    })
 
 
 if __name__ == "__main__":
