@@ -164,7 +164,14 @@
             {% endfor %}
         {% else %}
             <div class="card">
-                <p>You do not have any bookings yet.</p>
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <div class="empty-state-title">No bookings yet</div>
+                    <div class="empty-state-text">You haven't made any bookings yet. Search for flights to book your first trip.</div>
+                    <div class="button-group" style="margin-top: 20px;">
+                        <a href="{{ url_for('home') }}" class="btn">Search Flights</a>
+                    </div>
+                </div>
             </div>
         {% endif %}
     </div>

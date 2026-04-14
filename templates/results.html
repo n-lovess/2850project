@@ -38,8 +38,9 @@
             {% endif %}
         {% endwith %}
 
-        {% for flight in flights %}
-            <div class="card enhanced-flight-card">
+        {% if flights %}
+            {% for flight in flights %}
+                <div class="card enhanced-flight-card">
                 <div class="flight-top">
                     <div>
                         <p class="booking-meta">{{ flight.airline }} • {{ flight.class }}</p>
@@ -84,7 +85,16 @@
                     <a href="{{ url_for('passenger_details', flight_id=flight.id) }}" class="btn">Select Flight</a>
                 </div>
             </div>
-        {% endfor %}
+            {% endfor %}
+        {% else %}
+            <div class="card">
+                <div class="empty-state">
+                    <div class="empty-state-icon">✈</div>
+                    <div class="empty-state-title">No flights found</div>
+                    <div class="empty-state-text">We couldn't find any flights matching your search. Try adjusting your search criteria or check back later.</div>
+                </div>
+            </div>
+        {% endif %}
 
         <div class="back-link">
             <a href="{{ url_for('home') }}">← Back to Search</a>
