@@ -93,13 +93,14 @@ def init_database():
 
     if not existing_admin:
         print("Creating admin user...")
+        admin_password = os.environ.get("AIRGO_ADMIN_PASSWORD", "admin123")
         conn.execute("""
             INSERT INTO users (full_name, email, password_hash)
             VALUES (?, ?, ?)
         """, (
             "AirGo Admin",
             admin_email,
-            generate_password_hash("admin123")
+            generate_password_hash(admin_password)
         ))
 
     # Seed flights
@@ -124,13 +125,12 @@ def init_database():
     # Add indexes
     print("Creating indexes...")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_bookings_reference ON bookings(booking_reference)")
 
     conn.commit()
     conn.close()
     print("\nDatabase initialization completed successfully!")
     print("- Created tables: users, bookings, flights")
-    print("- Admin user: admin@airgo.com / admin123")
+    print("- Admin user: admin@airgo.com")
     print("- 6 sample flights inserted")
     print("- Indexes created for performance")
 

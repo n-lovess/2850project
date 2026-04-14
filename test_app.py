@@ -46,13 +46,14 @@ def logged_in(app):
             "email": "student@test.com",
             "password": "password123"
         })
-        yield c
-        # delete test user after each test
-        conn = airgo.get_db_connection()
-        conn.execute("DELETE FROM users WHERE email = ?", ("student@test.com",))
-        conn.execute("DELETE FROM bookings WHERE email = ?", ("student@test.com",))
-        conn.commit()
-        conn.close()
+    yield c
+    # delete test user after each test
+    conn = airgo.get_db_connection()
+    # Delete bookings first due to foreign key constraint
+    conn.execute("DELETE FROM bookings WHERE email = ?", ("student@test.com",))
+    conn.execute("DELETE FROM users WHERE email = ?", ("student@test.com",))
+    conn.commit()
+    conn.close()
 
 
 # just gets the user id from the db
@@ -622,3 +623,17 @@ def test_api_admin_reports_access_admin(app):
         data = res.get_json()
         assert data["error"] is None
         assert isinstance(data["data"], list)
+
+
+def test_api_admin_reports_popular_routes_denied_normal_user(logged_in):
+    res = logged_in.get("/api/admin/reports/popular-routes")
+    assert res.status_code == 403
+    data = res.get_json()
+    assert "Forbidden: Admin access only" in data["error"]
+
+
+def test_api_admin_reports_peak_times_denied_normal_user(logged_in):
+    res = logged_in.get("/api/admin/reports/peak-booking-times")
+    assert res.status_code == 403
+    data = res.get_json()
+    assert "Forbidden: Admin access only" in data["error"]

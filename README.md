@@ -29,7 +29,9 @@ python init_db.py
 
 This will create:
 - Users, bookings, and flights tables
-- Admin user: `admin@airgo.com` / `admin123`
+- Admin user: `admin@airgo.com`
+- Default password is `admin123` for local development only
+- For production, set AIRGO_ADMIN_PASSWORD environment variable
 - 6 sample flights
 - Performance indexes
 

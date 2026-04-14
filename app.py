@@ -381,7 +381,6 @@ def init_db():
 
     # Add indexes for performance
     conn.execute("CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_bookings_reference ON bookings(booking_reference)")
 
     conn.commit()
     conn.close()
@@ -1516,6 +1515,7 @@ def api_get_flights():
                destination_airport, destination_city, destination_code,
                departure_time, arrival_time, base_price, ticket_class, seats_left
         FROM flights
+        ORDER BY id ASC
     """).fetchall()
     conn.close()
     
