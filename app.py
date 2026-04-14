@@ -1014,7 +1014,6 @@ def payment():
             selected_flight["departure_time"],
             selected_flight["arrival_time"],
             selected_flight["class"],
-            passenger_data["meal_choice"],
             selected_seat,
             selected_flight["price"],
             points_earned,
