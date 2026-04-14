@@ -831,11 +831,11 @@ def passenger_details(flight_id):
         session.pop("selected_seat", None)
 
         if not session.get("user_id"):
-            session["post_login_redirect"] = url_for("seat_selection")
+            session["post_login_redirect"] = url_for("extras")
             flash("Please log in or sign up to continue your booking.", "error")
             return redirect(url_for("login"))
 
-        return redirect(url_for("seat_selection"))
+        return redirect(url_for("extras"))
 
     return render_template(
         "passenger_details.html",
@@ -906,6 +906,21 @@ def review_booking():
         selected_seat=selected_seat,
         search_data=search_data
     )
+@app.route("/extras", methods=["GET", "POST"])
+def extras():
+    if request.method == "POST":
+        baggage = request.form.get("baggage")
+        meal_choice = request.form.get("meal_choice")
+
+        session["extras"] = {
+            "baggage": baggage,
+            "meal_choice": meal_choice
+        }
+
+        return redirect(url_for("seat_selection"))
+
+    return render_template("extras.html")
+
 @app.route("/payment", methods=["GET", "POST"])
 def payment():
     selected_flight = session.get("selected_flight")
