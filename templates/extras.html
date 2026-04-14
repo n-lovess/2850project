@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extras</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-inner">
+            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
+            <div class="nav-links">
+                <a href="{{ url_for('home') }}">Search Flights</a>
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('signup') }}">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Choose Your Extras</h1>
+        <p>Select any extras before continuing to seat selection.</p>
+
+        <div class="card">
+            <form method="POST" class="form-grid">
+                <div class="full-width">
+                    <label for="baggage">Checked Baggage</label>
+                    <select id="baggage" name="baggage">
+                        <option value="No checked bag">No checked bag</option>
+                        <option value="1 checked bag (+£30)">1 checked bag (+£30)</option>
+                        <option value="2 checked bags (+£60)">2 checked bags (+£60)</option>
+                    </select>
+                </div>
+
+                <div class="full-width">
+                    <label for="meal_choice">Meal Choice</label>
+                    <select id="meal_choice" name="meal_choice">
+                        <option value="Standard Meal">Standard Meal</option>
+                        <option value="Vegetarian Meal">Vegetarian Meal</option>
+                        <option value="Vegan Meal">Vegan Meal</option>
+                        <option value="Gluten-Free Meal">Gluten-Free Meal</option>
+                        <option value="No Meal">No Meal</option>
+                    </select>
+                </div>
+
+                <div class="full-width">
+                    <button type="submit" class="btn">Continue to Seat Selection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
