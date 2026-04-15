@@ -924,6 +924,7 @@ def payment():
     passenger_data = session.get("passenger_data")
     selected_seat = session.get("selected_seat")
     search_data = session.get("search_data", {})
+    extras = session.get("extras", {})
 
     if not selected_flight or not passenger_data:
         flash("Please select a flight and enter passenger details first.", "error")
@@ -1014,6 +1015,7 @@ def payment():
             selected_flight["departure_time"],
             selected_flight["arrival_time"],
             selected_flight["class"],
+            extras.get("meal_choice", "No Meal"),
             selected_seat,
             selected_flight["price"],
             points_earned,
