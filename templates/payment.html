@@ -41,7 +41,7 @@
             <p><strong>Flight:</strong> {{ flight.airline }}</p>
             <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
             <p><strong>Class:</strong> {{ flight.class }}</p>
-            <p><strong>Meal:</strong> {{ passenger.meal_choice }}</p>
+            <p><strong>Meal:</strong> {{ extras.meal_choice }}</p>
             <p><strong>Seat:</strong> {{ selected_seat }}</p>
             <p><strong>Total Price:</strong> £{{ flight.price }}</p>
         </div>
@@ -68,11 +68,69 @@
                     <input type="password" id="cvv" name="cvv" maxlength="4" required>
                 </div>
 
-                <div class="full-width">
-                    <button type="submit" class="btn">Complete Booking</button>
-                </div>
+              <div class="full-width terms-box">
+    <div class="checkbox-row">
+        <input type="checkbox" id="accept_terms" name="accept_terms" required>
+        <label for="accept_terms">
+            I agree to the
+            <button type="button" class="terms-link-btn" onclick="openTermsModal()">Terms & Conditions</button>
+        </label>
+    </div>
+
+    <div class="checkbox-row">
+        <input type="checkbox" id="subscribe_offers" name="subscribe_offers">
+        <label for="subscribe_offers">
+            I would like to receive offers and updates
+        </label>
+    </div>
+</div>
+
+<div class="full-width">
+    <button type="submit" class="btn">Complete Booking</button>
+</div>
             </form>
         </div>
     </div>
+    <div id="termsModal" class="terms-modal">
+    <div class="terms-modal-content">
+        <span class="close-modal" onclick="closeTermsModal()">&times;</span>
+        <h2>Terms & Conditions</h2>
+
+        <h3>Booking Terms</h3>
+        <p>By completing a booking with AirGo, you confirm that all passenger details provided are accurate and complete.</p>
+
+        <h3>Payments</h3>
+        <p>All payments must be completed in full before a booking is confirmed. Prices shown at checkout include the selected flight and chosen extras.</p>
+
+        <h3>Changes and Cancellations</h3>
+        <p>Changes and cancellations are subject to the fare type and airline policy. Additional fees may apply depending on the request.</p>
+
+        <h3>Passenger Responsibility</h3>
+        <p>Passengers are responsible for ensuring they have valid travel documents, including passports, visas, and any required identification.</p>
+
+        <h3>Special Requests</h3>
+        <p>Requests such as meal preferences, assistance, and baggage selections will be recorded, but some services remain subject to availability.</p>
+
+        <h3>Notifications and Offers</h3>
+        <p>If you choose to receive updates and promotions, AirGo may contact you by email with booking updates, offers, and service information.</p>
+    </div>
+</div>
+
+<script>
+function openTermsModal() {
+    document.getElementById("termsModal").style.display = "flex";
+}
+
+function closeTermsModal() {
+    document.getElementById("termsModal").style.display = "none";
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById("termsModal");
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+}
+</script>
 </body>
 </html>

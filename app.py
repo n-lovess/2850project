@@ -946,6 +946,14 @@ def payment():
             "expiry_date": request.form.get("expiry_date", "").strip(),
             "cvv": request.form.get("cvv", "").strip()
         }
+    if not request.form.get("accept_terms"):
+        flash("You must accept the Terms & Conditions before completing your booking.", "error")
+        return render_template(
+          "payment.html",
+           flight=selected_flight,
+           passenger=passenger_data,
+           selected_seat=selected_seat
+    )
 
         if not all(payment_data.values()):
             flash("Please fill in all payment fields.", "error")
@@ -1044,6 +1052,9 @@ def payment():
         passenger=passenger_data,
         selected_seat=selected_seat
     )
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
 
 
 @app.route("/confirmation")
