@@ -908,10 +908,12 @@ def extras():
     if request.method == "POST":
         baggage = request.form.get("baggage")
         meal_choice = request.form.get("meal_choice")
+        insurance = request.form.get("insurance")
 
         session["extras"] = {
             "baggage": baggage,
-            "meal_choice": meal_choice
+            "meal_choice": meal_choice,
+            "insurance": insurance
         }
 
         return redirect(url_for("seat_selection"))
