@@ -41,7 +41,7 @@
             <p><strong>Flight:</strong> {{ flight.airline }}</p>
             <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
             <p><strong>Class:</strong> {{ flight.class }}</p>
-            <p><strong>Meal:</strong> {{ extras.meal_choice }}</p>
+            <p><strong>Meal:</strong> {{ extras.get('meal_choice', 'No Meal') }}</p>
             <p><strong>Seat:</strong> {{ selected_seat }}</p>
             <p><strong>Total Price:</strong> £{{ flight.price }}</p>
         </div>
