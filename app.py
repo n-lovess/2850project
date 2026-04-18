@@ -5,6 +5,8 @@ import string
 import sqlite3
 import os
 import csv
+import re
+import unicodedata
 
 app = Flask(__name__)
 app.secret_key = "super_secret_key_change_this_later"
@@ -504,21 +506,52 @@ def enrich_booking_for_display(booking):
     return booking_dict
 
 
+def normalize_place_name(text):
+    text = (text or "").strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
 def find_airport_by_city(city_name):
-    city_name = city_name.strip().lower()
-    preferred_all = None
-    first_match = None
+    target = normalize_place_name(city_name)
+
+    if not target:
+        return None
+
+    exact_matches = []
+    startswith_matches = []
 
     for airport in AIRPORTS:
-        airport_city = airport["city"].strip().lower()
+        airport_city = normalize_place_name(airport["city"])
+        airport_name = normalize_place_name(airport["name"])
 
-        if airport_city == city_name or city_name in airport_city or airport_city in city_name:
-            if not first_match:
-                first_match = airport
-            if "all airports" in airport["name"].lower():
-                preferred_all = airport
+        if airport_city == target:
+            exact_matches.append(airport)
+        elif airport_name == target:
+            exact_matches.append(airport)
+        elif airport_city.startswith(target + " "):
+            startswith_matches.append(airport)
 
-    return preferred_all or first_match
+    # Prefer exact "All Airports" match first
+    for airport in exact_matches:
+        if "all airports" in airport["name"].lower():
+            return airport
+
+    if exact_matches:
+        return exact_matches[0]
+
+    # Then fallback to startswith matches, again preferring "All Airports"
+    for airport in startswith_matches:
+        if "all airports" in airport["name"].lower():
+            return airport
+
+    if startswith_matches:
+        return startswith_matches[0]
+
+    return None
 
 
 def apply_approved_change_to_booking(conn, booking):
