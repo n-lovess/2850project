@@ -927,6 +927,24 @@ def payment():
     selected_seat = session.get("selected_seat")
     search_data = session.get("search_data", {})
     extras = session.get("extras", {})
+    # ---- PRICE BREAKDOWN ----
+base_fare = selected_flight["price"]
+
+# simple 12% tax
+taxes = round(base_fare * 0.12, 2)
+
+# baggage price
+baggage_price = 0
+if "1 checked bag" in extras.get("baggage", ""):
+    baggage_price = 30
+elif "2 checked bags" in extras.get("baggage", ""):
+    baggage_price = 60
+
+# insurance price
+insurance_price = 25 if "Insurance" in extras.get("insurance", "") else 0
+
+# total
+total_price = base_fare + taxes + baggage_price + insurance_price
 
     if not selected_flight or not passenger_data:
         flash("Please select a flight and enter passenger details first.", "error")
@@ -1052,13 +1070,17 @@ def payment():
         return redirect(url_for("confirmation"))
 
     return render_template(
-        "payment.html",
-        flight=selected_flight,
-        passenger=passenger_data,
-        selected_seat=selected_seat,
-        extras=extras
-    ) 
-
+    "payment.html",
+    flight=selected_flight,
+    passenger=passenger_data,
+    selected_seat=selected_seat,
+    extras=extras,
+    base_fare=base_fare,
+    taxes=taxes,
+    baggage_price=baggage_price,
+    insurance_price=insurance_price,
+    total_price=total_price
+)
 @app.route("/confirmation")
 def confirmation():
     selected_flight = session.get("selected_flight")
