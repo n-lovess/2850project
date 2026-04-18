@@ -919,6 +919,27 @@ def extras():
         return redirect(url_for("seat_selection"))
 
     return render_template("extras.html")
+def calculate_price(selected_flight, extras):
+    base_fare = selected_flight["price"]
+    taxes = round(base_fare * 0.12, 2)
+
+    baggage_price = 0
+    if "1 checked bag" in extras.get("baggage", ""):
+        baggage_price = 30
+    elif "2 checked bags" in extras.get("baggage", ""):
+        baggage_price = 60
+
+    insurance_price = 25 if "Insurance" in extras.get("insurance", "") else 0
+
+    total_price = base_fare + taxes + baggage_price + insurance_price
+
+    return {
+        "base_fare": base_fare,
+        "taxes": taxes,
+        "baggage_price": baggage_price,
+        "insurance_price": insurance_price,
+        "total_price": total_price
+    }
 
 @app.route("/payment", methods=["GET", "POST"])
 def payment():
@@ -927,7 +948,6 @@ def payment():
     selected_seat = session.get("selected_seat")
     search_data = session.get("search_data", {})
     extras = session.get("extras", {})
-    price_data = calculate_price(selected_flight, extras)
 
     if not selected_flight or not passenger_data:
         flash("Please select a flight and enter passenger details first.", "error")
@@ -941,6 +961,8 @@ def payment():
         session["post_login_redirect"] = url_for("payment")
         flash("Please log in to complete your booking.", "error")
         return redirect(url_for("login"))
+
+    price_data = calculate_price(selected_flight, extras)
 
     if request.method == "POST":
         payment_data = {
@@ -1053,27 +1075,6 @@ def payment():
         session["points_earned"] = points_earned
 
         return redirect(url_for("confirmation"))
-def calculate_price(selected_flight, extras):
-    base_fare = selected_flight["price"]
-    taxes = round(base_fare * 0.12, 2)
-
-    baggage_price = 0
-    if "1 checked bag" in extras.get("baggage", ""):
-        baggage_price = 30
-    elif "2 checked bags" in extras.get("baggage", ""):
-        baggage_price = 60
-
-    insurance_price = 25 if "Insurance" in extras.get("insurance", "") else 0
-
-    total_price = base_fare + taxes + baggage_price + insurance_price
-
-    return {
-        "base_fare": base_fare,
-        "taxes": taxes,
-        "baggage_price": baggage_price,
-        "insurance_price": insurance_price,
-        "total_price": total_price
-    }
 
     return render_template(
         "payment.html",
