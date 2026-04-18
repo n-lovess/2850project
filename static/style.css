@@ -91,7 +91,7 @@ label {
     font-weight: bold;
 }
 
-input,
+input:not([type="checkbox"]):not([type="radio"]),
 select {
     width: 100%;
     padding: 12px;
@@ -102,7 +102,6 @@ select {
     background-color: white;
     margin-bottom: 12px;
 }
-
 .btn {
     display: inline-block;
     background-color: #1f3c88;
@@ -767,4 +766,101 @@ select {
     font-weight: bold;
     cursor: pointer;
     color: #444;
+}
+.insurance-section {
+    margin-top: 24px;
+}
+
+.section-subtext {
+    margin: 8px 0 18px 0;
+    font-size: 15px;
+    color: #5f6b7a;
+    line-height: 1.5;
+}
+
+.insurance-card {
+    background: #ffffff;
+    border: 1px solid #dbe5f0;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+.insurance-badge {
+    display: inline-block;
+    background: #e8f1ff;
+    color: #1f4b99;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.insurance-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: #16356b;
+}
+
+.insurance-price {
+    margin: 0 0 18px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #0b5ed7;
+}
+
+.insurance-benefits {
+    margin: 0 0 24px 0;
+    padding-left: 20px;
+    color: #243447;
+}
+
+.insurance-benefits li {
+    margin-bottom: 10px;
+    line-height: 1.5;
+    font-size: 15px;
+}
+
+.insurance-options {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.insurance-option {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    border: 1px solid #d8e1eb;
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: #f9fbfd;
+    cursor: pointer;
+    font-weight: 600;
+    color: #1f2d3d;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.insurance-option:hover {
+    border-color: #0b5ed7;
+    background: #eef5ff;
+}
+
+.insurance-option input[type="radio"] {
+    width: auto;
+    margin: 0;
+    flex-shrink: 0;
+    transform: scale(1.15);
+}
+
+.insurance-option span {
+    display: inline-block;
+    line-height: 1.4;
 }

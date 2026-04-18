@@ -60,14 +60,38 @@
                     <option value="No Meal">No Meal</option>
                 </select>
             </div>
-            <div class="full-width">
+           <div class="full-width insurance-section">
     <h2>Travel Insurance</h2>
-    <label for="insurance">Protect your trip</label>
-    <select id="insurance" name="insurance" required>
-        <option value="No Travel Insurance">No Travel Insurance</option>
-        <option value="Travel Insurance (+£25)">Travel Insurance (+£25)</option>
-    </select>
-    <p class="field-note">Covers unexpected trip cancellation, delays, and emergency support.</p>
+    <p class="section-subtext">Protect your journey with optional travel cover before you pay.</p>
+
+    <div class="insurance-card">
+        <div class="insurance-top">
+            <div>
+                <span class="insurance-badge">Recommended</span>
+                <h3>AirGo Travel Protection</h3>
+                <p class="insurance-price">Only £25 per booking</p>
+            </div>
+        </div>
+
+        <ul class="insurance-benefits">
+            <li>Flight changes up to 24 hours before departure</li>
+            <li>Support during delays and travel disruption</li>
+            <li>Emergency travel assistance when needed</li>
+            <li>Added flexibility and peace of mind</li>
+        </ul>
+
+        <div class="insurance-options">
+            <label class="insurance-option">
+                <input type="radio" name="insurance" value="Travel Insurance (+£25)" required>
+                <span>Add Travel Insurance</span>
+            </label>
+
+            <label class="insurance-option">
+                <input type="radio" name="insurance" value="No Travel Insurance" required>
+                <span>No, continue without insurance</span>
+            </label>
+        </div>
+    </div>
 </div>
 
             <div class="full-width">
