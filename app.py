@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import date
 import random
 import string
 import sqlite3
@@ -18,7 +19,6 @@ DATABASE = os.path.join(BASE_DIR, "bookings.db")
 def load_airports():
     airports = []
     seen_codes = set()
-    seen_city_all = set()
 
     file_path = os.path.join(BASE_DIR, "data", "airports.csv")
 
@@ -26,7 +26,7 @@ def load_airports():
         reader = csv.DictReader(csvfile)
 
         for row in reader:
-            iata = (row.get("iata_code") or "").strip()
+            iata = (row.get("iata_code") or "").strip().upper()
             airport_type = (row.get("type") or "").strip()
             city = (row.get("municipality") or row.get("name") or "").strip()
             airport_name = (row.get("name") or "").strip()
@@ -48,17 +48,6 @@ def load_airports():
                 "code": iata
             })
 
-            city_key = city.lower()
-            if city and city_key not in seen_city_all:
-                seen_city_all.add(city_key)
-                city_code = city[:3].upper() if len(city) >= 3 else city.upper()
-
-                airports.append({
-                    "city": city,
-                    "name": f"{city} All Airports",
-                    "code": city_code
-                })
-
     return airports
 
 
@@ -71,11 +60,11 @@ SAMPLE_FLIGHTS = [
         "from": "London Heathrow",
         "from_city": "London",
         "from_code": "LHR",
-        "airport_group": "London All Airports",
+        "airport_group": "London Airports",
         "to": "Paris Charles de Gaulle",
         "to_city": "Paris",
         "to_code": "CDG",
-        "destination_group": "Paris All Airports",
+        "destination_group": "Paris Airports",
         "departure_time": "08:00",
         "arrival_time": "10:15",
         "price": 120,
@@ -88,11 +77,11 @@ SAMPLE_FLIGHTS = [
         "from": "London Gatwick",
         "from_city": "London",
         "from_code": "LGW",
-        "airport_group": "London All Airports",
+        "airport_group": "London Airports",
         "to": "Paris Orly",
         "to_city": "Paris",
         "to_code": "ORY",
-        "destination_group": "Paris All Airports",
+        "destination_group": "Paris Airports",
         "departure_time": "12:30",
         "arrival_time": "14:45",
         "price": 185,
@@ -105,11 +94,11 @@ SAMPLE_FLIGHTS = [
         "from": "London Stansted",
         "from_city": "London",
         "from_code": "STN",
-        "airport_group": "London All Airports",
+        "airport_group": "London Airports",
         "to": "Dubai International",
         "to_city": "Dubai",
         "to_code": "DXB",
-        "destination_group": "Dubai All Airports",
+        "destination_group": "Dubai Airports",
         "departure_time": "18:20",
         "arrival_time": "03:35",
         "price": 310,
@@ -122,11 +111,11 @@ SAMPLE_FLIGHTS = [
         "from": "Paris Charles de Gaulle",
         "from_city": "Paris",
         "from_code": "CDG",
-        "airport_group": "Paris All Airports",
+        "airport_group": "Paris Airports",
         "to": "Dubai International",
         "to_city": "Dubai",
         "to_code": "DXB",
-        "destination_group": "Dubai All Airports",
+        "destination_group": "Dubai Airports",
         "departure_time": "09:45",
         "arrival_time": "18:10",
         "price": 275,
@@ -139,11 +128,11 @@ SAMPLE_FLIGHTS = [
         "from": "Dubai International",
         "from_city": "Dubai",
         "from_code": "DXB",
-        "airport_group": "Dubai All Airports",
+        "airport_group": "Dubai Airports",
         "to": "London Heathrow",
         "to_city": "London",
         "to_code": "LHR",
-        "destination_group": "London All Airports",
+        "destination_group": "London Airports",
         "departure_time": "14:00",
         "arrival_time": "18:45",
         "price": 420,
@@ -156,11 +145,11 @@ SAMPLE_FLIGHTS = [
         "from": "London City",
         "from_city": "London",
         "from_code": "LCY",
-        "airport_group": "London All Airports",
+        "airport_group": "London Airports",
         "to": "John F. Kennedy",
         "to_city": "New York",
         "to_code": "JFK",
-        "destination_group": "New York All Airports",
+        "destination_group": "New York Airports",
         "departure_time": "10:00",
         "arrival_time": "13:25",
         "price": 510,
@@ -198,35 +187,6 @@ CLASS_BENEFITS = {
         "lounge": "Included",
         "flexibility": "Maximum flexibility"
     }
-}
-
-MEAL_OPTIONS = {
-    "Economy": [
-        "Standard Meal",
-        "Vegetarian Meal",
-        "Vegan Meal",
-        "Halal Meal"
-    ],
-    "Premium Economy": [
-        "Premium Standard Meal",
-        "Vegetarian Meal",
-        "Vegan Meal",
-        "Halal Meal"
-    ],
-    "Business": [
-        "Business Signature Meal",
-        "Vegetarian Meal",
-        "Vegan Meal",
-        "Halal Meal",
-        "Gluten Free Meal"
-    ],
-    "First": [
-        "First Class Signature Dining",
-        "Vegetarian Meal",
-        "Vegan Meal",
-        "Halal Meal",
-        "Gluten Free Meal"
-    ]
 }
 
 COMMON_MEAL_OPTIONS = [
@@ -323,6 +283,12 @@ def init_db():
             lounge_access INTEGER NOT NULL DEFAULT 0,
             requested_route TEXT DEFAULT '',
             requested_date TEXT DEFAULT '',
+            requested_departure_airport TEXT DEFAULT '',
+            requested_departure_city TEXT DEFAULT '',
+            requested_departure_code TEXT DEFAULT '',
+            requested_destination_airport TEXT DEFAULT '',
+            requested_destination_city TEXT DEFAULT '',
+            requested_destination_code TEXT DEFAULT '',
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)
@@ -428,15 +394,11 @@ def generate_seat_map(flight):
     rows = 10
     cols = ["A", "B", "C", "D", "E", "F"]
 
-    permanently_unavailable = {
-        "1A", "1F", "2C", "3D", "4B", "5E", "7A", "8F"
-    }
-
+    permanently_unavailable = {"1A", "1F", "2C", "3D", "4B", "5E", "7A", "8F"}
     booked_seats = get_booked_seats_for_flight(flight)
     all_unavailable = permanently_unavailable.union(booked_seats)
 
     seat_rows = []
-
     for row_number in range(1, rows + 1):
         current_row = []
         for col in cols:
@@ -470,10 +432,7 @@ def get_tier_info(total_points):
     for idx, tier in enumerate(LOYALTY_TIERS):
         if total_points >= tier["min_points"]:
             current_tier = tier
-            if idx + 1 < len(LOYALTY_TIERS):
-                next_tier = LOYALTY_TIERS[idx + 1]
-            else:
-                next_tier = None
+            next_tier = LOYALTY_TIERS[idx + 1] if idx + 1 < len(LOYALTY_TIERS) else None
 
     if next_tier:
         current_min = current_tier["min_points"]
@@ -515,49 +474,25 @@ def normalize_place_name(text):
     return text
 
 
-def find_airport_by_city(city_name):
-    target = normalize_place_name(city_name)
-
-    if not target:
+def parse_airport_selection(selection_text):
+    selection_text = (selection_text or "").strip()
+    if not selection_text:
         return None
 
-    exact_matches = []
-    startswith_matches = []
+    match = re.search(r"\(([A-Z]{3})\)", selection_text)
+    if not match:
+        return None
+
+    selected_code = match.group(1).upper()
 
     for airport in AIRPORTS:
-        airport_city = normalize_place_name(airport["city"])
-        airport_name = normalize_place_name(airport["name"])
-
-        if airport_city == target:
-            exact_matches.append(airport)
-        elif airport_name == target:
-            exact_matches.append(airport)
-        elif airport_city.startswith(target + " "):
-            startswith_matches.append(airport)
-
-    # Prefer exact "All Airports" match first
-    for airport in exact_matches:
-        if "all airports" in airport["name"].lower():
+        if airport["code"].upper() == selected_code:
             return airport
-
-    if exact_matches:
-        return exact_matches[0]
-
-    # Then fallback to startswith matches, again preferring "All Airports"
-    for airport in startswith_matches:
-        if "all airports" in airport["name"].lower():
-            return airport
-
-    if startswith_matches:
-        return startswith_matches[0]
 
     return None
 
 
 def apply_approved_change_to_booking(conn, booking):
-    requested_route = (booking["requested_route"] or "").strip()
-    requested_date = (booking["requested_date"] or "").strip()
-
     updated_departure_airport = booking["departure_airport"]
     updated_departure_city = booking["departure_city"]
     updated_departure_code = booking["departure_code"]
@@ -566,31 +501,17 @@ def apply_approved_change_to_booking(conn, booking):
     updated_destination_code = booking["destination_code"]
     updated_flight_date = booking["flight_date"]
 
-    dep_city_raw = None
-    dest_city_raw = None
+    requested_date = (booking["requested_date"] or "").strip()
 
-    if requested_route:
-        normalized_route = " ".join(requested_route.replace("→", " to ").replace("-", " to ").split())
-        lower_route = normalized_route.lower()
+    if booking["requested_departure_airport"] and booking["requested_departure_city"] and booking["requested_departure_code"]:
+        updated_departure_airport = booking["requested_departure_airport"]
+        updated_departure_city = booking["requested_departure_city"]
+        updated_departure_code = booking["requested_departure_code"]
 
-        if " to " in lower_route:
-            split_index = lower_route.find(" to ")
-            dep_city_raw = normalized_route[:split_index].strip()
-            dest_city_raw = normalized_route[split_index + 4:].strip()
-
-    if dep_city_raw and dest_city_raw:
-        dep_airport = find_airport_by_city(dep_city_raw)
-        dest_airport = find_airport_by_city(dest_city_raw)
-
-        if dep_airport:
-            updated_departure_airport = dep_airport["name"]
-            updated_departure_city = dep_airport["city"]
-            updated_departure_code = dep_airport["code"]
-
-        if dest_airport:
-            updated_destination_airport = dest_airport["name"]
-            updated_destination_city = dest_airport["city"]
-            updated_destination_code = dest_airport["code"]
+    if booking["requested_destination_airport"] and booking["requested_destination_city"] and booking["requested_destination_code"]:
+        updated_destination_airport = booking["requested_destination_airport"]
+        updated_destination_city = booking["requested_destination_city"]
+        updated_destination_code = booking["requested_destination_code"]
 
     if requested_date:
         updated_flight_date = requested_date
@@ -616,11 +537,11 @@ def apply_approved_change_to_booking(conn, booking):
         booking["id"]
     ))
 
+
 @app.route("/")
 def home():
     today = date.today().isoformat()
     return render_template("index.html", today=today)
-from datetime import date
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -750,14 +671,32 @@ def airport_suggestions():
     if not query:
         return jsonify([])
 
-    matches = [
-        airport for airport in AIRPORTS
-        if query in airport["city"].lower()
-        or query in airport["name"].lower()
-        or query in airport["code"].lower()
-    ]
+    exact_city_matches = []
+    code_matches = []
+    name_matches = []
 
-    return jsonify(matches[:10])
+    for airport in AIRPORTS:
+        city_lower = airport["city"].lower()
+        name_lower = airport["name"].lower()
+        code_lower = airport["code"].lower()
+
+        if city_lower.startswith(query):
+            exact_city_matches.append(airport)
+        elif code_lower.startswith(query):
+            code_matches.append(airport)
+        elif query in name_lower or query in city_lower:
+            name_matches.append(airport)
+
+    matches = exact_city_matches + code_matches + name_matches
+
+    seen = set()
+    unique_matches = []
+    for airport in matches:
+        if airport["code"] not in seen:
+            seen.add(airport["code"])
+            unique_matches.append(airport)
+
+    return jsonify(unique_matches[:10])
 
 
 @app.route("/results", methods=["POST"])
@@ -832,7 +771,6 @@ def passenger_details(flight_id):
         flash("Selected flight was not found.", "error")
         return redirect(url_for("home"))
 
-
     if request.method == "POST":
         assistance_required = request.form.get("assistance_required")
         assistance_options = request.form.getlist("assistance_options")
@@ -881,6 +819,25 @@ def passenger_details(flight_id):
         flight=selected_flight,
         benefits=CLASS_BENEFITS.get(selected_flight["class"], {}),
     )
+
+
+@app.route("/extras", methods=["GET", "POST"])
+def extras():
+    if request.method == "POST":
+        baggage = request.form.get("baggage")
+        meal_choice = request.form.get("meal_choice")
+        insurance = request.form.get("insurance")
+
+        session["extras"] = {
+            "baggage": baggage,
+            "meal_choice": meal_choice,
+            "insurance": insurance
+        }
+
+        return redirect(url_for("seat_selection"))
+
+    return render_template("extras.html")
+
 
 @app.route("/seat-selection", methods=["GET", "POST"])
 def seat_selection():
@@ -946,25 +903,10 @@ def review_booking():
         search_data=search_data,
         extras=extras
     )
-@app.route("/extras", methods=["GET", "POST"])
-def extras():
-    if request.method == "POST":
-        baggage = request.form.get("baggage")
-        meal_choice = request.form.get("meal_choice")
-        insurance = request.form.get("insurance")
 
-        session["extras"] = {
-            "baggage": baggage,
-            "meal_choice": meal_choice,
-            "insurance": insurance
-        }
-
-        return redirect(url_for("seat_selection"))
-
-    return render_template("extras.html")
 
 def calculate_price(selected_flight, extras):
-    base_fare = selected_flight["price"]  # already includes taxes & fees
+    base_fare = selected_flight["price"]
 
     baggage_price = 0
     if "1 checked bag" in extras.get("baggage", ""):
@@ -973,7 +915,6 @@ def calculate_price(selected_flight, extras):
         baggage_price = 60
 
     insurance_price = 25 if "Insurance" in extras.get("insurance", "") else 0
-
     total_price = base_fare + baggage_price + insurance_price
 
     return {
@@ -982,6 +923,7 @@ def calculate_price(selected_flight, extras):
         "insurance_price": insurance_price,
         "total_price": total_price
     }
+
 
 @app.route("/payment", methods=["GET", "POST"])
 def payment():
@@ -1074,8 +1016,14 @@ def payment():
                 wifi_package,
                 lounge_access,
                 requested_route,
-                requested_date
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                requested_date,
+                requested_departure_airport,
+                requested_departure_city,
+                requested_departure_code,
+                requested_destination_airport,
+                requested_destination_city,
+                requested_destination_code
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             session["user_id"],
             booking_reference,
@@ -1108,6 +1056,12 @@ def payment():
             0,
             0,
             "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
             ""
         ))
         conn.commit()
@@ -1126,6 +1080,8 @@ def payment():
         extras=extras,
         **price_data
     )
+
+
 @app.route("/confirmation")
 def confirmation():
     selected_flight = session.get("selected_flight")
@@ -1337,16 +1293,36 @@ def request_change(booking_id):
         flash("Please log in first.", "error")
         return redirect(url_for("login"))
 
-    requested_route = request.form.get("requested_route", "").strip()
+    requested_departure = request.form.get("requested_departure", "").strip()
+    requested_destination = request.form.get("requested_destination", "").strip()
     requested_date = request.form.get("requested_date", "").strip()
     request_reason = request.form.get("request_reason", "").strip()
 
-    if not requested_route and not requested_date and not request_reason:
+    if not requested_departure and not requested_destination and not requested_date and not request_reason:
         flash("Please enter at least one change request detail.", "error")
         return redirect(url_for("bookings"))
 
+    departure_airport = parse_airport_selection(requested_departure) if requested_departure else None
+    destination_airport = parse_airport_selection(requested_destination) if requested_destination else None
+
+    if requested_departure and not departure_airport:
+        flash("Please select a valid departure airport from the suggestions.", "error")
+        return redirect(url_for("bookings"))
+
+    if requested_destination and not destination_airport:
+        flash("Please select a valid destination airport from the suggestions.", "error")
+        return redirect(url_for("bookings"))
+
+    route_summary_parts = []
+    if departure_airport:
+        route_summary_parts.append(f"{departure_airport['name']} ({departure_airport['code']})")
+    if destination_airport:
+        route_summary_parts.append(f"{destination_airport['name']} ({destination_airport['code']})")
+
+    requested_route_summary = " to ".join(route_summary_parts) if route_summary_parts else "No route specified"
+
     request_summary = (
-        f"Requested Route: {requested_route or 'No change specified'} | "
+        f"Requested Route: {requested_route_summary} | "
         f"Requested Date: {requested_date or 'No date specified'} | "
         f"Reason: {request_reason or 'No reason given'}"
     )
@@ -1367,13 +1343,25 @@ def request_change(booking_id):
         SET change_request = ?,
             change_status = ?,
             requested_route = ?,
-            requested_date = ?
+            requested_date = ?,
+            requested_departure_airport = ?,
+            requested_departure_city = ?,
+            requested_departure_code = ?,
+            requested_destination_airport = ?,
+            requested_destination_city = ?,
+            requested_destination_code = ?
         WHERE id = ? AND user_id = ?
     """, (
         request_summary,
         "Pending",
-        requested_route,
+        requested_route_summary,
         requested_date,
+        departure_airport["name"] if departure_airport else "",
+        departure_airport["city"] if departure_airport else "",
+        departure_airport["code"] if departure_airport else "",
+        destination_airport["name"] if destination_airport else "",
+        destination_airport["city"] if destination_airport else "",
+        destination_airport["code"] if destination_airport else "",
         booking_id,
         session["user_id"]
     ))

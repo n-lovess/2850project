@@ -138,9 +138,28 @@
 
                         <div class="manage-box">
                             <h3>Request Flight Change</h3>
-                            <form action="{{ url_for('request_change', booking_id=booking.id) }}" method="POST" class="manage-form">
-                                <label for="requested_route_{{ booking.id }}">Requested New Route</label>
-                                <input type="text" id="requested_route_{{ booking.id }}" name="requested_route" placeholder="e.g. Dubai to New York">
+                            <form action="{{ url_for('request_change', booking_id=booking.id) }}" method="POST" class="manage-form" autocomplete="off">
+                                <label for="requested_departure_{{ booking.id }}">Requested New Departure Airport</label>
+                                <div class="airport-suggestions">
+                                    <input
+                                        type="text"
+                                        id="requested_departure_{{ booking.id }}"
+                                        name="requested_departure"
+                                        placeholder="e.g. London Heathrow (LHR)"
+                                    >
+                                    <div id="requested_departure_suggestions_{{ booking.id }}" class="suggestions-list"></div>
+                                </div>
+
+                                <label for="requested_destination_{{ booking.id }}">Requested New Destination Airport</label>
+                                <div class="airport-suggestions">
+                                    <input
+                                        type="text"
+                                        id="requested_destination_{{ booking.id }}"
+                                        name="requested_destination"
+                                        placeholder="e.g. Nice Côte d’Azur (NCE)"
+                                    >
+                                    <div id="requested_destination_suggestions_{{ booking.id }}" class="suggestions-list"></div>
+                                </div>
 
                                 <label for="requested_date_{{ booking.id }}">Requested New Date</label>
                                 <input type="date" id="requested_date_{{ booking.id }}" name="requested_date">
@@ -168,5 +187,99 @@
             </div>
         {% endif %}
     </div>
+
+    <script>
+        async function fetchAirportSuggestions(query) {
+            if (!query || query.trim().length < 1) {
+                return [];
+            }
+
+            try {
+                const response = await fetch(`/airport-suggestions?q=${encodeURIComponent(query)}`);
+                if (!response.ok) {
+                    return [];
+                }
+                return await response.json();
+            } catch (error) {
+                console.error("Error fetching airport suggestions:", error);
+                return [];
+            }
+        }
+
+        function renderSuggestions(inputElement, suggestionsElement, suggestions) {
+            suggestionsElement.innerHTML = "";
+
+            if (!suggestions || suggestions.length === 0) {
+                suggestionsElement.style.display = "none";
+                return;
+            }
+
+            suggestions.forEach((airport) => {
+                const item = document.createElement("div");
+                item.className = "suggestion-item";
+                item.innerHTML = `
+                    <strong>${airport.city}</strong> - ${airport.name}
+                    <div class="small-text">${airport.code}</div>
+                `;
+
+                item.addEventListener("click", function () {
+                    inputElement.value = `${airport.name} (${airport.code})`;
+                    suggestionsElement.innerHTML = "";
+                    suggestionsElement.style.display = "none";
+                });
+
+                suggestionsElement.appendChild(item);
+            });
+
+            suggestionsElement.style.display = "block";
+        }
+
+        function setupAutocomplete(inputId, suggestionsId) {
+            const inputElement = document.getElementById(inputId);
+            const suggestionsElement = document.getElementById(suggestionsId);
+
+            if (!inputElement || !suggestionsElement) {
+                return;
+            }
+
+            inputElement.addEventListener("input", async function () {
+                const query = inputElement.value.trim();
+
+                if (query.length === 0) {
+                    suggestionsElement.innerHTML = "";
+                    suggestionsElement.style.display = "none";
+                    return;
+                }
+
+                const suggestions = await fetchAirportSuggestions(query);
+                renderSuggestions(inputElement, suggestionsElement, suggestions);
+            });
+
+            inputElement.addEventListener("focus", async function () {
+                const query = inputElement.value.trim();
+                if (query.length > 0) {
+                    const suggestions = await fetchAirportSuggestions(query);
+                    renderSuggestions(inputElement, suggestionsElement, suggestions);
+                }
+            });
+        }
+
+        document.addEventListener("click", function (event) {
+            const allSuggestionLists = document.querySelectorAll(".suggestions-list");
+
+            allSuggestionLists.forEach((list) => {
+                if (!list.parentElement.contains(event.target)) {
+                    list.style.display = "none";
+                }
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            {% for booking in bookings %}
+                setupAutocomplete("requested_departure_{{ booking.id }}", "requested_departure_suggestions_{{ booking.id }}");
+                setupAutocomplete("requested_destination_{{ booking.id }}", "requested_destination_suggestions_{{ booking.id }}");
+            {% endfor %}
+        });
+    </script>
 </body>
 </html>

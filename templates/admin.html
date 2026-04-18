@@ -49,10 +49,13 @@
                         </div>
                     {% endif %}
 
-                    {% if booking.requested_route or booking.requested_date %}
+                    {% if booking.requested_departure_airport or booking.requested_destination_airport or booking.requested_date %}
                         <div class="manage-note">
-                            <strong>Requested Route Field:</strong> {{ booking.requested_route or 'No route specified' }}<br>
-                            <strong>Requested Date Field:</strong> {{ booking.requested_date or 'No date specified' }}
+                            <strong>Requested Departure:</strong>
+                            {{ booking.requested_departure_airport }}{% if booking.requested_departure_code %} ({{ booking.requested_departure_code }}){% endif %}<br>
+                            <strong>Requested Destination:</strong>
+                            {{ booking.requested_destination_airport }}{% if booking.requested_destination_code %} ({{ booking.requested_destination_code }}){% endif %}<br>
+                            <strong>Requested Date:</strong> {{ booking.requested_date or 'No date specified' }}
                         </div>
                     {% endif %}
 
