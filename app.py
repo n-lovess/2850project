@@ -574,10 +574,11 @@ def apply_approved_change_to_booking(conn, booking):
         booking["id"]
     ))
 
-
 @app.route("/")
 def home():
-    return render_template("index.html")
+    today = date.today().isoformat()
+    return render_template("index.html", today=today)
+from datetime import date
 
 
 @app.route("/signup", methods=["GET", "POST"])

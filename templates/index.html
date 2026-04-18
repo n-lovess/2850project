@@ -63,12 +63,12 @@
 
                 <div>
                     <label for="depart_date">Departure Date</label>
-                    <input type="date" id="depart_date" name="depart_date" required>
+                    <input type="date" id="depart_date" name="depart_date" required min="{{ today }}">
                 </div>
 
                 <div id="return-date-group">
                     <label for="return_date">Return Date</label>
-                    <input type="date" id="return_date" name="return_date">
+                    <input type="date" id="return_date" name="return_date" min="{{ today }}">
                 </div>
 
                 <div id="multi-city-fields" class="full-width" style="display: none;">
@@ -89,7 +89,7 @@
 
                             <div>
                                 <label for="depart_date_2">Departure Date</label>
-                                <input type="date" id="depart_date_2" name="depart_date_2">
+                                <input type="date" id="depart_date_2" name="depart_date_2" min="{{ today }}">
                             </div>
                         </div>
                     </div>
