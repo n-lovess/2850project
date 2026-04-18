@@ -1,40 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Review Booking</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-<div class="container">
-    <h1>Review Your Booking</h1>
+    <div class="navbar">
+        <div class="nav-inner">
+            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
+            <div class="nav-links">
+                <a href="{{ url_for('home') }}">Search Flights</a>
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('signup') }}">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
-    <h2>Flight Details</h2>
-    <p>From: {{ flight.from }} → {{ flight.to }}</p>
-    <p>Date: {{ search_data.depart_date }}</p>
-    <p>Departure: {{ flight.departure_time }}</p>
-    <p>Arrival: {{ flight.arrival_time }}</p>
-    <p>Class: {{ flight.class }}</p>
-    <p>Seat: {{ selected_seat }}</p>
-    <p>Price: £{{ flight.price }}</p>
+    <div class="container">
+        <h1>Review Your Booking</h1>
+        <p class="subtitle">Please review your flight, passenger details, and selected extras before continuing to payment.</p>
 
-    <div class="booking-card">
-    <h2>Selected Extras</h2>
-    <p><strong>Baggage:</strong> {{ extras.get('baggage', 'No extra baggage') }}</p>
-    <p><strong>Meal:</strong> {{ extras.get('meal_choice', 'No Meal') }}</p>
-</div>
+        <div class="card summary-card">
+            <h2>Flight Details</h2>
+            <p><strong>Route:</strong> {{ flight.from }} → {{ flight.to }}</p>
+            <p><strong>Date:</strong> {{ search_data.depart_date }}</p>
+            <p><strong>Departure:</strong> {{ flight.departure_time }}</p>
+            <p><strong>Arrival:</strong> {{ flight.arrival_time }}</p>
+            <p><strong>Class:</strong> {{ flight.class }}</p>
+            <p><strong>Seat:</strong> {{ selected_seat }}</p>
+            <p><strong>Fare:</strong> £{{ flight.price }}</p>
+        </div>
 
-    <h2>Passenger Details</h2>
-    <p>Name: {{ passenger.first_name }} {{ passenger.last_name }}</p>
-    <p>Email: {{ passenger.email }}</p>
-    <p>Passport: {{ passenger.passport_number }}</p>
+        <div class="card">
+            <h2>Selected Extras</h2>
+            <p><strong>Baggage:</strong> {{ extras.get('baggage', 'No extra baggage') }}</p>
+            <p><strong>Meal:</strong> {{ extras.get('meal_choice', 'No Meal') }}</p>
+            <p><strong>Travel Insurance:</strong> {{ extras.get('insurance', 'No Travel Insurance') }}</p>
+        </div>
 
-    <br>
+        <div class="card">
+            <h2>Passenger Details</h2>
+            <p><strong>Name:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
+            <p><strong>Email:</strong> {{ passenger.email }}</p>
+            <p><strong>Passport:</strong> {{ passenger.passport_number }}</p>
+        </div>
 
-    <a href="{{ url_for('seat_selection') }}">⬅ Back</a>
-    <a href="{{ url_for('payment') }}">Continue to Payment ➡</a>
-
-</div>
+        <div class="button-row">
+            <a href="{{ url_for('seat_selection') }}" class="btn secondary-btn">← Back</a>
+            <a href="{{ url_for('payment') }}" class="btn">Continue to Payment →</a>
+        </div>
+    </div>
 
 </body>
 </html>
