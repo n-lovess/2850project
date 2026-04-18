@@ -510,7 +510,9 @@ def find_airport_by_city(city_name):
     first_match = None
 
     for airport in AIRPORTS:
-        if airport["city"].lower() == city_name:
+        airport_city = airport["city"].strip().lower()
+
+        if airport_city == city_name or city_name in airport_city or airport_city in city_name:
             if not first_match:
                 first_match = airport
             if "all airports" in airport["name"].lower():
@@ -531,24 +533,31 @@ def apply_approved_change_to_booking(conn, booking):
     updated_destination_code = booking["destination_code"]
     updated_flight_date = booking["flight_date"]
 
-    if requested_route and " to " in requested_route.lower():
-        parts = requested_route.split(" to ")
-        if len(parts) == 2:
-            dep_city_raw = parts[0].strip()
-            dest_city_raw = parts[1].strip()
+    dep_city_raw = None
+    dest_city_raw = None
 
-            dep_airport = find_airport_by_city(dep_city_raw)
-            dest_airport = find_airport_by_city(dest_city_raw)
+    if requested_route:
+        normalized_route = " ".join(requested_route.replace("→", " to ").replace("-", " to ").split())
+        lower_route = normalized_route.lower()
 
-            if dep_airport:
-                updated_departure_airport = dep_airport["name"]
-                updated_departure_city = dep_airport["city"]
-                updated_departure_code = dep_airport["code"]
+        if " to " in lower_route:
+            split_index = lower_route.find(" to ")
+            dep_city_raw = normalized_route[:split_index].strip()
+            dest_city_raw = normalized_route[split_index + 4:].strip()
 
-            if dest_airport:
-                updated_destination_airport = dest_airport["name"]
-                updated_destination_city = dest_airport["city"]
-                updated_destination_code = dest_airport["code"]
+    if dep_city_raw and dest_city_raw:
+        dep_airport = find_airport_by_city(dep_city_raw)
+        dest_airport = find_airport_by_city(dest_city_raw)
+
+        if dep_airport:
+            updated_departure_airport = dep_airport["name"]
+            updated_departure_city = dep_airport["city"]
+            updated_departure_code = dep_airport["code"]
+
+        if dest_airport:
+            updated_destination_airport = dest_airport["name"]
+            updated_destination_city = dest_airport["city"]
+            updated_destination_code = dest_airport["code"]
 
     if requested_date:
         updated_flight_date = requested_date
