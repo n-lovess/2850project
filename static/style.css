@@ -643,6 +643,9 @@ select {
     .boarding-pass-header {
         flex-direction: column;
     }
+        .assistance-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .confirm-tick {
@@ -899,4 +902,65 @@ select {
 .button-row .btn {
     min-width: 190px;
     text-align: center;
+}
+.assistance-section {
+    margin-top: 8px;
+}
+
+.assistance-main-check {
+    margin: 14px 0 18px 0;
+    font-weight: 600;
+}
+
+.assistance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.assistance-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid #d8e1eb;
+    border-radius: 12px;
+    background: #f9fbfd;
+    cursor: pointer;
+    font-weight: 500;
+    color: #1f2d3d;
+    margin-bottom: 0;
+}
+
+.assistance-option:hover {
+    border-color: #4a69b8;
+    background: #eef5ff;
+}
+
+.assistance-option input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    flex-shrink: 0;
+    accent-color: #1f4aa8;
+}
+
+.assistance-option span {
+    line-height: 1.4;
+}
+
+.assistance-notes {
+    margin-top: 8px;
+}
+
+textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccd5e0;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 15px;
+    background-color: white;
+    font-family: inherit;
+    resize: vertical;
 }

@@ -81,30 +81,32 @@
                     <input type="text" id="passport_number" name="passport_number" required>
                 </div>
 
-                <div class="full-width">
+                <div class="full-width assistance-section">
     <h3>Accessibility & Special Assistance</h3>
-    <p>This service is provided at no extra cost. Let us know if you need any extra help during your journey.</p>
+    <p class="section-subtext">This service is provided at no extra cost. Let us know if you need any support during your journey.</p>
 
-    <label>
+    <label class="checkbox-row assistance-main-check">
         <input type="checkbox" name="assistance_required" value="Yes">
-        I require special assistance
+        <span>I require special assistance</span>
     </label>
 
-    <div style="margin-top: 10px; margin-bottom: 10px;">
-        <label><input type="checkbox" name="assistance_options" value="Wheelchair assistance"> Wheelchair assistance</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Visual assistance"> Visual assistance</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Hearing assistance"> Hearing assistance</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Pregnancy support"> Pregnancy support</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Travelling with infant"> Travelling with infant</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Elderly passenger support"> Elderly passenger support</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Medical assistance"> Medical assistance</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Extra boarding time"> Extra boarding time</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Airport/security assistance"> Airport/security assistance</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Special seating request"> Special seating request</label>
+    <div class="assistance-grid">
+        <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Wheelchair assistance"> <span>Wheelchair assistance</span></label>
+        <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Visual assistance"> <span>Visual assistance</span></label>
+        <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Hearing assistance"> <span>Hearing assistance</span></label>
+        <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Pregnancy support"> <span>Pregnancy support</span></label>
+        <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Travelling with infant"> <span>Travelling with infant</span></label>
+        <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Elderly passenger support"> <span>Elderly passenger support</span></label>
+        <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Medical assistance"> <span>Medical assistance</span></label>
+        <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Extra boarding time"> <span>Extra boarding time</span></label>
+        <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Airport/security assistance"> <span>Airport/security assistance</span></label>
+        <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Special seating request"> <span>Special seating request</span></label>
     </div>
 
-    <label>Other assistance needs</label>
-    <textarea name="other_assistance" rows="3" placeholder="Please describe any other support you may need"></textarea>
+    <div class="assistance-notes">
+        <label for="other_assistance">Other assistance needs</label>
+        <textarea id="other_assistance" name="other_assistance" rows="3" placeholder="Please describe any other support you may need"></textarea>
+    </div>
 </div>
 
 <div class="full-width">
