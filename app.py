@@ -919,9 +919,9 @@ def extras():
         return redirect(url_for("seat_selection"))
 
     return render_template("extras.html")
+
 def calculate_price(selected_flight, extras):
-    base_fare = selected_flight["price"]
-    taxes = round(base_fare * 0.12, 2)
+    base_fare = selected_flight["price"]  # already includes taxes & fees
 
     baggage_price = 0
     if "1 checked bag" in extras.get("baggage", ""):
@@ -931,11 +931,10 @@ def calculate_price(selected_flight, extras):
 
     insurance_price = 25 if "Insurance" in extras.get("insurance", "") else 0
 
-    total_price = base_fare + taxes + baggage_price + insurance_price
+    total_price = base_fare + baggage_price + insurance_price
 
     return {
         "base_fare": base_fare,
-        "taxes": taxes,
         "baggage_price": baggage_price,
         "insurance_price": insurance_price,
         "total_price": total_price

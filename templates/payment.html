@@ -35,11 +35,13 @@
         {% endwith %}
         <div class="card">
     <h2>Fare Details</h2>
-    <p><strong>Base Fare:</strong> £{{ base_fare }}</p>
-    <p><strong>Taxes & Fees:</strong> £{{ taxes }}</p>
+
+    <p><strong>Fare:</strong> £{{ base_fare }} <span class="small-text">(includes taxes & fees)</span></p>
     <p><strong>Baggage:</strong> £{{ baggage_price }}</p>
     <p><strong>Travel Insurance:</strong> £{{ insurance_price }}</p>
+
     <hr>
+
     <p style="font-size: 18px; font-weight: bold;">
         Total: £{{ total_price }}
     </p>
@@ -54,20 +56,9 @@
             <p><strong>Class:</strong> {{ flight.class }}</p>
             <p><strong>Meal:</strong> {{ extras.get('meal_choice', 'No Meal') }}</p>
             <p><strong>Seat:</strong> {{ selected_seat }}</p>
-            <p><strong>Base Fare:</strong> £{{ flight.price }}</p>
+            <p><strong>Fare:</strong> £{{ flight.price }}</p>
         </div>
-        <div class="card">
-    <h2>Price Breakdown</h2>
-    <p><strong>Base Fare:</strong> £{{ base_fare }}</p>
-    <p><strong>Taxes & Fees:</strong> £{{ taxes }}</p>
-    <p><strong>Baggage:</strong> £{{ baggage_price }}</p>
-    <p><strong>Travel Insurance:</strong> £{{ insurance_price }}</p>
-    <hr>
-    <p style="font-size: 18px; font-weight: bold;">
-        Total: £{{ total_price }}
-    </p>
-</div>
-
+      
         <div class="card">
             <form method="POST" class="form-grid">
                 <div class="full-width">
