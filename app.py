@@ -8,6 +8,16 @@ import os
 import csv
 import re
 import unicodedata
+import requests
+import time
+import hashlib
+import pycountry
+from babel.numbers import get_territory_currencies
+
+EXCHANGE_RATES = {"GBP": 1}
+LAST_FETCH = 0
+CACHE_DURATION = 3600 
+
 
 app = Flask(__name__)
 app.secret_key = "super_secret_key_change_this_later"
@@ -229,6 +239,17 @@ EXTRA_PRICES = {
 
 DEFAULT_FLIGHT_STATUS = "Scheduled"
 
+COUNTRY_NAME_ALIASES = {
+    "GB": ["uk", "britain", "great britain", "england", "scotland", "wales", "sterling"],
+    "US": ["usa", "us", "united states", "america", "american"],
+    "AE": ["uae", "united arab emirates", "emirates", "emirati"],
+    "TR": ["turkiye", "turkey", "turkish"],
+    "IR": ["iran", "iranian"],
+    "KR": ["south korea", "korea", "korean"],
+    "RU": ["russia", "russian"],
+    "VN": ["vietnam", "vietnamese"],
+    "CZ": ["czech republic", "czechia"],
+}
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
@@ -390,26 +411,120 @@ def get_booked_seats_for_flight(flight):
     return {row["seat"] for row in rows}
 
 
+def get_seat_layout():
+    return [
+        {
+            "cabin": "First Class",
+            "rows": range(1, 3),
+            "color_class": "first-class",
+            "seat_letters": ["A", "D", "F", "K"],
+            "availability_rate": 0.55
+        },
+        {
+            "cabin": "Business Class",
+            "rows": range(3, 8),
+            "color_class": "business-class",
+            "seat_letters": ["A", "B", "D", "E", "F", "K"],
+            "availability_rate": 0.65
+        },
+        {
+            "cabin": "Premium Economy",
+            "rows": range(8, 11),
+            "color_class": "premium-class",
+            "seat_letters": ["A", "B", "C", "D", "E", "F", "G", "H", "J", "K"],
+            "availability_rate": 0.72
+        },
+        {
+            "cabin": "Economy",
+            "rows": range(11, 21),
+            "color_class": "economy-class",
+            "seat_letters": ["A", "B", "C", "D", "E", "F", "G", "H", "J", "K"],
+            "availability_rate": 0.78
+        }
+    ]
+
+
+def get_seat_type_and_price(seat_code, row_number, seat_letter):
+    if row_number in [10, 11]:
+        return "Emergency Exit", 25
+
+    if seat_letter in ["A", "K"]:
+        return "Window", 10
+
+    if seat_letter in ["C", "D", "G", "H"]:
+        return "Aisle", 8
+
+    return "Middle", 5
+
+
+def generate_seeded_unavailable_seats(flight, flight_date, booked_seats):
+    layout = get_seat_layout()
+    unavailable = set()
+
+    seed_string = (
+        f"{flight['airline']}-"
+        f"{flight['from_code']}-"
+        f"{flight['to_code']}-"
+        f"{flight['departure_time']}-"
+        f"{flight['arrival_time']}-"
+        f"{flight_date}"
+    )
+
+    seed_number = int(hashlib.md5(seed_string.encode()).hexdigest(), 16)
+    rng = random.Random(seed_number)
+
+    for cabin in layout:
+        for row_number in cabin["rows"]:
+            for seat_letter in cabin["seat_letters"]:
+                seat_code = f"{row_number}{seat_letter}"
+
+                if seat_code in booked_seats:
+                    continue
+
+                if rng.random() > cabin["availability_rate"]:
+                    unavailable.add(seat_code)
+
+    return unavailable
+
+
 def generate_seat_map(flight):
-    rows = 10
-    cols = ["A", "B", "C", "D", "E", "F"]
-
-    permanently_unavailable = {"1A", "1F", "2C", "3D", "4B", "5E", "7A", "8F"}
+    flight_date = session.get("search_data", {}).get("depart_date", "")
     booked_seats = get_booked_seats_for_flight(flight)
-    all_unavailable = permanently_unavailable.union(booked_seats)
+    random_unavailable = generate_seeded_unavailable_seats(flight, flight_date, booked_seats)
+    all_unavailable = booked_seats.union(random_unavailable)
 
-    seat_rows = []
-    for row_number in range(1, rows + 1):
-        current_row = []
-        for col in cols:
-            seat_code = f"{row_number}{col}"
-            current_row.append({
-                "seat": seat_code,
-                "available": seat_code not in all_unavailable
+    sections = []
+
+    for cabin in get_seat_layout():
+        cabin_rows = []
+
+        for row_number in cabin["rows"]:
+            row_seats = []
+
+            for seat_letter in cabin["seat_letters"]:
+                seat_code = f"{row_number}{seat_letter}"
+                seat_type, seat_price = get_seat_type_and_price(seat_code, row_number, seat_letter)
+
+                row_seats.append({
+                    "seat": seat_code,
+                    "letter": seat_letter,
+                    "type": seat_type,
+                    "price": seat_price,
+                    "available": seat_code not in all_unavailable
+                })
+
+            cabin_rows.append({
+                "row_number": row_number,
+                "seats": row_seats
             })
-        seat_rows.append(current_row)
 
-    return seat_rows
+        sections.append({
+            "cabin": cabin["cabin"],
+            "color_class": cabin["color_class"],
+            "rows": cabin_rows
+        })
+
+    return sections
 
 
 def calculate_extras_total(extra_baggage, priority_boarding, wifi_package, lounge_access):
@@ -699,61 +814,77 @@ def airport_suggestions():
     return jsonify(unique_matches[:10])
 
 
-@app.route("/results", methods=["POST"])
+@app.route("/results", methods=["GET", "POST"])
 def results():
-    trip_type = request.form.get("trip_type", "return")
-    departure = request.form.get("departure", "").strip()
-    destination = request.form.get("destination", "").strip()
-    depart_date = request.form.get("depart_date", "")
-    return_date = request.form.get("return_date", "")
-    departure_2 = request.form.get("departure_2", "").strip()
-    destination_2 = request.form.get("destination_2", "").strip()
-    depart_date_2 = request.form.get("depart_date_2", "")
-    passengers = request.form.get("passengers", "1")
-    ticket_class = request.form.get("ticket_class", "Any")
+    if request.method == "POST":
+        trip_type = request.form.get("trip_type", "return")
+        departure = request.form.get("departure", "").strip()
+        destination = request.form.get("destination", "").strip()
+        depart_date = request.form.get("depart_date", "")
+        return_date = request.form.get("return_date", "")
+        departure_2 = request.form.get("departure_2", "").strip()
+        destination_2 = request.form.get("destination_2", "").strip()
+        depart_date_2 = request.form.get("depart_date_2", "")
+        passengers = request.form.get("passengers", "1")
+        ticket_class = request.form.get("ticket_class", "Any")
 
-    matching_flights = [
-        flight for flight in SAMPLE_FLIGHTS
-        if matches_airport_search(
-            departure,
-            flight["from_city"],
-            flight["from_code"],
-            flight["airport_group"],
-            flight["from"]
-        )
-        and matches_airport_search(
-            destination,
-            flight["to_city"],
-            flight["to_code"],
-            flight["destination_group"],
-            flight["to"]
-        )
-    ]
-
-    if ticket_class != "Any":
         matching_flights = [
-            flight for flight in matching_flights
-            if flight["class"].lower() == ticket_class.lower()
+            flight for flight in SAMPLE_FLIGHTS
+            if matches_airport_search(
+                departure,
+                flight["from_city"],
+                flight["from_code"],
+                flight["airport_group"],
+                flight["from"]
+            )
+            and matches_airport_search(
+                destination,
+                flight["to_city"],
+                flight["to_code"],
+                flight["destination_group"],
+                flight["to"]
+            )
         ]
 
-    search_data = {
-        "trip_type": trip_type,
-        "departure": departure,
-        "destination": destination,
-        "depart_date": depart_date,
-        "return_date": return_date,
-        "departure_2": departure_2,
-        "destination_2": destination_2,
-        "depart_date_2": depart_date_2,
-        "passengers": passengers,
-        "ticket_class": ticket_class
-    }
+        if ticket_class != "Any":
+            matching_flights = [
+                flight for flight in matching_flights
+                if flight["class"].lower() == ticket_class.lower()
+            ]
 
-    session["search_data"] = search_data
+        search_data = {
+            "trip_type": trip_type,
+            "departure": departure,
+            "destination": destination,
+            "depart_date": depart_date,
+            "return_date": return_date,
+            "departure_2": departure_2,
+            "destination_2": destination_2,
+            "depart_date_2": depart_date_2,
+            "passengers": passengers,
+            "ticket_class": ticket_class
+        }
 
-    if not matching_flights:
-        flash("No exact matches found. Showing sample flights instead.", "info")
-        matching_flights = SAMPLE_FLIGHTS
+        if not matching_flights:
+            flash("No exact matches found. Showing sample flights instead.", "info")
+            matching_flights = SAMPLE_FLIGHTS
+
+        session["search_data"] = search_data
+        session["last_flights"] = matching_flights
+
+        return render_template(
+            "results.html",
+            flights=matching_flights,
+            search_data=search_data,
+            class_benefits=CLASS_BENEFITS
+        )
+
+    search_data = session.get("search_data")
+    matching_flights = session.get("last_flights")
+
+    if not search_data or not matching_flights:
+        flash("Please search for flights first.", "error")
+        return redirect(url_for("home"))
 
     return render_template(
         "results.html",
@@ -853,33 +984,39 @@ def seat_selection():
 
         if not selected_seat:
             flash("Please choose a seat before continuing.", "error")
-            seat_rows = generate_seat_map(selected_flight)
+            seat_sections = generate_seat_map(selected_flight)
             return render_template(
                 "seat_selection.html",
                 flight=selected_flight,
-                seat_rows=seat_rows
+                seat_sections=seat_sections
             )
 
         booked_seats = get_booked_seats_for_flight(selected_flight)
-        permanently_unavailable = {"1A", "1F", "2C", "3D", "4B", "5E", "7A", "8F"}
+        flight_date = session.get("search_data", {}).get("depart_date", "")
+        random_unavailable = generate_seeded_unavailable_seats(
+            selected_flight,
+            flight_date,
+            booked_seats
+        )
+        all_unavailable = booked_seats.union(random_unavailable)
 
-        if selected_seat in booked_seats or selected_seat in permanently_unavailable:
+        if selected_seat in all_unavailable:
             flash("That seat is no longer available. Please choose another seat.", "error")
-            seat_rows = generate_seat_map(selected_flight)
+            seat_sections = generate_seat_map(selected_flight)
             return render_template(
                 "seat_selection.html",
                 flight=selected_flight,
-                seat_rows=seat_rows
+                seat_sections=seat_sections
             )
 
         session["selected_seat"] = selected_seat
         return redirect(url_for("review_booking"))
 
-    seat_rows = generate_seat_map(selected_flight)
+    seat_sections = generate_seat_map(selected_flight)
     return render_template(
         "seat_selection.html",
         flight=selected_flight,
-        seat_rows=seat_rows
+        seat_sections=seat_sections
     )
 
 
@@ -1502,6 +1639,165 @@ def admin_update_flight_status(booking_id):
 
     flash("Flight status updated.", "success")
     return redirect(url_for("admin_dashboard"))
+
+
+def get_exchange_rates():
+    global EXCHANGE_RATES, LAST_FETCH
+
+    if time.time() - LAST_FETCH < CACHE_DURATION:
+        return EXCHANGE_RATES
+
+    try:
+        response = requests.get("https://open.er-api.com/v6/latest/GBP")
+        data = response.json()
+
+        if data.get("result") == "success":
+            EXCHANGE_RATES = data["rates"]
+            LAST_FETCH = time.time()
+
+    except Exception as e:
+        print("Currency API failed:", e)
+
+    return EXCHANGE_RATES
+
+
+def convert_price(amount, currency):
+    rates = get_exchange_rates()
+    rate = rates.get(currency, 1)
+    return round(amount * rate, 2)
+
+def normalize_search_text(text):
+    text = (text or "").strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def get_currency_name_from_pycountry(code):
+    currency = pycountry.currencies.get(alpha_3=code)
+    if currency and getattr(currency, "name", None):
+        return currency.name
+    return code
+
+
+def get_currency_symbol_for_code(code):
+    symbols = {
+        "GBP": "£",
+        "USD": "$",
+        "EUR": "€",
+        "TRY": "₺",
+        "AED": "د.إ",
+        "CAD": "$",
+        "AUD": "$",
+        "NZD": "$",
+        "JPY": "¥",
+        "CNY": "¥",
+        "INR": "₹",
+        "IRR": "﷼",
+        "RUB": "₽",
+        "KRW": "₩",
+        "THB": "฿",
+        "CHF": "CHF",
+        "SEK": "kr",
+        "NOK": "kr",
+        "DKK": "kr",
+        "SAR": "﷼",
+        "QAR": "﷼",
+        "KWD": "د.ك",
+        "BHD": ".د.ب",
+        "OMR": "﷼",
+    }
+    return symbols.get(code, "")
+
+
+def build_currency_metadata():
+    rates = get_exchange_rates()
+    available_codes = sorted(rates.keys())
+
+    currency_to_territories = {}
+
+    for country in list(pycountry.countries):
+        alpha2 = getattr(country, "alpha_2", None)
+        if not alpha2:
+            continue
+
+        try:
+            currencies = get_territory_currencies(alpha2)
+        except Exception:
+            currencies = []
+
+        for currency_code in currencies:
+            currency_to_territories.setdefault(currency_code, []).append(country)
+
+    available_currencies = []
+
+    for code in available_codes:
+        aliases = set()
+        name = get_currency_name_from_pycountry(code)
+        symbol = get_currency_symbol_for_code(code)
+
+        aliases.add(normalize_search_text(code))
+        aliases.add(normalize_search_text(name))
+
+        for token in normalize_search_text(name).split():
+            aliases.add(token)
+
+        if symbol:
+            aliases.add(normalize_search_text(symbol))
+
+        for country in currency_to_territories.get(code, []):
+            country_name = getattr(country, "name", "")
+            official_name = getattr(country, "official_name", "")
+            common_name = getattr(country, "common_name", "")
+            alpha2 = getattr(country, "alpha_2", "")
+            alpha3 = getattr(country, "alpha_3", "")
+
+            for value in [country_name, official_name, common_name, alpha2, alpha3]:
+                normalized = normalize_search_text(value)
+                if normalized:
+                    aliases.add(normalized)
+                    for token in normalized.split():
+                        aliases.add(token)
+
+            for extra_alias in COUNTRY_NAME_ALIASES.get(alpha2, []):
+                aliases.add(normalize_search_text(extra_alias))
+
+        available_currencies.append({
+            "code": code,
+            "name": name,
+            "symbol": symbol,
+            "aliases": sorted(a for a in aliases if a)
+        })
+
+    return available_currencies
+
+@app.context_processor
+def inject_currency():
+    return {
+        "selected_currency": session.get("currency", "GBP"),
+        "convert_price": convert_price,
+        "available_currencies": build_currency_metadata()
+    }
+
+
+@app.route("/set-currency", methods=["POST"])
+def set_currency():
+    currency = request.form.get("currency", "GBP").upper()
+
+    rates = get_exchange_rates()
+    if currency in rates:
+        session["currency"] = currency
+    else:
+        session["currency"] = "GBP"
+
+    next_url = request.form.get("next_url", "").strip()
+
+    if next_url:
+        return redirect(next_url)
+
+    return redirect(url_for("home"))
 
 
 if __name__ == "__main__":

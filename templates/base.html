@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AirGo{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-inner">
+            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
+
+            <div class="nav-links">
+                <a href="{{ url_for('home') }}">Search Flights</a>
+
+                <div class="currency-wrapper">
+                    <button type="button" class="currency-toggle" onclick="toggleCurrencyDropdown()">
+                        {{ selected_currency }} ▾
+                    </button>
+
+                    <div id="currencyDropdown" class="currency-dropdown">
+                        <input
+                            type="text"
+                            id="currencySearch"
+                            class="currency-search"
+                            placeholder="Search currency..."
+                        >
+
+                        <form action="{{ url_for('set_currency') }}" method="POST">
+                            <input type="hidden" name="next_url" value="{{ request.full_path if request.query_string else request.path }}">
+
+                            <div id="currencyOptions" class="currency-options">
+                                {% for currency in available_currencies %}
+                                    <button
+                                        type="submit"
+                                        name="currency"
+                                        value="{{ currency.code }}"
+                                        class="currency-option {% if currency.code == selected_currency %}active-currency{% endif %}"
+                                        data-search="{{ currency.code }} {{ currency.name }} {{ currency.aliases | join(' ') }}"
+                                    >
+                                        <strong>{{ currency.code }}</strong>
+                                        {% if currency.symbol %} {{ currency.symbol }}{% endif %}
+                                        <div class="small-text">{{ currency.name }}</div>
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
+                    {% if session.get('user_email') == 'admin@airgo.com' %}
+                        <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('signup') }}">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        function toggleCurrencyDropdown() {
+            const dropdown = document.getElementById("currencyDropdown");
+            if (dropdown) {
+                dropdown.classList.toggle("show");
+            }
+        }
+
+        document.addEventListener("click", function(event) {
+            const wrapper = document.querySelector(".currency-wrapper");
+            const dropdown = document.getElementById("currencyDropdown");
+
+            if (wrapper && dropdown && !wrapper.contains(event.target)) {
+                dropdown.classList.remove("show");
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById("currencySearch");
+            const options = document.querySelectorAll(".currency-option");
+
+            if (searchInput) {
+                searchInput.addEventListener("input", function() {
+                    const filter = this.value.trim().toLowerCase();
+
+                    options.forEach((option) => {
+                        const searchableText = (option.getAttribute("data-search") || "").toLowerCase();
+                        option.style.display = searchableText.includes(filter) ? "block" : "none";
+                    });
+                });
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

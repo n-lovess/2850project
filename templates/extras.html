@@ -1,38 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Extras</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="navbar">
-        <div class="nav-inner">
-            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
-            <div class="nav-links">
-                <a href="{{ url_for('home') }}">Search Flights</a>
-                {% if session.get('user_id') %}
-                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
-                    <a href="{{ url_for('logout') }}">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}">Login</a>
-                    <a href="{{ url_for('signup') }}">Sign Up</a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+{% extends "base.html" %}
 
-    <div class="container">
+{% block title %}Extras{% endblock %}
+
+{% block content %}
     <h1>Choose Your Extras</h1>
-    <p>Select any extras for your trip before continuing.</p>
+    <p class="subtitle">Select any extras for your trip before continuing.</p>
 
     <div class="card summary-card">
         <h2>Your Flight</h2>
         <p><strong>Airline:</strong> {{ session.selected_flight.airline }}</p>
         <p><strong>Route:</strong> {{ session.selected_flight.from }} → {{ session.selected_flight.to }}</p>
         <p><strong>Class:</strong> {{ session.selected_flight.class }}</p>
-        <p><strong>Base Price:</strong> £{{ session.selected_flight.price }}</p>
+        <p><strong>Base Price:</strong> {{ selected_currency }} {{ convert_price(session.selected_flight.price, selected_currency) }}</p>
     </div>
 
     <div class="card">
@@ -43,8 +22,8 @@
                 <label for="baggage">Checked Baggage</label>
                 <select id="baggage" name="baggage" required>
                     <option value="No checked bag">No checked bag</option>
-                    <option value="1 checked bag (+£30)">1 checked bag (+£30)</option>
-                    <option value="2 checked bags (+£60)">2 checked bags (+£60)</option>
+                    <option value="1 checked bag (+£30)">1 checked bag (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})</option>
+                    <option value="2 checked bags (+£60)">2 checked bags (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})</option>
                 </select>
             </div>
 
@@ -60,39 +39,40 @@
                     <option value="No Meal">No Meal</option>
                 </select>
             </div>
-           <div class="full-width insurance-section">
-    <h2>Travel Insurance</h2>
-    <p class="section-subtext">Protect your journey with optional travel cover before you pay.</p>
 
-    <div class="insurance-card">
-        <div class="insurance-top">
-            <div>
-                <span class="insurance-badge">Recommended</span>
-                <h3>AirGo Travel Protection</h3>
-                <p class="insurance-price">Only £25 per booking</p>
+            <div class="full-width insurance-section">
+                <h2>Travel Insurance</h2>
+                <p class="section-subtext">Protect your journey with optional travel cover before you pay.</p>
+
+                <div class="insurance-card">
+                    <div class="insurance-top">
+                        <div>
+                            <span class="insurance-badge">Recommended</span>
+                            <h3>AirGo Travel Protection</h3>
+                            <p class="insurance-price">Only {{ selected_currency }} {{ convert_price(25, selected_currency) }} per booking</p>
+                        </div>
+                    </div>
+
+                    <ul class="insurance-benefits">
+                        <li>Flight changes up to 24 hours before departure</li>
+                        <li>Support during delays and travel disruption</li>
+                        <li>Emergency travel assistance when needed</li>
+                        <li>Added flexibility and peace of mind</li>
+                    </ul>
+
+                    <div class="insurance-options">
+                        <label class="insurance-option">
+                            <input type="radio" name="insurance" value="Travel Insurance (+£25)" required>
+                            <span>Add Travel Insurance</span>
+                        </label>
+
+                        <label class="insurance-option">
+                            <input type="radio" name="insurance" value="No Travel Insurance" required>
+                            <span>No, continue without insurance</span>
+                        </label>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <ul class="insurance-benefits">
-            <li>Flight changes up to 24 hours before departure</li>
-            <li>Support during delays and travel disruption</li>
-            <li>Emergency travel assistance when needed</li>
-            <li>Added flexibility and peace of mind</li>
-        </ul>
-
-        <div class="insurance-options">
-            <label class="insurance-option">
-                <input type="radio" name="insurance" value="Travel Insurance (+£25)" required>
-                <span>Add Travel Insurance</span>
-            </label>
-
-            <label class="insurance-option">
-                <input type="radio" name="insurance" value="No Travel Insurance" required>
-                <span>No, continue without insurance</span>
-            </label>
-        </div>
-    </div>
-</div>
 
             <div class="full-width">
                 <button type="submit" class="btn">Continue to Seat Selection</button>
@@ -100,6 +80,4 @@
 
         </form>
     </div>
-</div>
-</body>
-</html>
+{% endblock %}

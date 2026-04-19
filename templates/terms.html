@@ -1,50 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms & Conditions</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="navbar">
-        <div class="nav-inner">
-            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
-            <div class="nav-links">
-                <a href="{{ url_for('home') }}">Search Flights</a>
-                {% if session.get('user_id') %}
-                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
-                    <a href="{{ url_for('logout') }}">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}">Login</a>
-                    <a href="{{ url_for('signup') }}">Sign Up</a>
-                {% endif %}
-            </div>
-        </div>
+{% extends "base.html" %}
+
+{% block title %}Terms & Conditions - AirGo{% endblock %}
+
+{% block content %}
+    <h1>Terms & Conditions</h1>
+
+    <div class="card">
+        <h2>Booking Terms</h2>
+        <p>By completing a booking with AirGo, you confirm that all passenger details provided are accurate and complete.</p>
+
+        <h2>Payments</h2>
+        <p>All payments must be completed in full before a booking is confirmed. Prices shown at checkout include the selected flight and chosen extras.</p>
+
+        <h2>Changes and Cancellations</h2>
+        <p>Changes and cancellations are subject to the fare type and airline policy. Additional fees may apply depending on the request.</p>
+
+        <h2>Passenger Responsibility</h2>
+        <p>Passengers are responsible for ensuring they have valid travel documents, including passports, visas, and any required identification.</p>
+
+        <h2>Special Requests</h2>
+        <p>Requests such as meal preferences, assistance, and baggage selections will be recorded, but some services remain subject to availability.</p>
+
+        <h2>Notifications and Offers</h2>
+        <p>If you choose to receive updates and promotions, AirGo may contact you by email with booking updates, offers, and service information.</p>
     </div>
-
-    <div class="container">
-        <h1>Terms & Conditions</h1>
-
-        <div class="card">
-            <h2>Booking Terms</h2>
-            <p>By completing a booking with AirGo, you confirm that all passenger details provided are accurate and complete.</p>
-
-            <h2>Payments</h2>
-            <p>All payments must be completed in full before a booking is confirmed. Prices shown at checkout include the selected flight and chosen extras.</p>
-
-            <h2>Changes and Cancellations</h2>
-            <p>Changes and cancellations are subject to the fare type and airline policy. Additional fees may apply depending on the request.</p>
-
-            <h2>Passenger Responsibility</h2>
-            <p>Passengers are responsible for ensuring they have valid travel documents, including passports, visas, and any required identification.</p>
-
-            <h2>Special Requests</h2>
-            <p>Requests such as meal preferences, assistance, and baggage selections will be recorded, but some services remain subject to availability.</p>
-
-            <h2>Notifications and Offers</h2>
-            <p>If you choose to receive updates and promotions, AirGo may contact you by email with booking updates, offers, and service information.</p>
-        </div>
-    </div>
-</body>
-</html>
+{% endblock %}

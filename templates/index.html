@@ -1,236 +1,212 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AirGo</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="navbar">
-        <div class="nav-inner">
-            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
-            <div class="nav-links">
-                <a href="{{ url_for('home') }}">Search Flights</a>
-                {% if session.get('user_id') %}
-                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
-                    {% if session.get('user_email') == 'admin@airgo.com' %}
-                        <a href="{{ url_for('admin_dashboard') }}">Admin</a>
-                    {% endif %}
-                    <a href="{{ url_for('logout') }}">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}">Login</a>
-                    <a href="{{ url_for('signup') }}">Sign Up</a>
-                {% endif %}
+{% extends "base.html" %}
+
+{% block title %}AirGo{% endblock %}
+
+{% block content %}
+    <h1>Welcome to AirGo</h1>
+    <p class="subtitle">Book and manage your flights directly with our airline</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <form action="{{ url_for('results') }}" method="POST" class="form-grid" autocomplete="off">
+            <div class="full-width">
+                <label for="trip_type">Trip Type</label>
+                <select id="trip_type" name="trip_type" onchange="toggleTripType()" required>
+                    <option value="return">Return</option>
+                    <option value="one_way">One Way</option>
+                    <option value="multi_city">Multi City</option>
+                </select>
             </div>
-        </div>
-    </div>
 
-    <div class="container">
-        <h1>Welcome to AirGo</h1>
-        <p class="subtitle">Book and manage your flights directly with our airline</p>
+            <div class="airport-suggestions">
+                <label for="departure">From</label>
+                <input type="text" id="departure" name="departure" placeholder="e.g. London or LHR" required>
+                <div id="departure-suggestions" class="suggestions-list"></div>
+            </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-    <div class="flash-message flash-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+            <div class="airport-suggestions">
+                <label for="destination">To</label>
+                <input type="text" id="destination" name="destination" placeholder="e.g. Paris or CDG" required>
+                <div id="destination-suggestions" class="suggestions-list"></div>
+            </div>
 
-        <div class="card">
-            <form action="{{ url_for('results') }}" method="POST" class="form-grid" autocomplete="off">
-                <div class="full-width">
-                    <label for="trip_type">Trip Type</label>
-                    <select id="trip_type" name="trip_type" onchange="toggleTripType()" required>
-                        <option value="return">Return</option>
-                        <option value="one_way">One Way</option>
-                        <option value="multi_city">Multi City</option>
-                    </select>
-                </div>
+            <div>
+                <label for="depart_date">Departure Date</label>
+                <input type="date" id="depart_date" name="depart_date" required min="{{ today }}">
+            </div>
 
-                <div class="airport-suggestions">
-                    <label for="departure">From</label>
-                    <input type="text" id="departure" name="departure" placeholder="e.g. London or LHR" required>
-                    <div id="departure-suggestions" class="suggestions-list"></div>
-                </div>
+            <div id="return-date-group">
+                <label for="return_date">Return Date</label>
+                <input type="date" id="return_date" name="return_date" min="{{ today }}">
+            </div>
 
-                <div class="airport-suggestions">
-                    <label for="destination">To</label>
-                    <input type="text" id="destination" name="destination" placeholder="e.g. Paris or CDG" required>
-                    <div id="destination-suggestions" class="suggestions-list"></div>
-                </div>
+            <div id="multi-city-fields" class="full-width" style="display: none;">
+                <div class="multi-city-box">
+                    <h3>Second Flight</h3>
+                    <div class="form-grid">
+                        <div class="airport-suggestions">
+                            <label for="departure_2">From</label>
+                            <input type="text" id="departure_2" name="departure_2" placeholder="e.g. Paris or CDG">
+                            <div id="departure-2-suggestions" class="suggestions-list"></div>
+                        </div>
 
-                <div>
-                    <label for="depart_date">Departure Date</label>
-                    <input type="date" id="depart_date" name="depart_date" required min="{{ today }}">
-                </div>
+                        <div class="airport-suggestions">
+                            <label for="destination_2">To</label>
+                            <input type="text" id="destination_2" name="destination_2" placeholder="e.g. Dubai or DXB">
+                            <div id="destination-2-suggestions" class="suggestions-list"></div>
+                        </div>
 
-                <div id="return-date-group">
-                    <label for="return_date">Return Date</label>
-                    <input type="date" id="return_date" name="return_date" min="{{ today }}">
-                </div>
-
-                <div id="multi-city-fields" class="full-width" style="display: none;">
-                    <div class="multi-city-box">
-                        <h3>Second Flight</h3>
-                        <div class="form-grid">
-                            <div class="airport-suggestions">
-                                <label for="departure_2">From</label>
-                                <input type="text" id="departure_2" name="departure_2" placeholder="e.g. Paris or CDG">
-                                <div id="departure-2-suggestions" class="suggestions-list"></div>
-                            </div>
-
-                            <div class="airport-suggestions">
-                                <label for="destination_2">To</label>
-                                <input type="text" id="destination_2" name="destination_2" placeholder="e.g. Dubai or DXB">
-                                <div id="destination-2-suggestions" class="suggestions-list"></div>
-                            </div>
-
-                            <div>
-                                <label for="depart_date_2">Departure Date</label>
-                                <input type="date" id="depart_date_2" name="depart_date_2" min="{{ today }}">
-                            </div>
+                        <div>
+                            <label for="depart_date_2">Departure Date</label>
+                            <input type="date" id="depart_date_2" name="depart_date_2" min="{{ today }}">
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div>
-                    <label for="passengers">Passengers</label>
-                    <input type="number" id="passengers" name="passengers" min="1" value="1" required>
-                </div>
+            <div>
+                <label for="passengers">Passengers</label>
+                <input type="number" id="passengers" name="passengers" min="1" value="1" required>
+            </div>
 
-                <div>
-                    <label for="ticket_class">Class</label>
-                    <select id="ticket_class" name="ticket_class">
-                        <option value="Any">Any</option>
-                        <option value="Economy">Economy</option>
-                        <option value="Premium Economy">Premium Economy</option>
-                        <option value="Business">Business</option>
-                        <option value="First">First</option>
-                    </select>
-                </div>
+            <div>
+                <label for="ticket_class">Class</label>
+                <select id="ticket_class" name="ticket_class">
+                    <option value="Any">Any</option>
+                    <option value="Economy">Economy</option>
+                    <option value="Premium Economy">Premium Economy</option>
+                    <option value="Business">Business</option>
+                    <option value="First">First</option>
+                </select>
+            </div>
 
-                <div class="full-width">
-                    <button type="submit" class="btn">Search Flights</button>
-                </div>
-            </form>
-        </div>
+            <div class="full-width">
+                <button type="submit" class="btn">Search Flights</button>
+            </div>
+        </form>
     </div>
+{% endblock %}
 
-    <script>
-        function toggleTripType() {
-            const tripType = document.getElementById("trip_type").value;
-            const returnGroup = document.getElementById("return-date-group");
-            const multiCityFields = document.getElementById("multi-city-fields");
-            const returnDate = document.getElementById("return_date");
+{% block scripts %}
+<script>
+    function toggleTripType() {
+        const tripType = document.getElementById("trip_type").value;
+        const returnGroup = document.getElementById("return-date-group");
+        const multiCityFields = document.getElementById("multi-city-fields");
+        const returnDate = document.getElementById("return_date");
 
-            if (tripType === "one_way") {
-                returnGroup.style.display = "none";
-                multiCityFields.style.display = "none";
-                returnDate.value = "";
-            } else if (tripType === "multi_city") {
-                returnGroup.style.display = "none";
-                multiCityFields.style.display = "block";
-                returnDate.value = "";
-            } else {
-                returnGroup.style.display = "block";
-                multiCityFields.style.display = "none";
-            }
+        if (tripType === "one_way") {
+            returnGroup.style.display = "none";
+            multiCityFields.style.display = "none";
+            returnDate.value = "";
+        } else if (tripType === "multi_city") {
+            returnGroup.style.display = "none";
+            multiCityFields.style.display = "block";
+            returnDate.value = "";
+        } else {
+            returnGroup.style.display = "block";
+            multiCityFields.style.display = "none";
+        }
+    }
+
+    async function fetchAirportSuggestions(query) {
+        if (!query || query.trim().length < 1) {
+            return [];
         }
 
-        async function fetchAirportSuggestions(query) {
-            if (!query || query.trim().length < 1) {
+        try {
+            const response = await fetch(`/airport-suggestions?q=${encodeURIComponent(query)}`);
+            if (!response.ok) {
                 return [];
             }
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching airport suggestions:", error);
+            return [];
+        }
+    }
 
-            try {
-                const response = await fetch(`/airport-suggestions?q=${encodeURIComponent(query)}`);
-                if (!response.ok) {
-                    return [];
-                }
-                return await response.json();
-            } catch (error) {
-                console.error("Error fetching airport suggestions:", error);
-                return [];
-            }
+    function renderSuggestions(inputElement, suggestionsElement, suggestions) {
+        suggestionsElement.innerHTML = "";
+
+        if (!suggestions || suggestions.length === 0) {
+            suggestionsElement.style.display = "none";
+            return;
         }
 
-        function renderSuggestions(inputElement, suggestionsElement, suggestions) {
-            suggestionsElement.innerHTML = "";
+        suggestions.forEach((airport) => {
+            const item = document.createElement("div");
+            item.className = "suggestion-item";
+            item.innerHTML = `
+                <strong>${airport.city}</strong> - ${airport.name}
+                <div class="small-text">${airport.code}</div>
+            `;
 
-            if (!suggestions || suggestions.length === 0) {
+            item.addEventListener("click", function () {
+                inputElement.value = `${airport.city} (${airport.code})`;
+                suggestionsElement.innerHTML = "";
+                suggestionsElement.style.display = "none";
+            });
+
+            suggestionsElement.appendChild(item);
+        });
+
+        suggestionsElement.style.display = "block";
+    }
+
+    function setupAutocomplete(inputId, suggestionsId) {
+        const inputElement = document.getElementById(inputId);
+        const suggestionsElement = document.getElementById(suggestionsId);
+
+        if (!inputElement || !suggestionsElement) {
+            return;
+        }
+
+        inputElement.addEventListener("input", async function () {
+            const query = inputElement.value.trim();
+
+            if (query.length === 0) {
+                suggestionsElement.innerHTML = "";
                 suggestionsElement.style.display = "none";
                 return;
             }
 
-            suggestions.forEach((airport) => {
-                const item = document.createElement("div");
-                item.className = "suggestion-item";
-                item.innerHTML = `
-                    <strong>${airport.city}</strong> - ${airport.name}
-                    <div class="small-text">${airport.code}</div>
-                `;
-
-                item.addEventListener("click", function () {
-                    inputElement.value = `${airport.city} (${airport.code})`;
-                    suggestionsElement.innerHTML = "";
-                    suggestionsElement.style.display = "none";
-                });
-
-                suggestionsElement.appendChild(item);
-            });
-
-            suggestionsElement.style.display = "block";
-        }
-
-        function setupAutocomplete(inputId, suggestionsId) {
-            const inputElement = document.getElementById(inputId);
-            const suggestionsElement = document.getElementById(suggestionsId);
-
-            if (!inputElement || !suggestionsElement) {
-                return;
-            }
-
-            inputElement.addEventListener("input", async function () {
-                const query = inputElement.value.trim();
-
-                if (query.length === 0) {
-                    suggestionsElement.innerHTML = "";
-                    suggestionsElement.style.display = "none";
-                    return;
-                }
-
-                const suggestions = await fetchAirportSuggestions(query);
-                renderSuggestions(inputElement, suggestionsElement, suggestions);
-            });
-
-            inputElement.addEventListener("focus", async function () {
-                const query = inputElement.value.trim();
-                if (query.length > 0) {
-                    const suggestions = await fetchAirportSuggestions(query);
-                    renderSuggestions(inputElement, suggestionsElement, suggestions);
-                }
-            });
-        }
-
-        document.addEventListener("click", function (event) {
-            const allSuggestionLists = document.querySelectorAll(".suggestions-list");
-
-            allSuggestionLists.forEach((list) => {
-                if (!list.parentElement.contains(event.target)) {
-                    list.style.display = "none";
-                }
-            });
+            const suggestions = await fetchAirportSuggestions(query);
+            renderSuggestions(inputElement, suggestionsElement, suggestions);
         });
 
-        window.onload = function () {
-            toggleTripType();
-            setupAutocomplete("departure", "departure-suggestions");
-            setupAutocomplete("destination", "destination-suggestions");
-            setupAutocomplete("departure_2", "departure-2-suggestions");
-            setupAutocomplete("destination_2", "destination-2-suggestions");
-        };
-    </script>
-</body>
-</html>
+        inputElement.addEventListener("focus", async function () {
+            const query = inputElement.value.trim();
+            if (query.length > 0) {
+                const suggestions = await fetchAirportSuggestions(query);
+                renderSuggestions(inputElement, suggestionsElement, suggestions);
+            }
+        });
+    }
+
+    document.addEventListener("click", function (event) {
+        const allSuggestionLists = document.querySelectorAll(".suggestions-list");
+
+        allSuggestionLists.forEach((list) => {
+            if (!list.parentElement.contains(event.target)) {
+                list.style.display = "none";
+            }
+        });
+    });
+
+    window.onload = function () {
+        toggleTripType();
+        setupAutocomplete("departure", "departure-suggestions");
+        setupAutocomplete("destination", "destination-suggestions");
+        setupAutocomplete("departure_2", "departure-2-suggestions");
+        setupAutocomplete("destination_2", "destination-2-suggestions");
+    };
+</script>
+{% endblock %}

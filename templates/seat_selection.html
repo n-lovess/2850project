@@ -1,103 +1,127 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seat Selection</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="navbar">
-        <div class="nav-inner">
-            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
-            <div class="nav-links">
-                <a href="{{ url_for('home') }}">Search Flights</a>
-                {% if session.get('user_id') %}
-                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
-                    <a href="{{ url_for('logout') }}">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}">Login</a>
-                    <a href="{{ url_for('signup') }}">Sign Up</a>
-                {% endif %}
-            </div>
-        </div>
+{% extends "base.html" %}
+
+{% block title %}Seat Selection{% endblock %}
+
+{% block content %}
+    <h1>Choose your seat</h1>
+    <p class="subtitle">Pick your preferred cabin area and seat.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card summary-card">
+        <h2>{{ flight.airline }}</h2>
+        <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+        <p><strong>Time:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
+        <p><strong>Class:</strong> {{ flight.class }}</p>
+        <p><strong>Fare:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
     </div>
 
-    <div class="container">
-        <h1>Select Your Seat</h1>
-        <p class="subtitle">Choose a seat for your flight</p>
+    <div class="card seat-page-card">
+        <div class="seat-page-layout">
+            <div class="seat-left-panel">
+                <div class="seat-legend-box">
+                    <h3>Seat prices</h3>
+                    <ul class="seat-price-list">
+                        <li><strong>Window Seat</strong> – {{ selected_currency }} {{ convert_price(10, selected_currency) }}</li>
+                        <li><strong>Aisle Seat</strong> – {{ selected_currency }} {{ convert_price(8, selected_currency) }}</li>
+                        <li><strong>Middle Seat</strong> – {{ selected_currency }} {{ convert_price(5, selected_currency) }}</li>
+                        <li><strong>Emergency Exit Seat</strong> – {{ selected_currency }} {{ convert_price(25, selected_currency) }} <span class="small-text">(extra legroom)</span></li>
+                        <li><strong>No Seat Selection</strong> – {{ selected_currency }} {{ convert_price(0, selected_currency) }} <span class="small-text">(seat randomly allocated at check-in)</span></li>
+                    </ul>
+                </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash-message flash-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <div class="card summary-card">
-            <h2>{{ flight.airline }}</h2>
-            <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
-            <p><strong>Time:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
-            <p><strong>Class:</strong> {{ flight.class }}</p>
-        </div>
-
-        <div class="card">
-            <div class="seat-legend">
-                <div class="legend-item"><span class="legend-box available-box"></span>Available</div>
-                <div class="legend-item"><span class="legend-box unavailable-box"></span>Unavailable</div>
-                <div class="legend-item"><span class="legend-box selected-box"></span>Selected</div>
+                <div class="seat-legend-status">
+                    <div class="legend-item"><span class="legend-box available-box"></span> Available</div>
+                    <div class="legend-item"><span class="legend-box unavailable-box"></span> Unavailable</div>
+                    <div class="legend-item"><span class="legend-box selected-box"></span> Selected</div>
+                </div>
             </div>
 
-            <form method="POST" id="seatForm">
-                <input type="hidden" name="seat" id="selectedSeatInput">
+            <div class="seat-right-panel">
+                <form method="POST" id="seatForm">
+                    <input type="hidden" name="seat" id="selectedSeatInput">
 
-                <div class="seat-map-wrapper">
-                    {% for row in seat_rows %}
-                        <div class="seat-row">
-                            {% for seat in row[:3] %}
-                                <button type="button" class="seat-btn {% if not seat.available %}unavailable{% endif %}" {% if not seat.available %}disabled{% endif %} data-seat="{{ seat.seat }}">
-                                    {{ seat.seat }}
-                                </button>
-                            {% endfor %}
+                    {% for section in seat_sections %}
+                        <div class="cabin-section">
+                            <div class="cabin-header {{ section.color_class }}">
+                                {{ section.cabin }}
+                            </div>
 
-                            <div class="aisle-gap"></div>
+                            <div class="cabin-seat-map">
+                                {% for row in section.rows %}
+                                    <div class="cabin-row">
+                                        <div class="row-number">{{ row.row_number }}</div>
 
-                            {% for seat in row[3:] %}
-                                <button type="button" class="seat-btn {% if not seat.available %}unavailable{% endif %}" {% if not seat.available %}disabled{% endif %} data-seat="{{ seat.seat }}">
-                                    {{ seat.seat }}
-                                </button>
-                            {% endfor %}
+                                        <div class="seat-row-grid">
+                                            {% for seat in row.seats %}
+                                                {% if loop.index == 3 or loop.index == 5 or loop.index == 7 %}
+                                                    <div class="aisle-gap"></div>
+                                                {% endif %}
+
+                                                <button
+                                                    type="button"
+                                                    class="seat-tile {{ section.color_class }} {% if not seat.available %}unavailable{% endif %}"
+                                                    {% if not seat.available %}disabled{% endif %}
+                                                    data-seat="{{ seat.seat }}"
+                                                    data-seat-type="{{ seat.type }}"
+                                                    data-seat-price="{{ seat.price }}"
+                                                    data-seat-price-converted="{{ convert_price(seat.price, selected_currency) }}"
+                                                    title="{{ seat.seat }} • {{ seat.type }} • £{{ seat.price }}"
+                                                >
+                                                    {{ seat.letter }}
+                                                </button>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
                         </div>
                     {% endfor %}
-                </div>
 
-                <div class="selected-seat-display">
-                    Selected Seat: <span id="selectedSeatText">None</span>
-                </div>
+                    <div class="selected-seat-card">
+                        <p><strong>Selected Seat:</strong> <span id="selectedSeatText">None</span></p>
+                        <p><strong>Seat Type:</strong> <span id="selectedSeatType">—</span></p>
+                        <p><strong>Seat Price:</strong> <span id="selectedSeatPrice">—</span></p>
+                    </div>
 
-                <div class="button-group">
-                    <button type="submit" class="btn">Continue to Payment</button>
-                </div>
-            </form>
+                    <div class="button-group">
+                        <button type="submit" class="btn">Continue to Review Booking</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
+{% endblock %}
 
-    <script>
-        const seatButtons = document.querySelectorAll(".seat-btn:not(.unavailable)");
-        const selectedSeatInput = document.getElementById("selectedSeatInput");
-        const selectedSeatText = document.getElementById("selectedSeatText");
+{% block scripts %}
+<script>
+    const seatButtons = document.querySelectorAll(".seat-tile:not(.unavailable)");
+    const selectedSeatInput = document.getElementById("selectedSeatInput");
+    const selectedSeatText = document.getElementById("selectedSeatText");
+    const selectedSeatType = document.getElementById("selectedSeatType");
+    const selectedSeatPrice = document.getElementById("selectedSeatPrice");
 
-        seatButtons.forEach((button) => {
-            button.addEventListener("click", function () {
-                seatButtons.forEach((btn) => btn.classList.remove("selected"));
-                button.classList.add("selected");
+    seatButtons.forEach((button) => {
+        button.addEventListener("click", function () {
+            seatButtons.forEach((btn) => btn.classList.remove("selected"));
 
-                const seatCode = button.getAttribute("data-seat");
-                selectedSeatInput.value = seatCode;
-                selectedSeatText.textContent = seatCode;
-            });
+            button.classList.add("selected");
+
+            const seatCode = button.getAttribute("data-seat");
+            const seatType = button.getAttribute("data-seat-type");
+            const seatPriceConverted = button.getAttribute("data-seat-price-converted");
+
+            selectedSeatInput.value = seatCode;
+            selectedSeatText.textContent = seatCode;
+            selectedSeatType.textContent = seatType;
+            selectedSeatPrice.textContent = "{{ selected_currency }} " + seatPriceConverted;
         });
-    </script>
-</body>
-</html>
+    });
+</script>
+{% endblock %}

@@ -1,94 +1,71 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Available Flights</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="navbar">
-        <div class="nav-inner">
-            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
-            <div class="nav-links">
-                <a href="{{ url_for('home') }}">Search Flights</a>
-                {% if session.get('user_id') %}
-                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
-                    <a href="{{ url_for('logout') }}">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}">Login</a>
-                    <a href="{{ url_for('signup') }}">Sign Up</a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+{% extends "base.html" %}
 
-    <div class="container">
-        <h1>Available Flights</h1>
-        <p class="subtitle">
-            {{ search_data.departure }} to {{ search_data.destination }}
-            {% if search_data.depart_date %} on {{ search_data.depart_date }}{% endif %}
-        </p>
+{% block title %}Available Flights{% endblock %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash-message flash-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+{% block content %}
+    <h1>Available Flights</h1>
+    <p class="subtitle">
+        {{ search_data.departure }} to {{ search_data.destination }}
+        {% if search_data.depart_date %} on {{ search_data.depart_date }}{% endif %}
+    </p>
 
-        {% for flight in flights %}
-            <div class="card enhanced-flight-card">
-                <div class="flight-top">
-                    <div>
-                        <p class="booking-meta">{{ flight.airline }} • {{ flight.class }}</p>
-                        <h2>{{ flight.from_city }} ({{ flight.from_code }}) → {{ flight.to_city }} ({{ flight.to_code }})</h2>
-                        <p class="route-detail">{{ flight.from }} → {{ flight.to }}</p>
-                    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
-                    <div class="price-box">
-                        <div class="price-label">From</div>
-                        <div class="price-value">£{{ flight.price }}</div>
-                        <div class="small-text">{{ flight.seats_left }} seats left</div>
-                    </div>
+    {% for flight in flights %}
+        <div class="card enhanced-flight-card">
+            <div class="flight-top">
+                <div>
+                    <p class="booking-meta">{{ flight.airline }} • {{ flight.class }}</p>
+                    <h2>{{ flight.from_city }} ({{ flight.from_code }}) → {{ flight.to_city }} ({{ flight.to_code }})</h2>
+                    <p class="route-detail">{{ flight.from }} → {{ flight.to }}</p>
                 </div>
 
-                <div class="flight-middle">
-                    <div class="time-block">
-                        <div class="time-value">{{ flight.departure_time }}</div>
-                        <div class="small-text">{{ flight.from_code }}</div>
-                    </div>
-
-                    <div class="flight-line">✈</div>
-
-                    <div class="time-block">
-                        <div class="time-value">{{ flight.arrival_time }}</div>
-                        <div class="small-text">{{ flight.to_code }}</div>
-                    </div>
-                </div>
-
-                <div class="benefits-box">
-                    {% set benefits = class_benefits[flight.class] %}
-                    <h3>What’s Included</h3>
-                    <ul class="benefits-list">
-                        <li><strong>Baggage:</strong> {{ benefits.baggage }}</li>
-                        <li><strong>Meal:</strong> {{ benefits.meal }}</li>
-                        <li><strong>Seat Selection:</strong> {{ benefits.seat_selection }}</li>
-                        <li><strong>Lounge:</strong> {{ benefits.lounge }}</li>
-                        <li><strong>Flexibility:</strong> {{ benefits.flexibility }}</li>
-                    </ul>
-                </div>
-
-                <div class="flight-actions-row">
-                    <a href="{{ url_for('passenger_details', flight_id=flight.id) }}" class="btn">Select Flight</a>
+                <div class="price-box">
+                    <div class="price-label">From</div>
+                    <div class="price-value">{{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</div>
+                    <div class="small-text">{{ flight.seats_left }} seats left</div>
                 </div>
             </div>
-        {% endfor %}
 
-        <div class="back-link">
-            <a href="{{ url_for('home') }}">← Back to Search</a>
+            <div class="flight-middle">
+                <div class="time-block">
+                    <div class="time-value">{{ flight.departure_time }}</div>
+                    <div class="small-text">{{ flight.from_code }}</div>
+                </div>
+
+                <div class="flight-line">✈</div>
+
+                <div class="time-block">
+                    <div class="time-value">{{ flight.arrival_time }}</div>
+                    <div class="small-text">{{ flight.to_code }}</div>
+                </div>
+            </div>
+
+            <div class="benefits-box">
+                {% set benefits = class_benefits[flight.class] %}
+                <h3>What’s Included</h3>
+                <ul class="benefits-list">
+                    <li><strong>Baggage:</strong> {{ benefits.baggage }}</li>
+                    <li><strong>Meal:</strong> {{ benefits.meal }}</li>
+                    <li><strong>Seat Selection:</strong> {{ benefits.seat_selection }}</li>
+                    <li><strong>Lounge:</strong> {{ benefits.lounge }}</li>
+                    <li><strong>Flexibility:</strong> {{ benefits.flexibility }}</li>
+                </ul>
+            </div>
+
+            <div class="flight-actions-row">
+                <a href="{{ url_for('passenger_details', flight_id=flight.id) }}" class="btn">Select Flight</a>
+            </div>
         </div>
+    {% endfor %}
+
+    <div class="back-link">
+        <a href="{{ url_for('home') }}">← Back to Search</a>
     </div>
-</body>
-</html>
+{% endblock %}
