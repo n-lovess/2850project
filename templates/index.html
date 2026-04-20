@@ -92,6 +92,61 @@
             </div>
         </form>
     </div>
+        <section class="popular-destinations-section" aria-labelledby="popular-destinations-heading">
+        <div class="popular-destinations-header">
+            <div>
+                <p class="popular-destinations-eyebrow">Popular routes</p>
+                <h2 id="popular-destinations-heading">Explore our most booked destinations</h2>
+                <p class="popular-destinations-text">
+                    Choose a destination to fill your search instantly and start booking faster.
+                </p>
+            </div>
+        </div>
+
+        <div class="popular-destinations-grid">
+            <button type="button" class="destination-card" onclick="setPopularDestination('Istanbul (IST)')">
+                <div class="destination-card-image-wrap">
+                    <img src="{{ url_for('static', filename='images/istanbul.jpg') }}" alt="Istanbul" class="destination-card-image">
+                    <span class="destination-card-badge">Top Choice</span>
+                </div>
+                <div class="destination-card-content">
+                    <div>
+                        <h3>Istanbul</h3>
+                        <p>Türkiye</p>
+                    </div>
+                    <span class="destination-code">IST</span>
+                </div>
+            </button>
+
+            <button type="button" class="destination-card" onclick="setPopularDestination('Leeds (LBA)')">
+                <div class="destination-card-image-wrap">
+                    <img src="{{ url_for('static', filename='images/leeds.jpg') }}" alt="Leeds" class="destination-card-image">
+                    <span class="destination-card-badge">Popular in UK</span>
+                </div>
+                <div class="destination-card-content">
+                    <div>
+                        <h3>Leeds</h3>
+                        <p>United Kingdom</p>
+                    </div>
+                    <span class="destination-code">LBA</span>
+                </div>
+            </button>
+
+            <button type="button" class="destination-card" onclick="setPopularDestination('New York (JFK)')">
+                <div class="destination-card-image-wrap">
+                    <img src="{{ url_for('static', filename='images/newyork.jpg') }}" alt="New York" class="destination-card-image">
+                    <span class="destination-card-badge">Long-haul favourite</span>
+                </div>
+                <div class="destination-card-content">
+                    <div>
+                        <h3>New York</h3>
+                        <p>United States</p>
+                    </div>
+                    <span class="destination-code">JFK</span>
+                </div>
+            </button>
+        </div>
+    </section>
 {% endblock %}
 
 {% block scripts %}
@@ -191,7 +246,7 @@
         });
     }
 
-    document.addEventListener("click", function (event) {
+          document.addEventListener("click", function (event) {
         const allSuggestionLists = document.querySelectorAll(".suggestions-list");
 
         allSuggestionLists.forEach((list) => {
@@ -200,6 +255,25 @@
             }
         });
     });
+
+    function setPopularDestination(destinationValue) {
+        const destinationInput = document.getElementById("destination");
+        const suggestionsElement = document.getElementById("destination-suggestions");
+
+        if (!destinationInput) {
+            return;
+        }
+
+        destinationInput.value = destinationValue;
+        destinationInput.focus();
+
+        if (suggestionsElement) {
+            suggestionsElement.innerHTML = "";
+            suggestionsElement.style.display = "none";
+        }
+
+        destinationInput.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
 
     window.onload = function () {
         toggleTripType();
