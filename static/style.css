@@ -1307,42 +1307,82 @@ textarea:focus {
         grid-template-columns: 1fr;
     }
 }
-/* FLIGHT RESULTS UPGRADE */
-.flight-center-info {
+/* CLEANER FLIGHT RESULTS */
+.compact-flight-middle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 34px;
+    background: #f7f9ff;
+    padding: 18px 20px;
+    border-radius: 14px;
+}
+
+.compact-center-info {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 6px;
+    min-width: 90px;
 }
 
-.flight-duration {
-    font-size: 14px;
-    font-weight: 700;
-    color: #4d67b8;
+.flight-center-info .flight-line,
+.compact-center-info .flight-line {
+    font-size: 26px;
+    color: #4a6cd4;
+    line-height: 1;
 }
 
 .flight-stops {
-    font-size: 12px;
+    font-size: 13px;
     color: #667089;
+    font-weight: 600;
 }
 
-.flight-middle {
+.flight-includes-row {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 28px;
-    background: #f7f9ff;
-    padding: 18px;
-    border-radius: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: -4px;
 }
 
-.flight-line {
-    font-size: 22px;
-    color: #4a6cd4;
+.flight-include-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f4f7fd;
+    border: 1px solid #dbe5f7;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #38508f;
+}
+
+.enhanced-flight-card {
+    gap: 18px;
+}
+
+.flight-top {
+    align-items: center;
+}
+
+.price-value {
+    font-size: 24px;
 }
 
 .time-value {
-    font-size: 26px;
+    font-size: 22px;
     font-weight: 800;
     color: #264493;
+}
+
+@media (max-width: 900px) {
+    .compact-flight-middle {
+        gap: 18px;
+        padding: 16px;
+    }
+
+    .flight-includes-row {
+        gap: 8px;
+    }
 }
