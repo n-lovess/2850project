@@ -1307,3 +1307,42 @@ textarea:focus {
         grid-template-columns: 1fr;
     }
 }
+/* FLIGHT RESULTS UPGRADE */
+.flight-center-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.flight-duration {
+    font-size: 14px;
+    font-weight: 700;
+    color: #4d67b8;
+}
+
+.flight-stops {
+    font-size: 12px;
+    color: #667089;
+}
+
+.flight-middle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    background: #f7f9ff;
+    padding: 18px;
+    border-radius: 14px;
+}
+
+.flight-line {
+    font-size: 22px;
+    color: #4a6cd4;
+}
+
+.time-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: #264493;
+}

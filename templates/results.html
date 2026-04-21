@@ -21,7 +21,9 @@
         <div class="card enhanced-flight-card">
             <div class="flight-top">
                 <div>
-                    <p class="booking-meta">{{ flight.airline }} • {{ flight.class }}</p>
+                    <p class="booking-meta">
+    {{ flight.airline }} • {{ flight.class }} • {{ flight.aircraft or "Boeing 737" }}
+</p>
                     <h2>{{ flight.from_city }} ({{ flight.from_code }}) → {{ flight.to_city }} ({{ flight.to_code }})</h2>
                     <p class="route-detail">{{ flight.from }} → {{ flight.to }}</p>
                 </div>
@@ -33,7 +35,23 @@
                 </div>
             </div>
 
-            <div class="flight-middle">
+           <div class="flight-middle">
+    <div class="time-block">
+        <div class="time-value">{{ flight.departure_time }}</div>
+        <div class="small-text">{{ flight.from_code }}</div>
+    </div>
+
+    <div class="flight-center-info">
+        <div class="flight-duration">{{ flight.duration or "6h 20m" }}</div>
+        <div class="flight-line">✈</div>
+        <div class="flight-stops">Direct</div>
+    </div>
+
+    <div class="time-block">
+        <div class="time-value">{{ flight.arrival_time }}</div>
+        <div class="small-text">{{ flight.to_code }}</div>
+    </div>
+</div>
                 <div class="time-block">
                     <div class="time-value">{{ flight.departure_time }}</div>
                     <div class="small-text">{{ flight.from_code }}</div>
