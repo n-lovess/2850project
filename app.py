@@ -199,6 +199,13 @@ translations = {
 "create_account": "Create Account",
 "full_name": "Full Name",
 "already_account": "Already have an account?",
+"forgot_password_title": "Forgot Password",
+"reset_password": "Reset Password",
+"account_email": "Account Email",
+"new_password": "New Password",
+"confirm_new_password": "Confirm New Password",
+"update_password": "Update Password",
+"back_to_login": "Back to login",
     },
 
     "fr": {
@@ -421,6 +428,13 @@ translations = {
 "create_account": "Créer un compte",
 "full_name": "Nom complet",
 "already_account": "Vous avez déjà un compte ?",
+"forgot_password_title": "Mot de passe oublié",
+"reset_password": "Réinitialiser le mot de passe",
+"account_email": "E-mail du compte",
+"new_password": "Nouveau mot de passe",
+"confirm_new_password": "Confirmer le nouveau mot de passe",
+"update_password": "Mettre à jour le mot de passe",
+"back_to_login": "Retour à la connexion",
 },
 
     "ar": {
@@ -643,6 +657,13 @@ translations = {
 "create_account": "إنشاء حساب",
 "full_name": "الاسم الكامل",
 "already_account": "هل لديك حساب بالفعل؟",
+"forgot_password_title": "نسيت كلمة المرور",
+"reset_password": "إعادة تعيين كلمة المرور",
+"account_email": "بريد الحساب الإلكتروني",
+"new_password": "كلمة المرور الجديدة",
+"confirm_new_password": "تأكيد كلمة المرور الجديدة",
+"update_password": "تحديث كلمة المرور",
+"back_to_login": "العودة إلى تسجيل الدخول",
 }
 }
 def get_translation():
