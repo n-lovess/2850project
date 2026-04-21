@@ -17,7 +17,7 @@
     <div class="card">
         <form action="{{ url_for('results') }}" method="POST" class="form-grid" autocomplete="off">
             <div class="full-width">
-                <label for="trip_type">Trip Type</label>
+                <label for="trip_type">{{ t.trip_type }}</label>
                 <select id="trip_type" name="trip_type" onchange="toggleTripType()" required>
                     <option value="return">Return</option>
                     <option value="one_way">One Way</option>
@@ -26,24 +26,24 @@
             </div>
 
             <div class="airport-suggestions">
-                <label for="departure">From</label>
-                <input type="text" id="departure" name="departure" placeholder="e.g. London or LHR" required>
+               <label for="departure">{{ t.from_label }}</label>
+                <input type="text" id="departure" name="departure"placeholder="{{ t.example_departure }}"  required>
                 <div id="departure-suggestions" class="suggestions-list"></div>
             </div>
 
             <div class="airport-suggestions">
-                <label for="destination">To</label>
+                <label for="destination">{{ t.to_label }}</label>
                 <input type="text" id="destination" name="destination" placeholder="e.g. Paris or CDG" required>
                 <div id="destination-suggestions" class="suggestions-list"></div>
             </div>
 
             <div>
-                <label for="depart_date">Departure Date</label>
+                <label for="depart_date">{{ t.departure_date }}</label>
                 <input type="date" id="depart_date" name="depart_date" required min="{{ today }}">
             </div>
 
             <div id="return-date-group">
-                <label for="return_date">Return Date</label>
+                <label for="return_date">{{ t.return_date }}</label><label for="passengers">Passengers</label>
                 <input type="date" id="return_date" name="return_date" min="{{ today }}">
             </div>
 
@@ -72,12 +72,12 @@
             </div>
 
             <div>
-                <label for="passengers">Passengers</label>
+                <label for="passengers">{{ t.passengers }}</label>
                 <input type="number" id="passengers" name="passengers" min="1" value="1" required>
             </div>
 
             <div>
-                <label for="ticket_class">Class</label>
+                <label for="ticket_class">{{ t.class_label }}</label>
                 <select id="ticket_class" name="ticket_class">
                     <option value="Any">Any</option>
                     <option value="Economy">Economy</option>
@@ -95,11 +95,11 @@
         <section class="popular-destinations-section" aria-labelledby="popular-destinations-heading">
         <div class="popular-destinations-header">
             <div>
-                <p class="popular-destinations-eyebrow">Popular routes</p>
-                <h2 id="popular-destinations-heading">Explore our most booked destinations</h2>
+                <p class="popular-destinations-eyebrow">{{ t.popular_routes }}</p>
+                <h2 id="popular-destinations-heading">{{ t.explore_destinations }}</h2>
                 <p class="popular-destinations-text">
-                    Choose a destination to fill your search instantly and start booking faster.
-                </p>
+    {{ t.choose_destination }}
+</p>
             </div>
         </div>
 

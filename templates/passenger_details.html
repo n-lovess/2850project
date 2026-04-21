@@ -3,7 +3,7 @@
 {% block title %}Passenger Details{% endblock %}
 
 {% block content %}
-    <h1>Passenger Details</h1>
+    <h1>{{ t.passenger_details_title }}</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -14,7 +14,7 @@
     {% endwith %}
 
     <div class="card summary-card">
-        <h2>Selected Flight</h2>
+        <h2>{{ t.selected_flight }}</h2>
         <p><strong>Airline:</strong> {{ flight.airline }}</p>
         <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
         <p><strong>Time:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
@@ -23,7 +23,7 @@
     </div>
 
     <div class="card benefits-box">
-        <h2>What’s Included With {{ flight.class }}</h2>
+        <h2>{{ t.whats_included }} {{ flight.class }}</h2>
         <ul class="benefits-list">
             <li><strong>Baggage:</strong> {{ benefits.baggage }}</li>
             <li><strong>Meal:</strong> {{ benefits.meal }}</li>
@@ -36,7 +36,7 @@
     <div class="card">
         <form method="POST" class="form-grid">
             <div>
-                <label for="first_name">First Name</label>
+                <label>{{ t.first_name }}</label>
                 <input type="text" id="first_name" name="first_name" required>
             </div>
 
@@ -61,12 +61,12 @@
             </div>
 
             <div class="full-width assistance-section">
-                <h3>Accessibility & Special Assistance</h3>
-                <p class="section-subtext">This service is provided at no extra cost. Let us know if you need any support during your journey.</p>
+                <h3>{{ t.assistance_title }}</h3>
+                
 
-                <label class="checkbox-row assistance-main-check">
+                <la<p class="section-subtext">{{ t.assistance_text }}</p>bel class="checkbox-row assistance-main-check">
                     <input type="checkbox" name="assistance_required" value="Yes">
-                    <span>I require special assistance</span>
+                    <span>{{ t.assistance_required }}</span>
                 </label>
 
                 <div class="assistance-grid">
@@ -83,13 +83,13 @@
                 </div>
 
                 <div class="assistance-notes">
-                    <label for="other_assistance">Other assistance needs</label>
-                    <textarea id="other_assistance" name="other_assistance" rows="3" placeholder="Please describe any other support you may need"></textarea>
+                    <label for="other_assistance">{{ t.other_assistance }}</label>
+                    <textarea id="other_assistance" name="other_assistance" rows="3" placeholder="{{ t.other_assistance_placeholder }}"></textarea>
                 </div>
             </div>
 
             <div class="full-width">
-                <button type="submit" class="btn">Continue to Extras</button>
+                <button type="submit" class="btn">{{ t.continue_to_extras }}</button>
             </div>
         </form>
     </div>

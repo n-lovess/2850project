@@ -26,6 +26,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DATABASE = os.path.join(BASE_DIR, "bookings.db")
 translations = {
     "en": {
+        # GENERAL
         "welcome": "Welcome to AirGo",
         "subtitle": "Book and manage your flights directly with our airline",
         "search": "Search Flights",
@@ -34,8 +35,52 @@ translations = {
         "logout": "Logout",
         "login": "Login",
         "signup": "Sign Up",
-        "search_currency": "Search currency..."
+        "search_currency": "Search currency...",
+
+        # FORM
+        "trip_type": "Trip Type",
+        "from_label": "From",
+        "to_label": "To",
+        "departure_date": "Departure Date",
+        "return_date": "Return Date",
+        "second_flight": "Second Flight",
+        "passengers": "Passengers",
+        "class_label": "Class",
+        "example_departure": "e.g. London or LHR",
+
+        # TRIP TYPES
+        "return_trip": "Return",
+        "one_way": "One Way",
+        "multi_city": "Multi City",
+
+        # DESTINATIONS
+        "popular_routes": "Popular routes",
+        "explore_destinations": "Explore our most booked destinations",
+        "choose_destination": "Choose a destination to fill your search instantly and start booking faster.",
+        "uk": "United Kingdom",
+        "usa": "United States",
+
+        # PASSENGER PAGE
+        "passenger_details_title": "Passenger Details",
+        "selected_flight": "Selected Flight",
+        "whats_included": "What’s Included With",
+        "first_name": "First Name",
+        "last_name": "Last Name",
+        "email_address": "Email Address",
+        "phone_number": "Phone Number",
+        "passport_number": "Passport Number",
+
+        # ASSISTANCE
+        "assistance_title": "Accessibility & Special Assistance",
+        "assistance_text": "This service is provided at no extra cost. Let us know if you need any support during your journey.",
+        "assistance_required": "I require special assistance",
+        "other_assistance": "Other assistance needs",
+        "other_assistance_placeholder": "Please describe any other support you may need",
+
+        # BUTTONS
+        "continue_to_extras": "Continue to Extras"
     },
+
     "fr": {
         "welcome": "Bienvenue sur AirGo",
         "subtitle": "Réservez et gérez vos vols directement avec notre compagnie",
@@ -45,8 +90,46 @@ translations = {
         "logout": "Déconnexion",
         "login": "Connexion",
         "signup": "S’inscrire",
-        "search_currency": "Rechercher une devise..."
+        "search_currency": "Rechercher une devise...",
+
+        "trip_type": "Type de voyage",
+        "from_label": "Départ",
+        "to_label": "Destination",
+        "departure_date": "Date de départ",
+        "return_date": "Date de retour",
+        "second_flight": "Deuxième vol",
+        "passengers": "Passagers",
+        "class_label": "Classe",
+        "example_departure": "ex: Londres ou LHR",
+
+        "return_trip": "Aller-retour",
+        "one_way": "Aller simple",
+        "multi_city": "Multi-destinations",
+
+        "popular_routes": "Routes populaires",
+        "explore_destinations": "Découvrez nos destinations les plus réservées",
+        "choose_destination": "Choisissez une destination pour remplir votre recherche plus rapidement.",
+        "uk": "Royaume-Uni",
+        "usa": "États-Unis",
+
+        "passenger_details_title": "Détails du passager",
+        "selected_flight": "Vol sélectionné",
+        "whats_included": "Ce qui est inclus avec",
+        "first_name": "Prénom",
+        "last_name": "Nom de famille",
+        "email_address": "Adresse e-mail",
+        "phone_number": "Numéro de téléphone",
+        "passport_number": "Numéro de passeport",
+
+        "assistance_title": "Accessibilité et assistance spéciale",
+        "assistance_text": "Ce service est fourni sans frais supplémentaires. Indiquez-nous si vous avez besoin d’une assistance pendant votre voyage.",
+        "assistance_required": "J’ai besoin d’une assistance spéciale",
+        "other_assistance": "Autres besoins d’assistance",
+        "other_assistance_placeholder": "Veuillez décrire toute autre aide dont vous pourriez avoir besoin",
+
+        "continue_to_extras": "Continuer vers les extras"
     },
+
     "ar": {
         "welcome": "مرحبًا بك في AirGo",
         "subtitle": "احجز وأدر رحلاتك مباشرة مع شركتنا",
@@ -56,7 +139,44 @@ translations = {
         "logout": "تسجيل الخروج",
         "login": "تسجيل الدخول",
         "signup": "إنشاء حساب",
-        "search_currency": "ابحث عن عملة..."
+        "search_currency": "ابحث عن عملة...",
+
+        "trip_type": "نوع الرحلة",
+        "from_label": "من",
+        "to_label": "إلى",
+        "departure_date": "تاريخ المغادرة",
+        "return_date": "تاريخ العودة",
+        "second_flight": "الرحلة الثانية",
+        "passengers": "المسافرون",
+        "class_label": "الدرجة",
+        "example_departure": "مثال: لندن أو LHR",
+
+        "return_trip": "ذهاب وعودة",
+        "one_way": "ذهاب فقط",
+        "multi_city": "مدن متعددة",
+
+        "popular_routes": "الوجهات الشائعة",
+        "explore_destinations": "اكتشف الوجهات الأكثر حجزًا",
+        "choose_destination": "اختر وجهة لملء البحث بسرعة.",
+        "uk": "المملكة المتحدة",
+        "usa": "الولايات المتحدة",
+
+        "passenger_details_title": "تفاصيل المسافر",
+        "selected_flight": "الرحلة المحددة",
+        "whats_included": "ما هو المشمول مع",
+        "first_name": "الاسم الأول",
+        "last_name": "اسم العائلة",
+        "email_address": "البريد الإلكتروني",
+        "phone_number": "رقم الهاتف",
+        "passport_number": "رقم جواز السفر",
+
+        "assistance_title": "إمكانية الوصول والمساعدة الخاصة",
+        "assistance_text": "يتم تقديم هذه الخدمة دون تكلفة إضافية. أخبرنا إذا كنت بحاجة إلى أي دعم أثناء رحلتك.",
+        "assistance_required": "أحتاج إلى مساعدة خاصة",
+        "other_assistance": "احتياجات مساعدة أخرى",
+        "other_assistance_placeholder": "يرجى وصف أي دعم آخر قد تحتاجه",
+
+        "continue_to_extras": "المتابعة إلى الإضافات"
     }
 }
 def get_translation():
@@ -1816,7 +1936,8 @@ def inject_currency():
     return {
         "selected_currency": session.get("currency", "GBP"),
         "convert_price": convert_price,
-        "available_currencies": build_currency_metadata()
+        "available_currencies": build_currency_metadata(),
+        "t": get_translation()
     }
 @app.route("/set-language/<lang>")
 def set_language(lang):
