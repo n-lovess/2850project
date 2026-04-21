@@ -1,81 +1,81 @@
 {% extends "base.html" %}
 
-{% block title %}Extras{% endblock %}
+{% block title %}{{ t.extras_title }}{% endblock %}
 
 {% block content %}
-    <h1>Choose Your Extras</h1>
-    <p class="subtitle">Select any extras for your trip before continuing.</p>
+    <h1>{{ t.extras_title }}</h1>
+    <p class="subtitle">{{ t.extras_subtitle }}</p>
 
     <div class="card summary-card">
-        <h2>Your Flight</h2>
-        <p><strong>Airline:</strong> {{ session.selected_flight.airline }}</p>
-        <p><strong>Route:</strong> {{ session.selected_flight.from }} → {{ session.selected_flight.to }}</p>
-        <p><strong>Class:</strong> {{ session.selected_flight.class }}</p>
-        <p><strong>Base Price:</strong> {{ selected_currency }} {{ convert_price(session.selected_flight.price, selected_currency) }}</p>
+        <h2>{{ t.your_flight }}</h2>
+        <p><strong>{{ t.airline }}:</strong> {{ session.selected_flight.airline }}</p>
+        <p><strong>{{ t.route }}:</strong> {{ session.selected_flight.from }} → {{ session.selected_flight.to }}</p>
+        <p><strong>{{ t.class_label }}:</strong> {{ session.selected_flight.class }}</p>
+        <p><strong>{{ t.base_price }}:</strong> {{ selected_currency }} {{ convert_price(session.selected_flight.price, selected_currency) }}</p>
     </div>
 
     <div class="card">
         <form method="POST" class="form-grid">
 
             <div class="full-width">
-                <h2>Baggage Options</h2>
-                <label for="baggage">Checked Baggage</label>
+                <h2>{{ t.baggage_options }}</h2>
+                <label for="baggage">{{ t.checked_baggage }}</label>
                 <select id="baggage" name="baggage" required>
-                    <option value="No checked bag">No checked bag</option>
-                    <option value="1 checked bag (+£30)">1 checked bag (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})</option>
-                    <option value="2 checked bags (+£60)">2 checked bags (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})</option>
+                    <option value="No checked bag">{{ t.no_checked_bag }}</option>
+                    <option value="1 checked bag (+£30)">{{ t.one_checked_bag }} (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})</option>
+                    <option value="2 checked bags (+£60)">{{ t.two_checked_bags }} (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})</option>
                 </select>
             </div>
 
             <div class="full-width">
-                <h2>Meal Preference</h2>
-                <label for="meal_choice">Choose your meal</label>
+                <h2>{{ t.meal_preference }}</h2>
+                <label for="meal_choice">{{ t.choose_your_meal }}</label>
                 <select id="meal_choice" name="meal_choice" required>
-                    <option value="Standard Meal">Standard Meal</option>
-                    <option value="Halal Meal">Halal Meal</option>
-                    <option value="Vegetarian Meal">Vegetarian Meal</option>
-                    <option value="Vegan Meal">Vegan Meal</option>
-                    <option value="Gluten-Free Meal">Gluten-Free Meal</option>
-                    <option value="No Meal">No Meal</option>
+                    <option value="Standard Meal">{{ t.standard_meal }}</option>
+                    <option value="Halal Meal">{{ t.halal_meal }}</option>
+                    <option value="Vegetarian Meal">{{ t.vegetarian_meal }}</option>
+                    <option value="Vegan Meal">{{ t.vegan_meal }}</option>
+                    <option value="Gluten-Free Meal">{{ t.gluten_free_meal }}</option>
+                    <option value="No Meal">{{ t.no_meal }}</option>
                 </select>
             </div>
 
             <div class="full-width insurance-section">
-                <h2>Travel Insurance</h2>
-                <p class="section-subtext">Protect your journey with optional travel cover before you pay.</p>
+                <h2>{{ t.travel_insurance }}</h2>
+                <p class="section-subtext">{{ t.insurance_text }}</p>
 
                 <div class="insurance-card">
                     <div class="insurance-top">
                         <div>
-                            <span class="insurance-badge">Recommended</span>
-                            <h3>AirGo Travel Protection</h3>
-                            <p class="insurance-price">Only {{ selected_currency }} {{ convert_price(25, selected_currency) }} per booking</p>
+                            <span class="insurance-badge">{{ t.recommended }}</span>
+                            <h3>{{ t.travel_protection }}</h3>
+                            <p class="insurance-price">{{ t.only_per_booking }} {{ selected_currency }} {{ convert_price(25, selected_currency) }} {{ t.per_booking }}</p>
                         </div>
                     </div>
 
                     <ul class="insurance-benefits">
-                        <li>Flight changes up to 24 hours before departure</li>
-                        <li>Support during delays and travel disruption</li>
-                        <li>Emergency travel assistance when needed</li>
-                        <li>Added flexibility and peace of mind</li>
+                        <li>{{ t.insurance_benefit_1 }}</li>
+                        <li>{{ t.insurance_benefit_2 }}</li>
+                        <li>{{ t.insurance_benefit_3 }}</li>
+                        <li>{{ t.insurance_benefit_4 }}</li>
                     </ul>
 
                     <div class="insurance-options">
                         <label class="insurance-option">
                             <input type="radio" name="insurance" value="Travel Insurance (+£25)" required>
-                            <span>Add Travel Insurance</span>
+                            <span>{{ t.add_travel_insurance }}</span>
                         </label>
 
                         <label class="insurance-option">
                             <input type="radio" name="insurance" value="No Travel Insurance" required>
-                            <span>No, continue without insurance</span>
+                            <span>{{ t.continue_without_insurance }}</span>
                         </label>
                     </div>
                 </div>
             </div>
 
             <div class="full-width">
-                <button type="submit" class="btn">Continue to Seat Selection</button>
+                <button type="submit" class="btn">{{ t.continue_to_seat_selection }}</button>
             </div>
 
         </form>

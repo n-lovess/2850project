@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Seat Selection{% endblock %}
+{% block title %}{{ t.seat_selection_title }}{% endblock %}
 
 {% block content %}
-    <h1>Choose your seat</h1>
-    <p class="subtitle">Pick your preferred cabin area and seat.</p>
+    <h1>{{ t.choose_seat }}</h1>
+    <p class="subtitle">{{ t.choose_seat_subtitle }}</p>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -16,30 +16,31 @@
 
     <div class="card summary-card">
         <h2>{{ flight.airline }}</h2>
-        <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
-        <p><strong>Time:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
-        <p><strong>Class:</strong> {{ flight.class }}</p>
-        <p><strong>Fare:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
+        <p><strong>{{ t.route }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+        <p><strong>{{ t.time }}:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
+        <p><strong>{{ t.class_label }}:</strong> {{ flight.class }}</p>
+        <p><strong>{{ t.fare }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
     </div>
 
     <div class="card seat-page-card">
         <div class="seat-page-layout">
+
             <div class="seat-left-panel">
                 <div class="seat-legend-box">
-                    <h3>Seat prices</h3>
+                    <h3>{{ t.seat_prices }}</h3>
                     <ul class="seat-price-list">
-                        <li><strong>Window Seat</strong> – {{ selected_currency }} {{ convert_price(10, selected_currency) }}</li>
-                        <li><strong>Aisle Seat</strong> – {{ selected_currency }} {{ convert_price(8, selected_currency) }}</li>
-                        <li><strong>Middle Seat</strong> – {{ selected_currency }} {{ convert_price(5, selected_currency) }}</li>
-                        <li><strong>Emergency Exit Seat</strong> – {{ selected_currency }} {{ convert_price(25, selected_currency) }} <span class="small-text">(extra legroom)</span></li>
-                        <li><strong>No Seat Selection</strong> – {{ selected_currency }} {{ convert_price(0, selected_currency) }} <span class="small-text">(seat randomly allocated at check-in)</span></li>
+                        <li><strong>{{ t.window_seat }}</strong> – {{ selected_currency }} {{ convert_price(10, selected_currency) }}</li>
+                        <li><strong>{{ t.aisle_seat }}</strong> – {{ selected_currency }} {{ convert_price(8, selected_currency) }}</li>
+                        <li><strong>{{ t.middle_seat }}</strong> – {{ selected_currency }} {{ convert_price(5, selected_currency) }}</li>
+                        <li><strong>{{ t.exit_seat }}</strong> – {{ selected_currency }} {{ convert_price(25, selected_currency) }} <span class="small-text">({{ t.extra_legroom }})</span></li>
+                        <li><strong>{{ t.no_selection }}</strong> – {{ selected_currency }} {{ convert_price(0, selected_currency) }} <span class="small-text">({{ t.random_seat }})</span></li>
                     </ul>
                 </div>
 
                 <div class="seat-legend-status">
-                    <div class="legend-item"><span class="legend-box available-box"></span> Available</div>
-                    <div class="legend-item"><span class="legend-box unavailable-box"></span> Unavailable</div>
-                    <div class="legend-item"><span class="legend-box selected-box"></span> Selected</div>
+                    <div class="legend-item"><span class="legend-box available-box"></span> {{ t.available }}</div>
+                    <div class="legend-item"><span class="legend-box unavailable-box"></span> {{ t.unavailable }}</div>
+                    <div class="legend-item"><span class="legend-box selected-box"></span> {{ t.selected }}</div>
                 </div>
             </div>
 
@@ -85,13 +86,13 @@
                     {% endfor %}
 
                     <div class="selected-seat-card">
-                        <p><strong>Selected Seat:</strong> <span id="selectedSeatText">None</span></p>
-                        <p><strong>Seat Type:</strong> <span id="selectedSeatType">—</span></p>
-                        <p><strong>Seat Price:</strong> <span id="selectedSeatPrice">—</span></p>
+                        <p><strong>{{ t.selected_seat }}:</strong> <span id="selectedSeatText">{{ t.none }}</span></p>
+                        <p><strong>{{ t.seat_type }}:</strong> <span id="selectedSeatType">—</span></p>
+                        <p><strong>{{ t.seat_price }}:</strong> <span id="selectedSeatPrice">—</span></p>
                     </div>
 
                     <div class="button-group">
-                        <button type="submit" class="btn">Continue to Review Booking</button>
+                        <button type="submit" class="btn">{{ t.continue_review }}</button>
                     </div>
                 </form>
             </div>

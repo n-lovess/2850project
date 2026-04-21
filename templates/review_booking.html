@@ -1,38 +1,38 @@
 {% extends "base.html" %}
 
-{% block title %}Review Booking{% endblock %}
+{% block title %}{{ t.review_title }}{% endblock %}
 
 {% block content %}
-    <h1>Review Your Booking</h1>
-    <p class="subtitle">Please review your flight, passenger details, and selected extras before continuing to payment.</p>
+    <h1>{{ t.review_title }}</h1>
+    <p class="subtitle">{{ t.review_subtitle }}</p>
 
     <div class="card summary-card">
-        <h2>Flight Details</h2>
-        <p><strong>Route:</strong> {{ flight.from }} → {{ flight.to }}</p>
-        <p><strong>Date:</strong> {{ search_data.depart_date }}</p>
-        <p><strong>Departure:</strong> {{ flight.departure_time }}</p>
-        <p><strong>Arrival:</strong> {{ flight.arrival_time }}</p>
-        <p><strong>Class:</strong> {{ flight.class }}</p>
-        <p><strong>Seat:</strong> {{ selected_seat }}</p>
-        <p><strong>Fare:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
+        <h2>{{ t.flight_details }}</h2>
+        <p><strong>{{ t.route }}:</strong> {{ flight.from }} → {{ flight.to }}</p>
+        <p><strong>{{ t.date }}:</strong> {{ search_data.depart_date }}</p>
+        <p><strong>{{ t.departure }}:</strong> {{ flight.departure_time }}</p>
+        <p><strong>{{ t.arrival }}:</strong> {{ flight.arrival_time }}</p>
+        <p><strong>{{ t.class_label }}:</strong> {{ flight.class }}</p>
+        <p><strong>{{ t.seat }}:</strong> {{ selected_seat }}</p>
+        <p><strong>{{ t.fare }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
     </div>
 
     <div class="card">
-        <h2>Selected Extras</h2>
-        <p><strong>Baggage:</strong> {{ extras.get('baggage', 'No extra baggage') }}</p>
-        <p><strong>Meal:</strong> {{ extras.get('meal_choice', 'No Meal') }}</p>
-        <p><strong>Travel Insurance:</strong> {{ extras.get('insurance', 'No Travel Insurance') }}</p>
+        <h2>{{ t.selected_extras }}</h2>
+        <p><strong>{{ t.baggage }}:</strong> {{ extras.get('baggage', t.no_baggage) }}</p>
+        <p><strong>{{ t.meal }}:</strong> {{ extras.get('meal_choice', t.no_meal) }}</p>
+        <p><strong>{{ t.travel_insurance }}:</strong> {{ extras.get('insurance', t.no_insurance) }}</p>
     </div>
 
     <div class="card">
-        <h2>Passenger Details</h2>
-        <p><strong>Name:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
-        <p><strong>Email:</strong> {{ passenger.email }}</p>
-        <p><strong>Passport:</strong> {{ passenger.passport_number }}</p>
+        <h2>{{ t.passenger_details_title }}</h2>
+        <p><strong>{{ t.name }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
+        <p><strong>{{ t.email_address }}:</strong> {{ passenger.email }}</p>
+        <p><strong>{{ t.passport_number }}:</strong> {{ passenger.passport_number }}</p>
     </div>
 
     <div class="button-group">
-        <a href="{{ url_for('seat_selection') }}" class="btn secondary-btn">← Back</a>
-        <a href="{{ url_for('payment') }}" class="btn">Continue to Payment →</a>
+        <a href="{{ url_for('seat_selection') }}" class="btn secondary-btn">← {{ t.back }}</a>
+        <a href="{{ url_for('payment') }}" class="btn">{{ t.continue_payment }} →</a>
     </div>
 {% endblock %}
