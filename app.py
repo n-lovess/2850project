@@ -216,6 +216,7 @@ translations = {
 "class_premium": "Premium Economy",
 "class_business": "Business",
 "class_first": "First",
+"any_class": "Any",
     },
 
     "fr": {
@@ -455,6 +456,7 @@ translations = {
 "class_premium": "Économie Premium",
 "class_business": "Affaires",
 "class_first": "Première",
+"any_class": "Toutes",
 },
 
     "ar": {
@@ -694,6 +696,7 @@ translations = {
 "class_premium": "اقتصادية مميزة",
 "class_business": "رجال الأعمال",
 "class_first": "الأولى",
+"any_class": "الكل",
 }
 }
 def get_translation():

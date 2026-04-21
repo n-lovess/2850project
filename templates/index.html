@@ -77,15 +77,15 @@
             </div>
 
             <div>
-                <label for="ticket_class">{{ t.class_label }}</label>
-                <select id="ticket_class" name="ticket_class">
-                    <option value="Any">Any</option>
-                    <option value="Economy">Economy</option>
-                    <option value="Premium Economy">Premium Economy</option>
-                    <option value="Business">Business</option>
-                    <option value="First">First</option>
-                </select>
-            </div>
+    <label for="ticket_class">{{ t.class_label }}</label>
+    <select id="ticket_class" name="ticket_class">
+        <option value="Any">{{ t.any_class }}</option>
+        <option value="Economy">{{ t.economy }}</option>
+        <option value="Premium Economy">{{ t.premium_economy }}</option>
+        <option value="Business">{{ t.business }}</option>
+        <option value="First">{{ t.first_class }}</option>
+    </select>
+</div>
 
             <div class="full-width">
                 <button type="submit" class="btn">{{ t.search }}</button>
