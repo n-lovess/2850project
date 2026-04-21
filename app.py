@@ -206,6 +206,11 @@ translations = {
 "confirm_new_password": "Confirm New Password",
 "update_password": "Update Password",
 "back_to_login": "Back to login",
+"boarding_pass": "Boarding Pass",
+"boarding_gate": "Gate",
+"boarding_group": "Group",
+"not_assigned": "Not Assigned",
+"print_boarding_pass": "Print Boarding Pass",
     },
 
     "fr": {
@@ -435,6 +440,11 @@ translations = {
 "confirm_new_password": "Confirmer le nouveau mot de passe",
 "update_password": "Mettre à jour le mot de passe",
 "back_to_login": "Retour à la connexion",
+"boarding_pass": "Carte d’embarquement",
+"boarding_gate": "Porte",
+"boarding_group": "Groupe",
+"not_assigned": "Non attribué",
+"print_boarding_pass": "Imprimer la carte",
 },
 
     "ar": {
@@ -664,6 +674,11 @@ translations = {
 "confirm_new_password": "تأكيد كلمة المرور الجديدة",
 "update_password": "تحديث كلمة المرور",
 "back_to_login": "العودة إلى تسجيل الدخول",
+"boarding_pass": "بطاقة الصعود",
+"boarding_gate": "البوابة",
+"boarding_group": "المجموعة",
+"not_assigned": "غير محدد",
+"print_boarding_pass": "طباعة بطاقة الصعود",
 }
 }
 def get_translation():
