@@ -1105,3 +1105,205 @@ textarea:focus {
         height: 200px;
     }
 }
+/* INSURANCE SECTION */
+.insurance-section {
+    margin-top: 6px;
+}
+
+.section-subtext {
+    margin-top: -4px;
+    margin-bottom: 18px;
+    color: #647089;
+    font-size: 15px;
+}
+
+.insurance-card {
+    background: linear-gradient(180deg, #fbfdff 0%, #f4f8ff 100%);
+    border: 1px solid #dbe6fb;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 10px 26px rgba(38, 68, 147, 0.08);
+}
+
+.insurance-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.insurance-badge {
+    display: inline-block;
+    margin-bottom: 12px;
+    background: #edf3ff;
+    color: #264493;
+    border: 1px solid #cbdafb;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.insurance-card h3 {
+    margin-bottom: 8px;
+    font-size: 24px;
+    color: #1f3f8a;
+}
+
+.insurance-price {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: #264493;
+}
+
+.insurance-benefits {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
+}
+
+.insurance-benefits li {
+    position: relative;
+    background: #ffffff;
+    border: 1px solid #e4ebfa;
+    border-radius: 14px;
+    padding: 14px 14px 14px 42px;
+    color: #3f4c67;
+    line-height: 1.45;
+}
+
+.insurance-benefits li::before {
+    content: "✓";
+    position: absolute;
+    left: 14px;
+    top: 13px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #e8f8ed;
+    color: #1f7a3d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.insurance-options {
+    display: grid;
+    gap: 12px;
+}
+
+.insurance-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+    border: 1px solid #dce5f7;
+    border-radius: 14px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.insurance-option:hover {
+    border-color: #bcd0f6;
+    box-shadow: 0 6px 16px rgba(38, 68, 147, 0.08);
+    transform: translateY(-1px);
+}
+
+.insurance-option input[type="radio"] {
+    width: auto;
+    margin: 0;
+}
+
+.insurance-option span {
+    font-weight: 600;
+    color: #243555;
+}
+
+/* ASSISTANCE SECTION */
+.assistance-section {
+    margin-top: 6px;
+}
+
+.assistance-main-check {
+    background: #f7faff;
+    border: 1px solid #dbe6fb;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+
+.assistance-main-check span {
+    font-weight: 700;
+    color: #243555;
+}
+
+.assistance-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.assistance-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #fbfcff;
+    border: 1px solid #dfe7f7;
+    border-radius: 14px;
+    padding: 14px 16px;
+    min-height: 58px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.assistance-option:hover {
+    border-color: #bfd1f6;
+    box-shadow: 0 6px 16px rgba(38, 68, 147, 0.08);
+    transform: translateY(-1px);
+}
+
+.assistance-option input[type="checkbox"] {
+    width: auto;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.assistance-option span {
+    color: #33415f;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.assistance-notes {
+    background: #f8fbff;
+    border: 1px solid #e1e9f9;
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.assistance-notes label {
+    margin-bottom: 10px;
+}
+
+.assistance-notes textarea {
+    min-height: 96px;
+    resize: vertical;
+}
+
+/* RESPONSIVE OVERRIDES FOR INSURANCE + ASSISTANCE */
+@media (max-width: 900px) {
+    .insurance-benefits,
+    .assistance-grid {
+        grid-template-columns: 1fr;
+    }
+}
