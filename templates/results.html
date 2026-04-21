@@ -22,18 +22,17 @@
             <div class="flight-top">
                 <div>
                     <p class="booking-meta">
-                        {{ flight.airline }} •
-                        {% if flight.class == "Economy" %}
-                            {{ t.economy }}
-                        {% elif flight.class == "Premium Economy" %}
-                            {{ t.premium_economy }}
-                        {% elif flight.class == "Business" %}
-                            {{ t.business }}
-                        {% elif flight.class == "First" %}
-                            {{ t.first_class }}
-                        {% else %}
-                            {{ flight.class }}
-                        {% endif %}
+                       {% if flight.class == "Economy" %}
+    {{ t.class_economy }}
+{% elif flight.class == "Premium Economy" %}
+    {{ t.class_premium }}
+{% elif flight.class == "Business" %}
+    {{ t.class_business }}
+{% elif flight.class == "First" %}
+    {{ t.class_first }}
+{% else %}
+    {{ flight.class }}
+{% endif %}
                         • {{ flight.aircraft or "Boeing 737" }}
                     </p>
 
@@ -68,16 +67,16 @@
             <div class="flight-includes-row">
                 <span class="flight-include-pill">
                     {% if flight.class == "Economy" %}
-                        {{ t.economy }}
-                    {% elif flight.class == "Premium Economy" %}
-                        {{ t.premium_economy }}
-                    {% elif flight.class == "Business" %}
-                        {{ t.business }}
-                    {% elif flight.class == "First" %}
-                        {{ t.first_class }}
-                    {% else %}
-                        {{ flight.class }}
-                    {% endif %}
+    {{ t.class_economy }}
+{% elif flight.class == "Premium Economy" %}
+    {{ t.class_premium }}
+{% elif flight.class == "Business" %}
+    {{ t.class_business }}
+{% elif flight.class == "First" %}
+    {{ t.class_first }}
+{% else %}
+    {{ flight.class }}
+{% endif %}
                 </span>
                 <span class="flight-include-pill">{{ t.cabin_bag_included }}</span>
                 <span class="flight-include-pill">{{ t.seat_selection_available }}</span>
