@@ -70,12 +70,31 @@ translations = {
         "phone_number": "Phone Number",
         "passport_number": "Passport Number",
 
+        # BENEFITS
+        "baggage": "Baggage",
+        "meal": "Meal",
+        "seat_selection": "Seat Selection",
+        "lounge": "Lounge",
+        "flexibility": "Flexibility",
+
         # ASSISTANCE
         "assistance_title": "Accessibility & Special Assistance",
         "assistance_text": "This service is provided at no extra cost. Let us know if you need any support during your journey.",
         "assistance_required": "I require special assistance",
         "other_assistance": "Other assistance needs",
         "other_assistance_placeholder": "Please describe any other support you may need",
+
+        # ASSISTANCE OPTIONS
+        "wheelchair_assistance": "Wheelchair assistance",
+        "visual_assistance": "Visual assistance",
+        "hearing_assistance": "Hearing assistance",
+        "pregnancy_support": "Pregnancy support",
+        "travelling_with_infant": "Travelling with infant",
+        "elderly_support": "Elderly passenger support",
+        "medical_assistance": "Medical assistance",
+        "extra_boarding_time": "Extra boarding time",
+        "airport_security_assistance": "Airport/security assistance",
+        "special_seating_request": "Special seating request",
 
         # BUTTONS
         "continue_to_extras": "Continue to Extras"
@@ -121,11 +140,28 @@ translations = {
         "phone_number": "Numéro de téléphone",
         "passport_number": "Numéro de passeport",
 
+        "baggage": "Bagages",
+        "meal": "Repas",
+        "seat_selection": "Sélection du siège",
+        "lounge": "Salon",
+        "flexibility": "Flexibilité",
+
         "assistance_title": "Accessibilité et assistance spéciale",
         "assistance_text": "Ce service est fourni sans frais supplémentaires. Indiquez-nous si vous avez besoin d’une assistance pendant votre voyage.",
         "assistance_required": "J’ai besoin d’une assistance spéciale",
         "other_assistance": "Autres besoins d’assistance",
         "other_assistance_placeholder": "Veuillez décrire toute autre aide dont vous pourriez avoir besoin",
+
+        "wheelchair_assistance": "Assistance fauteuil roulant",
+        "visual_assistance": "Assistance visuelle",
+        "hearing_assistance": "Assistance auditive",
+        "pregnancy_support": "Assistance grossesse",
+        "travelling_with_infant": "Voyage avec un nourrisson",
+        "elderly_support": "Assistance passager âgé",
+        "medical_assistance": "Assistance médicale",
+        "extra_boarding_time": "Temps d’embarquement supplémentaire",
+        "airport_security_assistance": "Assistance aéroport/sécurité",
+        "special_seating_request": "Demande de siège spécial",
 
         "continue_to_extras": "Continuer vers les extras"
     },
@@ -170,11 +206,28 @@ translations = {
         "phone_number": "رقم الهاتف",
         "passport_number": "رقم جواز السفر",
 
+        "baggage": "الأمتعة",
+        "meal": "الوجبة",
+        "seat_selection": "اختيار المقعد",
+        "lounge": "الصالة",
+        "flexibility": "المرونة",
+
         "assistance_title": "إمكانية الوصول والمساعدة الخاصة",
         "assistance_text": "يتم تقديم هذه الخدمة دون تكلفة إضافية. أخبرنا إذا كنت بحاجة إلى أي دعم أثناء رحلتك.",
         "assistance_required": "أحتاج إلى مساعدة خاصة",
         "other_assistance": "احتياجات مساعدة أخرى",
         "other_assistance_placeholder": "يرجى وصف أي دعم آخر قد تحتاجه",
+
+        "wheelchair_assistance": "مساعدة الكرسي المتحرك",
+        "visual_assistance": "مساعدة بصرية",
+        "hearing_assistance": "مساعدة سمعية",
+        "pregnancy_support": "دعم الحمل",
+        "travelling_with_infant": "السفر مع رضيع",
+        "elderly_support": "دعم المسافر المسن",
+        "medical_assistance": "مساعدة طبية",
+        "extra_boarding_time": "وقت إضافي للصعود",
+        "airport_security_assistance": "مساعدة المطار/الأمن",
+        "special_seating_request": "طلب مقعد خاص",
 
         "continue_to_extras": "المتابعة إلى الإضافات"
     }

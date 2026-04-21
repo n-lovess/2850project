@@ -4,7 +4,7 @@
 
 {% block content %}
     <h1>{{ t.welcome }}</h1>
-<p class="subtitle">{{ t.subtitle }}</p>
+    <p class="subtitle">{{ t.subtitle }}</p>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -19,21 +19,21 @@
             <div class="full-width">
                 <label for="trip_type">{{ t.trip_type }}</label>
                 <select id="trip_type" name="trip_type" onchange="toggleTripType()" required>
-                    <option value="return">Return</option>
-                    <option value="one_way">One Way</option>
-                    <option value="multi_city">Multi City</option>
+                    <option value="return">{{ t.return_trip }}</option>
+                    <option value="one_way">{{ t.one_way }}</option>
+                    <option value="multi_city">{{ t.multi_city }}</option>
                 </select>
             </div>
 
             <div class="airport-suggestions">
-               <label for="departure">{{ t.from_label }}</label>
-                <input type="text" id="departure" name="departure"placeholder="{{ t.example_departure }}"  required>
+                <label for="departure">{{ t.from_label }}</label>
+                <input type="text" id="departure" name="departure" placeholder="{{ t.example_departure }}" required>
                 <div id="departure-suggestions" class="suggestions-list"></div>
             </div>
 
             <div class="airport-suggestions">
                 <label for="destination">{{ t.to_label }}</label>
-                <input type="text" id="destination" name="destination" placeholder="e.g. Paris or CDG" required>
+                <input type="text" id="destination" name="destination" placeholder="{{ t.example_departure }}" required>
                 <div id="destination-suggestions" class="suggestions-list"></div>
             </div>
 
@@ -43,28 +43,28 @@
             </div>
 
             <div id="return-date-group">
-                <label for="return_date">{{ t.return_date }}</label><label for="passengers">Passengers</label>
+                <label for="return_date">{{ t.return_date }}</label>
                 <input type="date" id="return_date" name="return_date" min="{{ today }}">
             </div>
 
             <div id="multi-city-fields" class="full-width" style="display: none;">
                 <div class="multi-city-box">
-                    <h3>Second Flight</h3>
+                    <h3>{{ t.second_flight }}</h3>
                     <div class="form-grid">
                         <div class="airport-suggestions">
-                            <label for="departure_2">From</label>
-                            <input type="text" id="departure_2" name="departure_2" placeholder="e.g. Paris or CDG">
+                            <label for="departure_2">{{ t.from_label }}</label>
+                            <input type="text" id="departure_2" name="departure_2" placeholder="{{ t.example_departure }}">
                             <div id="departure-2-suggestions" class="suggestions-list"></div>
                         </div>
 
                         <div class="airport-suggestions">
-                            <label for="destination_2">To</label>
-                            <input type="text" id="destination_2" name="destination_2" placeholder="e.g. Dubai or DXB">
+                            <label for="destination_2">{{ t.to_label }}</label>
+                            <input type="text" id="destination_2" name="destination_2" placeholder="{{ t.example_departure }}">
                             <div id="destination-2-suggestions" class="suggestions-list"></div>
                         </div>
 
                         <div>
-                            <label for="depart_date_2">Departure Date</label>
+                            <label for="depart_date_2">{{ t.departure_date }}</label>
                             <input type="date" id="depart_date_2" name="depart_date_2" min="{{ today }}">
                         </div>
                     </div>
@@ -92,14 +92,15 @@
             </div>
         </form>
     </div>
-        <section class="popular-destinations-section" aria-labelledby="popular-destinations-heading">
+
+    <section class="popular-destinations-section" aria-labelledby="popular-destinations-heading">
         <div class="popular-destinations-header">
             <div>
                 <p class="popular-destinations-eyebrow">{{ t.popular_routes }}</p>
                 <h2 id="popular-destinations-heading">{{ t.explore_destinations }}</h2>
                 <p class="popular-destinations-text">
-    {{ t.choose_destination }}
-</p>
+                    {{ t.choose_destination }}
+                </p>
             </div>
         </div>
 
@@ -126,7 +127,7 @@
                 <div class="destination-card-content">
                     <div>
                         <h3>Leeds</h3>
-                        <p>United Kingdom</p>
+                        <p>{{ t.uk }}</p>
                     </div>
                     <span class="destination-code">LBA</span>
                 </div>
@@ -140,7 +141,7 @@
                 <div class="destination-card-content">
                     <div>
                         <h3>New York</h3>
-                        <p>United States</p>
+                        <p>{{ t.usa }}</p>
                     </div>
                     <span class="destination-code">JFK</span>
                 </div>
@@ -246,7 +247,7 @@
         });
     }
 
-          document.addEventListener("click", function (event) {
+    document.addEventListener("click", function (event) {
         const allSuggestionLists = document.querySelectorAll(".suggestions-list");
 
         allSuggestionLists.forEach((list) => {
