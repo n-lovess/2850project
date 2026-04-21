@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Available Flights{% endblock %}
+{% block title %}{{ t.available_flights }}{% endblock %}
 
 {% block content %}
-    <h1>Available Flights</h1>
+    <h1>{{ t.available_flights }}</h1>
     <p class="subtitle">
-        {{ search_data.departure }} to {{ search_data.destination }}
-        {% if search_data.depart_date %} on {{ search_data.depart_date }}{% endif %}
+        {{ search_data.departure }} {{ t.to_connector }} {{ search_data.destination }}
+        {% if search_data.depart_date %} {{ t.on_date }} {{ search_data.depart_date }}{% endif %}
     </p>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -22,20 +22,33 @@
             <div class="flight-top">
                 <div>
                     <p class="booking-meta">
-    {{ flight.airline }} • {{ flight.class }} • {{ flight.aircraft or "Boeing 737" }}
-</p>
+                        {{ flight.airline }} •
+                        {% if flight.class == "Economy" %}
+                            {{ t.economy }}
+                        {% elif flight.class == "Premium Economy" %}
+                            {{ t.premium_economy }}
+                        {% elif flight.class == "Business" %}
+                            {{ t.business }}
+                        {% elif flight.class == "First" %}
+                            {{ t.first_class }}
+                        {% else %}
+                            {{ flight.class }}
+                        {% endif %}
+                        • {{ flight.aircraft or "Boeing 737" }}
+                    </p>
+
                     <h2>{{ flight.from_city }} ({{ flight.from_code }}) → {{ flight.to_city }} ({{ flight.to_code }})</h2>
                     <p class="route-detail">{{ flight.from }} → {{ flight.to }}</p>
                 </div>
 
                 <div class="price-box">
-                    <div class="price-label">From</div>
+                    <div class="price-label">{{ t.from_price }}</div>
                     <div class="price-value">{{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</div>
-                    <div class="small-text">{{ flight.seats_left }} seats left</div>
+                    <div class="small-text">{{ flight.seats_left }} {{ t.seats_left }}</div>
                 </div>
             </div>
 
-                <div class="flight-middle compact-flight-middle">
+            <div class="flight-middle compact-flight-middle">
                 <div class="time-block">
                     <div class="time-value">{{ flight.departure_time }}</div>
                     <div class="small-text">{{ flight.from_code }}</div>
@@ -43,7 +56,7 @@
 
                 <div class="flight-center-info compact-center-info">
                     <div class="flight-line">✈</div>
-                    <div class="flight-stops">Direct flight</div>
+                    <div class="flight-stops">{{ t.direct_flight }}</div>
                 </div>
 
                 <div class="time-block">
@@ -51,18 +64,32 @@
                     <div class="small-text">{{ flight.to_code }}</div>
                 </div>
             </div>
-                <div class="flight-includes-row">
-                <span class="flight-include-pill">{{ flight.class }}</span>
-                <span class="flight-include-pill">Cabin bag included</span>
-                <span class="flight-include-pill">Seat selection available</span>
+
+            <div class="flight-includes-row">
+                <span class="flight-include-pill">
+                    {% if flight.class == "Economy" %}
+                        {{ t.economy }}
+                    {% elif flight.class == "Premium Economy" %}
+                        {{ t.premium_economy }}
+                    {% elif flight.class == "Business" %}
+                        {{ t.business }}
+                    {% elif flight.class == "First" %}
+                        {{ t.first_class }}
+                    {% else %}
+                        {{ flight.class }}
+                    {% endif %}
+                </span>
+                <span class="flight-include-pill">{{ t.cabin_bag_included }}</span>
+                <span class="flight-include-pill">{{ t.seat_selection_available }}</span>
             </div>
+
             <div class="flight-actions-row">
-                <a href="{{ url_for('passenger_details', flight_id=flight.id) }}" class="btn">Select Flight</a>
+                <a href="{{ url_for('passenger_details', flight_id=flight.id) }}" class="btn">{{ t.select_flight }}</a>
             </div>
         </div>
     {% endfor %}
 
     <div class="back-link">
-        <a href="{{ url_for('home') }}">← Back to Search</a>
+        <a href="{{ url_for('home') }}">← {{ t.back_to_search }}</a>
     </div>
 {% endblock %}
