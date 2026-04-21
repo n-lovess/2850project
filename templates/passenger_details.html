@@ -15,21 +15,113 @@
 
     <div class="card summary-card">
         <h2>{{ t.selected_flight }}</h2>
-        <p><strong>Airline:</strong> {{ flight.airline }}</p>
-        <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
-        <p><strong>Time:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
-        <p><strong>{{ t.class_label }}:</strong> {{ flight.class }}</p>
-        <p><strong>Price:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
+        <p><strong>{{ t.airline_label }}:</strong> {{ flight.airline }}</p>
+        <p><strong>{{ t.route }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+        <p><strong>{{ t.time }}:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
+        <p>
+            <strong>{{ t.class_label }}:</strong>
+            {% if flight.class == "Economy" %}
+                {{ t.economy }}
+            {% elif flight.class == "Premium Economy" %}
+                {{ t.premium_economy }}
+            {% elif flight.class == "Business" %}
+                {{ t.business }}
+            {% elif flight.class == "First" %}
+                {{ t.first_class }}
+            {% else %}
+                {{ flight.class }}
+            {% endif %}
+        </p>
+        <p><strong>{{ t.price_label }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
     </div>
 
     <div class="card benefits-box">
-        <h2>{{ t.whats_included }} {{ flight.class }}</h2>
+        <h2>
+            {{ t.whats_included }}
+            {% if flight.class == "Economy" %}
+                {{ t.economy }}
+            {% elif flight.class == "Premium Economy" %}
+                {{ t.premium_economy }}
+            {% elif flight.class == "Business" %}
+                {{ t.business }}
+            {% elif flight.class == "First" %}
+                {{ t.first_class }}
+            {% else %}
+                {{ flight.class }}
+            {% endif %}
+        </h2>
+
         <ul class="benefits-list">
-            <li><strong>{{ t.baggage }}:</strong> {{ benefits.baggage }}</li>
-            <li><strong>{{ t.meal }}:</strong> {{ benefits.meal }}</li>
-            <li><strong>{{ t.seat_selection }}:</strong> {{ benefits.seat_selection }}</li>
-            <li><strong>{{ t.lounge }}:</strong> {{ benefits.lounge }}</li>
-            <li><strong>{{ t.flexibility }}:</strong> {{ benefits.flexibility }}</li>
+            <li>
+                <strong>{{ t.baggage }}:</strong>
+                {% if benefits.baggage == "1 cabin bag" %}
+                    {{ t.benefit_cabin_bag_1 }}
+                {% elif benefits.baggage == "1 cabin bag + 1 checked bag" %}
+                    {{ t.benefit_cabin_bag_checked_1 }}
+                {% elif benefits.baggage == "2 checked bags + 1 cabin bag" %}
+                    {{ t.benefit_checked_bags_2_cabin_1 }}
+                {% elif benefits.baggage == "3 checked bags + 2 cabin bags" %}
+                    {{ t.benefit_checked_bags_3_cabin_2 }}
+                {% else %}
+                    {{ benefits.baggage }}
+                {% endif %}
+            </li>
+
+            <li>
+                <strong>{{ t.meal }}:</strong>
+                {% if benefits.meal == "Standard meal" %}
+                    {{ t.benefit_standard_meal }}
+                {% elif benefits.meal == "Premium meal" %}
+                    {{ t.benefit_premium_meal }}
+                {% elif benefits.meal == "Business class dining" %}
+                    {{ t.benefit_business_dining }}
+                {% elif benefits.meal == "First class dining" %}
+                    {{ t.benefit_first_dining }}
+                {% else %}
+                    {{ benefits.meal }}
+                {% endif %}
+            </li>
+
+            <li>
+                <strong>{{ t.seat_selection }}:</strong>
+                {% if benefits.seat_selection == "Standard seat selection" %}
+                    {{ t.benefit_standard_seat_selection }}
+                {% elif benefits.seat_selection == "Included" %}
+                    {{ t.benefit_included }}
+                {% elif benefits.seat_selection == "Priority seat selection" %}
+                    {{ t.benefit_priority_seat_selection }}
+                {% elif benefits.seat_selection == "Luxury suite selection" %}
+                    {{ t.benefit_luxury_suite_selection }}
+                {% else %}
+                    {{ benefits.seat_selection }}
+                {% endif %}
+            </li>
+
+            <li>
+                <strong>{{ t.lounge }}:</strong>
+                {% if benefits.lounge == "Not included" %}
+                    {{ t.benefit_not_included }}
+                {% elif benefits.lounge == "Included" %}
+                    {{ t.benefit_included }}
+                {% else %}
+                    {{ benefits.lounge }}
+                {% endif %}
+            </li>
+
+            <li>
+                <strong>{{ t.flexibility }}:</strong>
+                {% if benefits.flexibility == "Low flexibility" %}
+                    {{ t.benefit_low_flexibility }}
+                {% elif benefits.flexibility == "Medium flexibility" %}
+                    {{ t.benefit_medium_flexibility }}
+                {% elif benefits.flexibility == "High flexibility" %}
+                    {{ t.benefit_high_flexibility }}
+                {% elif benefits.flexibility == "Maximum flexibility" %}
+                    {{ t.benefit_maximum_flexibility }}
+                {% else %}
+                    {{ benefits.flexibility }}
+                {% endif %}
+            </li>
         </ul>
     </div>
 

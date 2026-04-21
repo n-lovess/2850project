@@ -217,6 +217,35 @@ translations = {
 "class_business": "Business",
 "class_first": "First",
 "any_class": "Any",
+"class_economy": "Economy",
+"class_premium": "Premium Economy",
+"class_business": "Business",
+"class_first": "First",
+
+"benefit_cabin_bag_1": "1 cabin bag",
+"benefit_cabin_bag_checked_1": "1 cabin bag + 1 checked bag",
+"benefit_checked_bags_2_cabin_1": "2 checked bags + 1 cabin bag",
+"benefit_checked_bags_3_cabin_2": "3 checked bags + 2 cabin bags",
+
+"benefit_standard_meal": "Standard meal",
+"benefit_premium_meal": "Premium meal",
+"benefit_business_dining": "Business class dining",
+"benefit_first_dining": "First class dining",
+
+"benefit_standard_seat_selection": "Standard seat selection",
+"benefit_included": "Included",
+"benefit_priority_seat_selection": "Priority seat selection",
+"benefit_luxury_suite_selection": "Luxury suite selection",
+
+"benefit_not_included": "Not included",
+
+"benefit_low_flexibility": "Low flexibility",
+"benefit_medium_flexibility": "Medium flexibility",
+"benefit_high_flexibility": "High flexibility",
+"benefit_maximum_flexibility": "Maximum flexibility",
+
+"price_label": "Price",
+"airline_label": "Airline",
     },
 
     "fr": {
@@ -457,6 +486,35 @@ translations = {
 "class_business": "Affaires",
 "class_first": "Première",
 "any_class": "Toutes",
+"class_economy": "Économie",
+"class_premium": "Économie Premium",
+"class_business": "Affaires",
+"class_first": "Première",
+
+"benefit_cabin_bag_1": "1 bagage cabine",
+"benefit_cabin_bag_checked_1": "1 bagage cabine + 1 bagage en soute",
+"benefit_checked_bags_2_cabin_1": "2 bagages en soute + 1 bagage cabine",
+"benefit_checked_bags_3_cabin_2": "3 bagages en soute + 2 bagages cabine",
+
+"benefit_standard_meal": "Repas standard",
+"benefit_premium_meal": "Repas premium",
+"benefit_business_dining": "Restauration en classe affaires",
+"benefit_first_dining": "Restauration en première classe",
+
+"benefit_standard_seat_selection": "Sélection standard du siège",
+"benefit_included": "Inclus",
+"benefit_priority_seat_selection": "Sélection prioritaire du siège",
+"benefit_luxury_suite_selection": "Sélection de suite de luxe",
+
+"benefit_not_included": "Non inclus",
+
+"benefit_low_flexibility": "Faible flexibilité",
+"benefit_medium_flexibility": "Flexibilité moyenne",
+"benefit_high_flexibility": "Grande flexibilité",
+"benefit_maximum_flexibility": "Flexibilité maximale",
+
+"price_label": "Prix",
+"airline_label": "Compagnie",
 },
 
     "ar": {
@@ -697,6 +755,35 @@ translations = {
 "class_business": "رجال الأعمال",
 "class_first": "الأولى",
 "any_class": "الكل",
+"class_economy": "اقتصادية",
+"class_premium": "اقتصادية مميزة",
+"class_business": "رجال الأعمال",
+"class_first": "الأولى",
+
+"benefit_cabin_bag_1": "حقيبة مقصورة واحدة",
+"benefit_cabin_bag_checked_1": "حقيبة مقصورة واحدة + حقيبة مسجلة واحدة",
+"benefit_checked_bags_2_cabin_1": "حقيبتان مسجلتان + حقيبة مقصورة واحدة",
+"benefit_checked_bags_3_cabin_2": "3 حقائب مسجلة + حقيبتا مقصورة",
+
+"benefit_standard_meal": "وجبة عادية",
+"benefit_premium_meal": "وجبة مميزة",
+"benefit_business_dining": "وجبات درجة رجال الأعمال",
+"benefit_first_dining": "وجبات الدرجة الأولى",
+
+"benefit_standard_seat_selection": "اختيار مقعد عادي",
+"benefit_included": "مشمول",
+"benefit_priority_seat_selection": "اختيار مقعد بأولوية",
+"benefit_luxury_suite_selection": "اختيار جناح فاخر",
+
+"benefit_not_included": "غير مشمول",
+
+"benefit_low_flexibility": "مرونة منخفضة",
+"benefit_medium_flexibility": "مرونة متوسطة",
+"benefit_high_flexibility": "مرونة عالية",
+"benefit_maximum_flexibility": "أقصى مرونة",
+
+"price_label": "السعر",
+"airline_label": "شركة الطيران",
 }
 }
 def get_translation():
