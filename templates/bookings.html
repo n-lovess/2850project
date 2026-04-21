@@ -26,7 +26,21 @@
 {% if bookings %}
     {% for booking in bookings %}
     <div class="card manage-card">
-        <p class="booking-meta">{{ booking.airline }} • {{ booking.ticket_class }} • {{ booking.trip_type|replace("_", " ")|title }}</p>
+        <p class="booking-meta">
+    {{ booking.airline }} •
+    {% if booking.ticket_class == "Economy" %}
+        {{ t.class_economy }}
+    {% elif booking.ticket_class == "Premium Economy" %}
+        {{ t.class_premium }}
+    {% elif booking.ticket_class == "Business" %}
+        {{ t.class_business }}
+    {% elif booking.ticket_class == "First" %}
+        {{ t.class_first }}
+    {% else %}
+        {{ booking.ticket_class }}
+    {% endif %}
+    • {{ booking.trip_type|replace("_", " ")|title }}
+</p>
 
         <h2>{{ booking.departure_city }} → {{ booking.destination_city }}</h2>
 

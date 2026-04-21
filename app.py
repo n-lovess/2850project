@@ -211,6 +211,11 @@ translations = {
 "boarding_group": "Group",
 "not_assigned": "Not Assigned",
 "print_boarding_pass": "Print Boarding Pass",
+"no_exact_matches": "No exact matches found. Showing sample flights instead.",
+"class_economy": "Economy",
+"class_premium": "Premium Economy",
+"class_business": "Business",
+"class_first": "First",
     },
 
     "fr": {
@@ -445,6 +450,11 @@ translations = {
 "boarding_group": "Groupe",
 "not_assigned": "Non attribué",
 "print_boarding_pass": "Imprimer la carte",
+"no_exact_matches": "Aucune correspondance exacte trouvée. Affichage des vols d’exemple à la place.",
+"class_economy": "Économie",
+"class_premium": "Économie Premium",
+"class_business": "Affaires",
+"class_first": "Première",
 },
 
     "ar": {
@@ -679,6 +689,11 @@ translations = {
 "boarding_group": "المجموعة",
 "not_assigned": "غير محدد",
 "print_boarding_pass": "طباعة بطاقة الصعود",
+"no_exact_matches": "لم يتم العثور على نتائج مطابقة تمامًا. يتم عرض رحلات تجريبية بدلًا من ذلك.",
+"class_economy": "اقتصادية",
+"class_premium": "اقتصادية مميزة",
+"class_business": "رجال الأعمال",
+"class_first": "الأولى",
 }
 }
 def get_translation():
@@ -1529,7 +1544,7 @@ def results():
         }
 
         if not matching_flights:
-            flash("No exact matches found. Showing sample flights instead.", "info")
+            flash(get_translation()["no_exact_matches"], "info")
             matching_flights = SAMPLE_FLIGHTS
 
         session["search_data"] = search_data

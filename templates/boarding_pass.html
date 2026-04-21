@@ -19,7 +19,19 @@
 
             <div class="col-md-6">
                 <p><strong>{{ t.seat }}:</strong> {{ booking.seat }}</p>
-                <p><strong>{{ t.ticket_class_label }}:</strong> {{ booking.ticket_class }}</p>
+                <p><strong>{{ t.ticket_class_label }}:</strong>
+    {% if booking.ticket_class == "Economy" %}
+        {{ t.class_economy }}
+    {% elif booking.ticket_class == "Premium Economy" %}
+        {{ t.class_premium }}
+    {% elif booking.ticket_class == "Business" %}
+        {{ t.class_business }}
+    {% elif booking.ticket_class == "First" %}
+        {{ t.class_first }}
+    {% else %}
+        {{ booking.ticket_class }}
+    {% endif %}
+</p>
                 <p><strong>{{ t.boarding_gate }}:</strong> {{ booking.gate or t.not_assigned }}</p>
                 <p><strong>{{ t.boarding_group }}:</strong> {{ booking.group or t.not_assigned }}</p>
                 <p><strong>{{ t.booking_reference }}:</strong> {{ booking.booking_reference }}</p>

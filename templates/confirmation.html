@@ -19,7 +19,19 @@
     <p><strong>{{ t.route }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
     <p><strong>{{ t.departure_time_label }}:</strong> {{ flight.departure_time }}</p>
     <p><strong>{{ t.arrival_time_label }}:</strong> {{ flight.arrival_time }}</p>
-    <p><strong>{{ t.ticket_class_label }}:</strong> {{ flight.class }}</p>
+    <p><strong>{{ t.ticket_class_label }}:</strong>
+    {% if flight.class == "Economy" %}
+        {{ t.class_economy }}
+    {% elif flight.class == "Premium Economy" %}
+        {{ t.class_premium }}
+    {% elif flight.class == "Business" %}
+        {{ t.class_business }}
+    {% elif flight.class == "First" %}
+        {{ t.class_first }}
+    {% else %}
+        {{ flight.class }}
+    {% endif %}
+</p>
     <p><strong>{{ t.meal }}:</strong> {{ passenger.meal_choice or extras.meal_choice if extras is defined else '' }}</p>
     <p><strong>{{ t.seat }}:</strong> {{ selected_seat }}</p>
     <p><strong>{{ t.total_paid }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
