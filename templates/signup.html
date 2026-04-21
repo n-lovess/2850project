@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Sign Up - AirGo{% endblock %}
+{% block title %}{{ t.signup }} - AirGo{% endblock %}
 
 {% block content %}
     <div class="narrow-container">
         <div class="card auth-card">
-            <h1>Create Account</h1>
+            <h1>{{ t.create_account }}</h1>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -16,19 +16,22 @@
             {% endwith %}
 
             <form method="POST" class="auth-form">
-                <label for="full_name">Full Name</label>
+                <label for="full_name">{{ t.full_name }}</label>
                 <input type="text" id="full_name" name="full_name" required>
 
-                <label for="email">Email Address</label>
+                <label for="email">{{ t.email_address }}</label>
                 <input type="email" id="email" name="email" required>
 
-                <label for="password">Password</label>
+                <label for="password">{{ t.password }}</label>
                 <input type="password" id="password" name="password" required>
 
-                <button type="submit" class="btn full-btn">Create Account</button>
+                <button type="submit" class="btn full-btn">{{ t.create_account }}</button>
             </form>
 
-            <p class="auth-switch">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+            <p class="auth-switch">
+                {{ t.already_account }}
+                <a href="{{ url_for('login') }}">{{ t.login }}</a>
+            </p>
         </div>
     </div>
 {% endblock %}

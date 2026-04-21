@@ -196,6 +196,9 @@ translations = {
 "no_account": "Don’t have an account?",
 "create_one": "Create one",
 "forgot_password": "Forgot password?",
+"create_account": "Create Account",
+"full_name": "Full Name",
+"already_account": "Already have an account?",
     },
 
     "fr": {
@@ -415,6 +418,9 @@ translations = {
 "no_account": "Vous n’avez pas de compte ?",
 "create_one": "Créer un compte",
 "forgot_password": "Mot de passe oublié ?",
+"create_account": "Créer un compte",
+"full_name": "Nom complet",
+"already_account": "Vous avez déjà un compte ?",
 },
 
     "ar": {
@@ -634,6 +640,9 @@ translations = {
 "no_account": "ليس لديك حساب؟",
 "create_one": "أنشئ حسابًا",
 "forgot_password": "هل نسيت كلمة المرور؟",
+"create_account": "إنشاء حساب",
+"full_name": "الاسم الكامل",
+"already_account": "هل لديك حساب بالفعل؟",
 }
 }
 def get_translation():
