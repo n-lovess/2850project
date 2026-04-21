@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Payment{% endblock %}
+{% block title %}{{ t.payment_title }}{% endblock %}
 
 {% block content %}
-    <h1>Payment</h1>
+    <h1>{{ t.payment_title }}</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -14,45 +14,45 @@
     {% endwith %}
 
     <div class="card">
-        <h2>Fare Details</h2>
+        <h2>{{ t.fare_details }}</h2>
 
-        <p><strong>Fare:</strong> {{ selected_currency }} {{ convert_price(base_fare, selected_currency) }} <span class="small-text">(includes taxes & fees)</span></p>
-        <p><strong>Baggage:</strong> {{ selected_currency }} {{ convert_price(baggage_price, selected_currency) }}</p>
-        <p><strong>Travel Insurance:</strong> {{ selected_currency }} {{ convert_price(insurance_price, selected_currency) }}</p>
+        <p><strong>{{ t.fare }}:</strong> {{ selected_currency }} {{ convert_price(base_fare, selected_currency) }} <span class="small-text">({{ t.includes_taxes }})</span></p>
+        <p><strong>{{ t.baggage }}:</strong> {{ selected_currency }} {{ convert_price(baggage_price, selected_currency) }}</p>
+        <p><strong>{{ t.travel_insurance }}:</strong> {{ selected_currency }} {{ convert_price(insurance_price, selected_currency) }}</p>
 
         <hr>
 
         <p style="font-size: 18px; font-weight: bold;">
-            Total: {{ selected_currency }} {{ convert_price(total_price, selected_currency) }}
+            {{ t.total }}: {{ selected_currency }} {{ convert_price(total_price, selected_currency) }}
         </p>
     </div>
 
     <div class="card summary-card">
-        <h2>Booking Summary</h2>
-        <p><strong>Passenger:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
-        <p><strong>Email:</strong> {{ passenger.email }}</p>
-        <p><strong>Flight:</strong> {{ flight.airline }}</p>
-        <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
-        <p><strong>Class:</strong> {{ flight.class }}</p>
-        <p><strong>Meal:</strong> {{ extras.get('meal_choice', 'No Meal') }}</p>
-        <p><strong>Seat:</strong> {{ selected_seat }}</p>
-        <p><strong>Fare:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
+        <h2>{{ t.booking_summary }}</h2>
+        <p><strong>{{ t.passenger_label }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
+        <p><strong>{{ t.email_address }}:</strong> {{ passenger.email }}</p>
+        <p><strong>{{ t.flight_label }}:</strong> {{ flight.airline }}</p>
+        <p><strong>{{ t.route }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+        <p><strong>{{ t.class_label }}:</strong> {{ flight.class }}</p>
+        <p><strong>{{ t.meal }}:</strong> {{ extras.get('meal_choice', t.no_meal) }}</p>
+        <p><strong>{{ t.seat }}:</strong> {{ selected_seat }}</p>
+        <p><strong>{{ t.fare }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
     </div>
 
     <div class="card">
         <form method="POST" class="form-grid">
             <div class="full-width">
-                <label for="card_name">Name on Card</label>
+                <label for="card_name">{{ t.name_on_card }}</label>
                 <input type="text" id="card_name" name="card_name" required>
             </div>
 
             <div class="full-width">
-                <label for="card_number">Card Number</label>
+                <label for="card_number">{{ t.card_number }}</label>
                 <input type="text" id="card_number" name="card_number" maxlength="16" required>
             </div>
 
             <div>
-                <label for="expiry_date">Expiry Date</label>
+                <label for="expiry_date">{{ t.expiry_date }}</label>
                 <input type="month" id="expiry_date" name="expiry_date" required>
             </div>
 
@@ -65,21 +65,21 @@
                 <div class="checkbox-row">
                     <input type="checkbox" id="accept_terms" name="accept_terms" required>
                     <label for="accept_terms">
-                        I agree to the
-                        <button type="button" class="terms-link-btn" onclick="openTermsModal()">Terms & Conditions</button>
+                        {{ t.agree_terms_1 }}
+                        <button type="button" class="terms-link-btn" onclick="openTermsModal()">{{ t.terms_conditions }}</button>
                     </label>
                 </div>
 
                 <div class="checkbox-row">
                     <input type="checkbox" id="subscribe_offers" name="subscribe_offers">
                     <label for="subscribe_offers">
-                        I would like to receive offers and updates
+                        {{ t.receive_offers }}
                     </label>
                 </div>
             </div>
 
             <div class="full-width">
-                <button type="submit" class="btn">Complete Booking</button>
+                <button type="submit" class="btn">{{ t.complete_booking }}</button>
             </div>
         </form>
     </div>
@@ -87,25 +87,25 @@
     <div id="termsModal" class="terms-modal">
         <div class="terms-modal-content">
             <span class="close-modal" onclick="closeTermsModal()">&times;</span>
-            <h2>Terms & Conditions</h2>
+            <h2>{{ t.terms_conditions }}</h2>
 
-            <h3>Booking Terms</h3>
-            <p>By completing a booking with AirGo, you confirm that all passenger details provided are accurate and complete.</p>
+            <h3>{{ t.booking_terms }}</h3>
+            <p>{{ t.booking_terms_text }}</p>
 
-            <h3>Payments</h3>
-            <p>All payments must be completed in full before a booking is confirmed. Prices shown at checkout include the selected flight and chosen extras.</p>
+            <h3>{{ t.payments }}</h3>
+            <p>{{ t.payments_text }}</p>
 
-            <h3>Changes and Cancellations</h3>
-            <p>Changes and cancellations are subject to the fare type and airline policy. Additional fees may apply depending on the request.</p>
+            <h3>{{ t.changes_cancellations }}</h3>
+            <p>{{ t.changes_cancellations_text }}</p>
 
-            <h3>Passenger Responsibility</h3>
-            <p>Passengers are responsible for ensuring they have valid travel documents, including passports, visas, and any required identification.</p>
+            <h3>{{ t.passenger_responsibility }}</h3>
+            <p>{{ t.passenger_responsibility_text }}</p>
 
-            <h3>Special Requests</h3>
-            <p>Requests such as meal preferences, assistance, and baggage selections will be recorded, but some services remain subject to availability.</p>
+            <h3>{{ t.special_requests }}</h3>
+            <p>{{ t.special_requests_text }}</p>
 
-            <h3>Notifications and Offers</h3>
-            <p>If you choose to receive updates and promotions, AirGo may contact you by email with booking updates, offers, and service information.</p>
+            <h3>{{ t.notifications_offers }}</h3>
+            <p>{{ t.notifications_offers_text }}</p>
         </div>
     </div>
 {% endblock %}
