@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ session.get('lang', 'en') }}" dir="{{ 'rtl' if session.get('lang') == 'ar' else 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,8 +12,21 @@
             <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
 
             <div class="nav-links">
-                <a href="{{ url_for('home') }}">Search Flights</a>
-
+                <a href="{{ url_for('home') }}">{{ t.search }}</a>
+                <div class="language-switch">
+    <a href="{{ url_for('set_language', lang='en') }}"
+       class="{% if session.get('lang', 'en') == 'en' %}active{% endif %}">
+       EN
+    </a>
+    <a href="{{ url_for('set_language', lang='fr') }}"
+       class="{% if session.get('lang') == 'fr' %}active{% endif %}">
+       FR
+    </a>
+    <a href="{{ url_for('set_language', lang='ar') }}"
+       class="{% if session.get('lang') == 'ar' %}active{% endif %}">
+       AR
+    </a>
+</div>
                 <div class="currency-wrapper">
                     <button type="button" class="currency-toggle" onclick="toggleCurrencyDropdown()">
                         {{ selected_currency }} ▾
@@ -24,7 +37,7 @@
                             type="text"
                             id="currencySearch"
                             class="currency-search"
-                            placeholder="Search currency..."
+                            placeholder="{{ t.search_currency }}"
                         >
 
                         <form action="{{ url_for('set_currency') }}" method="POST">
@@ -49,16 +62,16 @@
                     </div>
                 </div>
 
-                {% if session.get('user_id') %}
-                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
-                    {% if session.get('user_email') == 'admin@airgo.com' %}
-                        <a href="{{ url_for('admin_dashboard') }}">Admin</a>
-                    {% endif %}
-                    <a href="{{ url_for('logout') }}">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}">Login</a>
-                    <a href="{{ url_for('signup') }}">Sign Up</a>
-                {% endif %}
+               {% if session.get('user_id') %}
+    <a href="{{ url_for('bookings') }}">{{ t.manage_booking }}</a>
+    {% if session.get('user_email') == 'admin@airgo.com' %}
+        <a href="{{ url_for('admin_dashboard') }}">{{ t.admin }}</a>
+    {% endif %}
+    <a href="{{ url_for('logout') }}">{{ t.logout }}</a>
+{% else %}
+    <a href="{{ url_for('login') }}">{{ t.login }}</a>
+    <a href="{{ url_for('signup') }}">{{ t.signup }}</a>
+{% endif %}
             </div>
         </div>
     </div>

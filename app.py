@@ -24,7 +24,44 @@ app.secret_key = "super_secret_key_change_this_later"
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DATABASE = os.path.join(BASE_DIR, "bookings.db")
-
+translations = {
+    "en": {
+        "welcome": "Welcome to AirGo",
+        "subtitle": "Book and manage your flights directly with our airline",
+        "search": "Search Flights",
+        "manage_booking": "Manage Booking",
+        "admin": "Admin",
+        "logout": "Logout",
+        "login": "Login",
+        "signup": "Sign Up",
+        "search_currency": "Search currency..."
+    },
+    "fr": {
+        "welcome": "Bienvenue sur AirGo",
+        "subtitle": "Réservez et gérez vos vols directement avec notre compagnie",
+        "search": "Rechercher des vols",
+        "manage_booking": "Gérer la réservation",
+        "admin": "Admin",
+        "logout": "Déconnexion",
+        "login": "Connexion",
+        "signup": "S’inscrire",
+        "search_currency": "Rechercher une devise..."
+    },
+    "ar": {
+        "welcome": "مرحبًا بك في AirGo",
+        "subtitle": "احجز وأدر رحلاتك مباشرة مع شركتنا",
+        "search": "ابحث عن رحلات",
+        "manage_booking": "إدارة الحجز",
+        "admin": "الإدارة",
+        "logout": "تسجيل الخروج",
+        "login": "تسجيل الدخول",
+        "signup": "إنشاء حساب",
+        "search_currency": "ابحث عن عملة..."
+    }
+}
+def get_translation():
+    lang = session.get("lang", "en")
+    return translations.get(lang, translations["en"])
 
 def load_airports():
     airports = []
@@ -656,7 +693,8 @@ def apply_approved_change_to_booking(conn, booking):
 @app.route("/")
 def home():
     today = date.today().isoformat()
-    return render_template("index.html", today=today)
+    t = get_translation()
+    return render_template("index.html", today=today, t=t)
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -1780,7 +1818,16 @@ def inject_currency():
         "convert_price": convert_price,
         "available_currencies": build_currency_metadata()
     }
+@app.route("/set-language/<lang>")
+def set_language(lang):
+    allowed_languages = ["en", "fr", "ar"]
 
+    if lang in allowed_languages:
+        session["lang"] = lang
+    else:
+        session["lang"] = "en"
+
+    return redirect(request.referrer or url_for("home"))
 
 @app.route("/set-currency", methods=["POST"])
 def set_currency():

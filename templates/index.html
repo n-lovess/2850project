@@ -3,8 +3,8 @@
 {% block title %}AirGo{% endblock %}
 
 {% block content %}
-    <h1>Welcome to AirGo</h1>
-    <p class="subtitle">Book and manage your flights directly with our airline</p>
+    <h1>{{ t.welcome }}</h1>
+<p class="subtitle">{{ t.subtitle }}</p>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -88,7 +88,7 @@
             </div>
 
             <div class="full-width">
-                <button type="submit" class="btn">Search Flights</button>
+                <button type="submit" class="btn">{{ t.search }}</button>
             </div>
         </form>
     </div>
