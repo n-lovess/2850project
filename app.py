@@ -1652,54 +1652,31 @@ def results():
         passengers = request.form.get("passengers", "1")
         ticket_class = request.form.get("ticket_class", "Any")
 
->>>>>>> origin/main
-    conn = get_db_connection()
-    all_flights = conn.execute("""
-        SELECT id, airline, departure_airport, departure_city, departure_code,
-               destination_airport, destination_city, destination_code,
-               departure_time, arrival_time, base_price, ticket_class, seats_left
-        FROM flights
-    """).fetchall()
-    conn.close()
+        conn = get_db_connection()
+        all_flights = conn.execute("""
+            SELECT id, airline, departure_airport, departure_city, departure_code,
+                   destination_airport, destination_city, destination_code,
+                   departure_time, arrival_time, base_price, ticket_class, seats_left
+            FROM flights
+        """).fetchall()
+        conn.close()
 
-    # Convert DB rows to the expected dict format and filter
-    flight_dicts = [db_flight_to_dict(flight) for flight in all_flights]
-    
-    matching_flights = [
-        flight for flight in flight_dicts
-        if matches_airport_search(
-            departure,
-            flight["from_city"],
-            flight["from_code"],
-            "",  # airport_group not in DB for minimal change
-            flight["from"]
-        )
-        and matches_airport_search(
-            destination,
-            flight["to_city"],
-            flight["to_code"],
-            "",  # destination_group not in DB for minimal change
-            flight["to"]
-        )
-    ]
+        flight_dicts = [db_flight_to_dict(flight) for flight in all_flights]
 
-    if ticket_class != "Any":
-=======
->>>>>>> origin/main
         matching_flights = [
-            flight for flight in SAMPLE_FLIGHTS
+            flight for flight in flight_dicts
             if matches_airport_search(
                 departure,
                 flight["from_city"],
                 flight["from_code"],
-                flight["airport_group"],
+                "",
                 flight["from"]
             )
             and matches_airport_search(
                 destination,
                 flight["to_city"],
                 flight["to_code"],
-                flight["destination_group"],
+                "",
                 flight["to"]
             )
         ]
@@ -1731,12 +1708,12 @@ def results():
         session["last_flights"] = matching_flights
 
         return render_template(
-    "results.html",
-    flights=matching_flights,
-    search_data=search_data,
-    class_benefits=CLASS_BENEFITS,
-    t=get_translation()
-)
+            "results.html",
+            flights=matching_flights,
+            search_data=search_data,
+            class_benefits=CLASS_BENEFITS,
+            t=get_translation()
+        )
 
     search_data = session.get("search_data")
     matching_flights = session.get("last_flights")
@@ -1749,8 +1726,10 @@ def results():
         "results.html",
         flights=matching_flights,
         search_data=search_data,
-        class_benefits=CLASS_BENEFITS
+        class_benefits=CLASS_BENEFITS,
+        t=get_translation()
     )
+    
 
 
 @app.route("/passenger-details/<int:flight_id>", methods=["GET", "POST"])
@@ -2674,18 +2653,14 @@ def set_currency():
         return redirect(next_url)
 
     return redirect(url_for("home"))
->>>>>>> origin/main
 
-
-if __name__ == "__main__":
-    init_db()
-<<<<<<< HEAD
-    app.run(debug=True)
-    app.run(host="0.0.0.0", port=5000, debug=True)
->>>>>>> origin/main
 # ==============
 # JSON API
 # ==============
+
+if __name__ == "__main__":
+    init_db()
+    app.run(host="0.0.0.0", port=5000, debug=True)
 
 @app.route("/api/flights", methods=["GET"])
 def api_get_flights():
@@ -2868,7 +2843,7 @@ def api_admin_peak_times():
         }), 403
     
     conn = get_db_connection()
-=======
+
 def get_exchange_rates():
     global EXCHANGE_RATES, LAST_FETCH
 
@@ -3039,13 +3014,6 @@ def set_currency():
         return redirect(next_url)
 
     return redirect(url_for("home"))
->>>>>>> origin/main
-
-
 if __name__ == "__main__":
     init_db()
-<<<<<<< HEAD
-    app.run(debug=True)
-=======
     app.run(host="0.0.0.0", port=5000, debug=True)
->>>>>>> origin/main
