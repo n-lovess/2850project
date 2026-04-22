@@ -322,6 +322,9 @@ select:focus {
     display: flex;
     justify-content: center;
 }
+.card .btn {
+    margin-bottom: 16px;
+}
 .btn {
     padding: 14px 22px;
     border-radius: 12px;
@@ -627,13 +630,17 @@ select:focus {
     background: #f8fbff;
     border: 1px solid #e1e9f9;
     border-radius: 16px;
-    padding: 18px;
+    padding: 18px 18px 28px 18px;
 }
 
 .manage-form {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 18px;
+}
+
+.manage-form .btn {
+    margin-top: 12px;
 }
 
 .manage-note {
@@ -1573,4 +1580,12 @@ select:focus {
     to {
         transform: rotate(360deg);
     }
+}
+.manage-box form .btn,
+.manage-box .manage-form .btn {
+    margin-top: 20px !important;
+}
+.form-grid .btn,
+form .btn {
+    margin-top: 18px;
 }
