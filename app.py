@@ -1267,16 +1267,36 @@ def get_seat_layout():
     ]
 
 
-def get_seat_type_and_price(seat_code, row_number, seat_letter):
+def get_seat_type_and_price(seat_code, row_number, seat_letter, cabin_name):
+    if cabin_name == "First Class":
+        if row_number in [1, 2]:
+            return "Suite", 60
+        if seat_letter in ["A", "K"]:
+            return "Window", 45
+        return "Aisle", 40
+
+    if cabin_name == "Business Class":
+        if seat_letter in ["A", "K"]:
+            return "Window", 30
+        if seat_letter in ["D", "E"]:
+            return "Aisle", 28
+        return "Middle", 24
+
+    if cabin_name == "Premium Economy":
+        if row_number in [10]:
+            return "Emergency Exit", 25
+        if seat_letter in ["A", "K"]:
+            return "Window", 18
+        if seat_letter in ["C", "D", "G", "H"]:
+            return "Aisle", 15
+        return "Middle", 12
+
     if row_number in [10, 11]:
         return "Emergency Exit", 25
-
     if seat_letter in ["A", "K"]:
         return "Window", 10
-
     if seat_letter in ["C", "D", "G", "H"]:
         return "Aisle", 8
-
     return "Middle", 5
 
 
@@ -1326,7 +1346,7 @@ def generate_seat_map(flight):
 
             for seat_letter in cabin["seat_letters"]:
                 seat_code = f"{row_number}{seat_letter}"
-                seat_type, seat_price = get_seat_type_and_price(seat_code, row_number, seat_letter)
+                seat_type, seat_price = get_seat_type_and_price(seat_code, row_number, seat_letter, cabin["cabin"])
 
                 row_seats.append({
                     "seat": seat_code,
@@ -1880,7 +1900,7 @@ def review_booking():
     )
 
 
-def calculate_price(selected_flight, extras):
+def calculate_price(selected_flight, extras, selected_seat):
     base_fare = selected_flight["price"]
 
     baggage_price = 0
@@ -1890,15 +1910,29 @@ def calculate_price(selected_flight, extras):
         baggage_price = 60
 
     insurance_price = 25 if "Insurance" in extras.get("insurance", "") else 0
-    total_price = base_fare + baggage_price + insurance_price
+
+    seat_price = 0
+    seat_type = ""
+    seat_sections = generate_seat_map(selected_flight)
+
+    for section in seat_sections:
+        for row in section["rows"]:
+            for seat in row["seats"]:
+                if seat["seat"] == selected_seat:
+                    seat_price = seat["price"]
+                    seat_type = seat["type"]
+                    break
+
+    total_price = base_fare + baggage_price + insurance_price + seat_price
 
     return {
         "base_fare": base_fare,
         "baggage_price": baggage_price,
         "insurance_price": insurance_price,
+        "seat_price": seat_price,
+        "seat_type": seat_type,
         "total_price": total_price
     }
-
 
 @app.route("/payment", methods=["GET", "POST"])
 def payment():
@@ -1921,7 +1955,7 @@ def payment():
         flash("Please log in to complete your booking.", "error")
         return redirect(url_for("login"))
 
-    price_data = calculate_price(selected_flight, extras)
+    price_data = calculate_price(selected_flight, extras, selected_seat)
 
     if request.method == "POST":
         payment_data = {
