@@ -1430,28 +1430,3 @@ textarea:focus {
 [dir="rtl"] .flight-actions-row {
     direction: rtl;
 }
-.navbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  margin-left: 20px;
-}
-
-.brand-name {
-  color: black;
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.logo {
-  height: 42px;
-  width: auto;
-  display: block;
-}
-.brand-name {
-  font-family: 'Great Vibes', cursive;
-  color: black;
-  font-size: 42px;
-}
