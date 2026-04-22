@@ -9,7 +9,11 @@
 <body>
     <div class="navbar">
         <div class="nav-inner">
-            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
+            <a href="/" class="navbar-brand">
+  <img src="{{ url_for('static', filename='images/logo.png') }}" alt="AirGo logo" class="logo">
+  <span class="brand-name">irGo</span>
+
+</a>
 
             <div class="nav-links">
                 <div class="language-switch">
