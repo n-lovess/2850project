@@ -212,10 +212,6 @@ translations = {
 "not_assigned": "Not Assigned",
 "print_boarding_pass": "Print Boarding Pass",
 "no_exact_matches": "No exact matches found. Showing sample flights instead.",
-"class_economy": "Economy",
-"class_premium": "Premium Economy",
-"class_business": "Business",
-"class_first": "First",
 "any_class": "Any",
 "class_economy": "Economy",
 "class_premium": "Premium Economy",
@@ -486,10 +482,6 @@ translations = {
 "class_business": "Affaires",
 "class_first": "Première",
 "any_class": "Toutes",
-"class_economy": "Économie",
-"class_premium": "Économie Premium",
-"class_business": "Affaires",
-"class_first": "Première",
 
 "benefit_cabin_bag_1": "1 bagage cabine",
 "benefit_cabin_bag_checked_1": "1 bagage cabine + 1 bagage en soute",
@@ -755,10 +747,6 @@ translations = {
 "class_business": "رجال الأعمال",
 "class_first": "الأولى",
 "any_class": "الكل",
-"class_economy": "اقتصادية",
-"class_premium": "اقتصادية مميزة",
-"class_business": "رجال الأعمال",
-"class_first": "الأولى",
 
 "benefit_cabin_bag_1": "حقيبة مقصورة واحدة",
 "benefit_cabin_bag_checked_1": "حقيبة مقصورة واحدة + حقيبة مسجلة واحدة",
@@ -1870,6 +1858,7 @@ def payment():
                 passenger=passenger_data,
                 selected_seat=selected_seat,
                 extras=extras,
+                search_data=search_data,
                 **price_data
             )
 
@@ -1881,6 +1870,7 @@ def payment():
                 passenger=passenger_data,
                 selected_seat=selected_seat,
                 extras=extras,
+                 search_data=search_data,
                 **price_data
             )
 
@@ -1984,6 +1974,7 @@ def payment():
         passenger=passenger_data,
         selected_seat=selected_seat,
         extras=extras,
+        search_data=search_data,
         **price_data
     )
 

@@ -13,27 +13,27 @@
         {% endif %}
     {% endwith %}
 
-    <div class="card summary-card">
-        <h2>{{ t.selected_flight }}</h2>
-        <p><strong>{{ t.airline_label }}:</strong> {{ flight.airline }}</p>
-        <p><strong>{{ t.route }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
-        <p><strong>{{ t.time }}:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
-        <p>
-            <strong>{{ t.class_label }}:</strong>
-            {% if flight.class == "Economy" %}
-                {{ t.economy }}
-            {% elif flight.class == "Premium Economy" %}
-                {{ t.premium_economy }}
-            {% elif flight.class == "Business" %}
-                {{ t.business }}
-            {% elif flight.class == "First" %}
-                {{ t.first_class }}
-            {% else %}
-                {{ flight.class }}
-            {% endif %}
-        </p>
-        <p><strong>{{ t.price_label }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
-    </div>
+   <div class="card summary-card">
+    <h2>{{ t.selected_flight }}</h2>
+    <p><strong>{{ t.airline_label }}:</strong> {{ flight.airline }}</p>
+    <p><strong>{{ t.route }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+    <p><strong>Time:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
+    <p>
+        <strong>{{ t.class_label }}:</strong>
+        {% if flight.class == "Economy" %}
+            {{ t.economy }}
+        {% elif flight.class == "Premium Economy" %}
+            {{ t.premium_economy }}
+        {% elif flight.class == "Business" %}
+            {{ t.business }}
+        {% elif flight.class == "First" %}
+            {{ t.first_class }}
+        {% else %}
+            {{ flight.class }}
+        {% endif %}
+    </p>
+    <p><strong>{{ t.price_label }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
+</div>
 
     <div class="card benefits-box">
         <h2>

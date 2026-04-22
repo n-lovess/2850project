@@ -1,38 +1,51 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t.review_title }}{% endblock %}
+{% block title %}{{ t.review_title or 'Review Your Booking' }}{% endblock %}
 
 {% block content %}
-    <h1>{{ t.review_title }}</h1>
-    <p class="subtitle">{{ t.review_subtitle }}</p>
+    <h1>{{ t.review_title or 'Review Your Booking' }}</h1>
+    <p class="subtitle">{{ t.review_subtitle or 'Please review your flight, passenger details, and selected extras before continuing to payment.' }}</p>
 
     <div class="card summary-card">
-        <h2>{{ t.flight_details }}</h2>
-        <p><strong>{{ t.route }}:</strong> {{ flight.from }} → {{ flight.to }}</p>
-        <p><strong>{{ t.date }}:</strong> {{ search_data.depart_date }}</p>
-        <p><strong>{{ t.departure }}:</strong> {{ flight.departure_time }}</p>
-        <p><strong>{{ t.arrival }}:</strong> {{ flight.arrival_time }}</p>
-        <p><strong>{{ t.class_label }}:</strong> {{ flight.class }}</p>
-        <p><strong>{{ t.seat }}:</strong> {{ selected_seat }}</p>
-        <p><strong>{{ t.fare }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
+        <h2>{{ t.flight_details or 'Flight Details' }}</h2>
+        <p><strong>{{ t.route or 'Route' }}:</strong> {{ flight.from }} → {{ flight.to }}</p>
+        <p><strong>{{ t.date or 'Date' }}:</strong> {{ search_data.depart_date }}</p>
+        <p><strong>{{ t.departure or 'Departure' }}:</strong> {{ flight.departure_time }}</p>
+        <p><strong>{{ t.arrival or 'Arrival' }}:</strong> {{ flight.arrival_time }}</p>
+        <p>
+            <strong>{{ t.class_label or 'Class' }}:</strong>
+            {% if flight.class == "Economy" %}
+                {{ t.economy or 'Economy' }}
+            {% elif flight.class == "Premium Economy" %}
+                {{ t.premium_economy or 'Premium Economy' }}
+            {% elif flight.class == "Business" %}
+                {{ t.business or 'Business' }}
+            {% elif flight.class == "First" %}
+                {{ t.first_class or 'First' }}
+            {% else %}
+                {{ flight.class }}
+            {% endif %}
+        </p>
+        <p><strong>{{ t.seat or 'Seat' }}:</strong> {{ selected_seat }}</p>
+        <p><strong>{{ t.fare or 'Fare' }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
     </div>
 
     <div class="card">
-        <h2>{{ t.selected_extras }}</h2>
-        <p><strong>{{ t.baggage }}:</strong> {{ extras.get('baggage', t.no_baggage) }}</p>
-        <p><strong>{{ t.meal }}:</strong> {{ extras.get('meal_choice', t.no_meal) }}</p>
-        <p><strong>{{ t.travel_insurance }}:</strong> {{ extras.get('insurance', t.no_insurance) }}</p>
+        <h2>{{ t.selected_extras or 'Selected Extras' }}</h2>
+        <p><strong>{{ t.baggage or 'Baggage' }}:</strong> {{ extras.get('baggage', t.no_baggage or 'No extra baggage') }}</p>
+        <p><strong>{{ t.meal or 'Meal' }}:</strong> {{ extras.get('meal_choice', t.no_meal or 'No Meal') }}</p>
+        <p><strong>{{ t.travel_insurance or 'Travel Insurance' }}:</strong> {{ extras.get('insurance', t.no_insurance or 'No Travel Insurance') }}</p>
     </div>
 
     <div class="card">
-        <h2>{{ t.passenger_details_title }}</h2>
-        <p><strong>{{ t.name }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
-        <p><strong>{{ t.email_address }}:</strong> {{ passenger.email }}</p>
-        <p><strong>{{ t.passport_number }}:</strong> {{ passenger.passport_number }}</p>
+        <h2>{{ t.passenger_details_title or 'Passenger Details' }}</h2>
+        <p><strong>{{ t.name or 'Name' }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
+        <p><strong>{{ t.email_address or 'Email Address' }}:</strong> {{ passenger.email }}</p>
+        <p><strong>{{ t.passport_number or 'Passport Number' }}:</strong> {{ passenger.passport_number }}</p>
     </div>
 
     <div class="button-group">
-        <a href="{{ url_for('seat_selection') }}" class="btn secondary-btn">← {{ t.back }}</a>
-        <a href="{{ url_for('payment') }}" class="btn">{{ t.continue_payment }} →</a>
+        <a href="{{ url_for('seat_selection') }}" class="btn secondary-btn">← {{ t.back or 'Back' }}</a>
+        <a href="{{ url_for('payment') }}" class="btn">{{ t.continue_payment or 'Continue to Payment' }} →</a>
     </div>
 {% endblock %}
