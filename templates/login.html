@@ -1,25 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - AirGo</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="navbar">
-        <div class="nav-inner">
-            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
-            <div class="nav-links">
-                <a href="{{ url_for('home') }}">Search Flights</a>
-                <a href="{{ url_for('signup') }}">Sign Up</a>
-            </div>
-        </div>
-    </div>
+{% extends "base.html" %}
 
-    <div class="container narrow-container">
+{% block title %}{{ t.login }} - AirGo{% endblock %}
+
+{% block content %}
+    <div class="narrow-container">
         <div class="card auth-card">
-            <h1>Login</h1>
+            <h1>{{ t.login }}</h1>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -30,18 +16,17 @@
             {% endwith %}
 
             <form method="POST" class="auth-form">
-                <label for="email">Email Address</label>
+                <label for="email">{{ t.email_address }}</label>
                 <input type="email" id="email" name="email" required>
 
-                <label for="password">Password</label>
+                <label for="password">{{ t.password }}</label>
                 <input type="password" id="password" name="password" required>
 
-                <button type="submit" class="btn full-btn">Login</button>
+                <button type="submit" class="btn full-btn">{{ t.login }}</button>
             </form>
 
-            <p class="auth-switch">Don’t have an account? <a href="{{ url_for('signup') }}">Create one</a></p>
-            <p class="auth-switch"><a href="{{ url_for('forgot_password') }}">Forgot password?</a></p>
+            <p class="auth-switch">{{ t.no_account }} <a href="{{ url_for('signup') }}">{{ t.create_one }}</a></p>
+            <p class="auth-switch"><a href="{{ url_for('forgot_password') }}">{{ t.forgot_password }}</a></p>
         </div>
     </div>
-</body>
-</html>
+{% endblock %}

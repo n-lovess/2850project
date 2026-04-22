@@ -1,104 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boarding Pass - AirGo</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="navbar">
-        <div class="nav-inner">
-            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
-            <div class="nav-links">
-                <a href="{{ url_for('home') }}">Search Flights</a>
-                <a href="{{ url_for('bookings') }}">Manage Booking</a>
-                {% if session.get('user_email') == 'admin@airgo.com' %}
-                    <a href="{{ url_for('admin_dashboard') }}">Admin</a>
-                {% endif %}
-                <a href="{{ url_for('logout') }}">Logout</a>
+{% extends "base.html" %}
+
+{% block title %}{{ t.boarding_pass }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card p-4 shadow-sm">
+
+        <h2 class="mb-4 text-center">{{ t.boarding_pass }}</h2>
+
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>{{ t.passenger_label }}:</strong> {{ booking.first_name }} {{ booking.last_name }}</p>
+                <p><strong>{{ t.flight_label }}:</strong> {{ booking.airline }}</p>
+                <p><strong>{{ t.route }}:</strong> {{ booking.departure_city }} → {{ booking.destination_city }}</p>
+                <p><strong>{{ t.date }}:</strong> {{ booking.flight_date }}</p>
+                <p><strong>{{ t.time }}:</strong> {{ booking.departure_time }} - {{ booking.arrival_time }}</p>
+            </div>
+
+            <div class="col-md-6">
+                <p><strong>{{ t.seat }}:</strong> {{ booking.seat }}</p>
+                <p><strong>{{ t.ticket_class_label }}:</strong>
+    {% if booking.ticket_class == "Economy" %}
+        {{ t.class_economy }}
+    {% elif booking.ticket_class == "Premium Economy" %}
+        {{ t.class_premium }}
+    {% elif booking.ticket_class == "Business" %}
+        {{ t.class_business }}
+    {% elif booking.ticket_class == "First" %}
+        {{ t.class_first }}
+    {% else %}
+        {{ booking.ticket_class }}
+    {% endif %}
+</p>
+                <p><strong>{{ t.boarding_gate }}:</strong> {{ booking.gate or t.not_assigned }}</p>
+                <p><strong>{{ t.boarding_group }}:</strong> {{ booking.group or t.not_assigned }}</p>
+                <p><strong>{{ t.booking_reference }}:</strong> {{ booking.booking_reference }}</p>
             </div>
         </div>
-    </div>
 
-    <div class="container">
-        <div class="boarding-pass">
-            <div class="boarding-pass-header">
-                <div>
-                    <h1>AirGo Boarding Pass</h1>
-                    <p class="subtitle">Electronic travel document</p>
-                </div>
-                <div class="boarding-badge">{{ booking.flight_status }}</div>
-            </div>
+        <hr>
 
-            <div class="boarding-grid">
-                <div class="boarding-box">
-                    <span class="boarding-label">Passenger</span>
-                    <span class="boarding-value">{{ booking.first_name }} {{ booking.last_name }}</span>
-                </div>
-
-                <div class="boarding-box">
-                    <span class="boarding-label">Booking Ref</span>
-                    <span class="boarding-value">{{ booking.booking_reference }}</span>
-                </div>
-
-                <div class="boarding-box">
-                    <span class="boarding-label">From</span>
-                    <span class="boarding-value">{{ booking.departure_city }} ({{ booking.departure_code }})</span>
-                    <span class="small-text">{{ booking.departure_airport }}</span>
-                </div>
-
-                <div class="boarding-box">
-                    <span class="boarding-label">To</span>
-                    <span class="boarding-value">{{ booking.destination_city }} ({{ booking.destination_code }})</span>
-                    <span class="small-text">{{ booking.destination_airport }}</span>
-                </div>
-
-                <div class="boarding-box">
-                    <span class="boarding-label">Flight Date</span>
-                    <span class="boarding-value">{{ booking.flight_date }}</span>
-                </div>
-
-                <div class="boarding-box">
-                    <span class="boarding-label">Departure</span>
-                    <span class="boarding-value">{{ booking.departure_time }}</span>
-                </div>
-
-                <div class="boarding-box">
-                    <span class="boarding-label">Arrival</span>
-                    <span class="boarding-value">{{ booking.arrival_time }}</span>
-                </div>
-
-                <div class="boarding-box">
-                    <span class="boarding-label">Class</span>
-                    <span class="boarding-value">{{ booking.ticket_class }}</span>
-                </div>
-
-                <div class="boarding-box">
-                    <span class="boarding-label">Seat</span>
-                    <span class="boarding-value">{{ booking.seat }}</span>
-                </div>
-
-                <div class="boarding-box">
-                    <span class="boarding-label">Meal</span>
-                    <span class="boarding-value">{{ booking.meal_choice }}</span>
-                </div>
-
-                <div class="boarding-box">
-                    <span class="boarding-label">Change Status</span>
-                    <span class="boarding-value">{{ booking.change_status }}</span>
-                </div>
-
-                <div class="boarding-box">
-                    <span class="boarding-label">Status</span>
-                    <span class="boarding-value">{{ booking.flight_status }}</span>
-                </div>
-            </div>
-
-            <div class="button-group">
-                <a href="{{ url_for('bookings') }}" class="btn">Back to Manage Booking</a>
-            </div>
+        <div class="text-center">
+            <button onclick="window.print()" class="btn btn-primary">
+                {{ t.print_boarding_pass }}
+            </button>
         </div>
+
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

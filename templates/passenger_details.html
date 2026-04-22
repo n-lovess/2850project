@@ -1,126 +1,188 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passenger Details</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="navbar">
-        <div class="nav-inner">
-            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
-            <div class="nav-links">
-                <a href="{{ url_for('home') }}">Search Flights</a>
-                {% if session.get('user_id') %}
-                    <a href="{{ url_for('bookings') }}">Manage Booking</a>
-                    <a href="{{ url_for('logout') }}">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}">Login</a>
-                    <a href="{{ url_for('signup') }}">Sign Up</a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+{% extends "base.html" %}
 
-    <div class="container">
-        <h1>Passenger Details</h1>
+{% block title %}{{ t.passenger_details_title }}{% endblock %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash-message flash-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+{% block content %}
+    <h1>{{ t.passenger_details_title }}</h1>
 
-        <div class="card summary-card">
-            <h2>Selected Flight</h2>
-            <p><strong>Airline:</strong> {{ flight.airline }}</p>
-            <p><strong>Route:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
-            <p><strong>Time:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
-            <p><strong>Class:</strong> {{ flight.class }}</p>
-            <p><strong>Price:</strong> £{{ flight.price }}</p>
-        </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
-        <div class="card benefits-box">
-            <h2>What’s Included With {{ flight.class }}</h2>
-            <ul class="benefits-list">
-                <li><strong>Baggage:</strong> {{ benefits.baggage }}</li>
-                <li><strong>Meal:</strong> {{ benefits.meal }}</li>
-                <li><strong>Seat Selection:</strong> {{ benefits.seat_selection }}</li>
-                <li><strong>Lounge:</strong> {{ benefits.lounge }}</li>
-                <li><strong>Flexibility:</strong> {{ benefits.flexibility }}</li>
-            </ul>
-        </div>
-
-        <div class="card">
-            <form method="POST" class="form-grid">
-                <div>
-                    <label for="first_name">First Name</label>
-                    <input type="text" id="first_name" name="first_name" required>
-                </div>
-
-                <div>
-                    <label for="last_name">Last Name</label>
-                    <input type="text" id="last_name" name="last_name" required>
-                </div>
-
-                <div>
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-
-                <div>
-                    <label for="phone">Phone Number</label>
-                    <input type="text" id="phone" name="phone" required>
-                </div>
-
-                <div class="full-width">
-                    <label for="passport_number">Passport Number</label>
-                    <input type="text" id="passport_number" name="passport_number" required>
-                </div>
-
-                <div class="full-width">
-                    <label for="meal_choice">Meal Preference</label>
-                    <select id="meal_choice" name="meal_choice" required>
-                        {% for meal in meal_options %}
-                            <option value="{{ meal }}">{{ meal }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="full-width">
-    <h3>Accessibility & Special Assistance</h3>
-    <p>This service is provided at no extra cost. Let us know if you need any extra help during your journey.</p>
-
-    <label>
-        <input type="checkbox" name="assistance_required" value="Yes">
-        I require special assistance
-    </label>
-
-    <div style="margin-top: 10px; margin-bottom: 10px;">
-        <label><input type="checkbox" name="assistance_options" value="Wheelchair assistance"> Wheelchair assistance</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Visual assistance"> Visual assistance</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Hearing assistance"> Hearing assistance</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Pregnancy support"> Pregnancy support</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Travelling with infant"> Travelling with infant</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Elderly passenger support"> Elderly passenger support</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Medical assistance"> Medical assistance</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Extra boarding time"> Extra boarding time</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Airport/security assistance"> Airport/security assistance</label><br>
-        <label><input type="checkbox" name="assistance_options" value="Special seating request"> Special seating request</label>
-    </div>
-
-    <label>Other assistance needs</label>
-    <textarea name="other_assistance" rows="3" placeholder="Please describe any other support you may need"></textarea>
+   <div class="card summary-card">
+    <h2>{{ t.selected_flight }}</h2>
+    <p><strong>{{ t.airline_label }}:</strong> {{ flight.airline }}</p>
+    <p><strong>{{ t.route }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+    <p><strong>Time:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
+    <p>
+        <strong>{{ t.class_label }}:</strong>
+        {% if flight.class == "Economy" %}
+            {{ t.economy }}
+        {% elif flight.class == "Premium Economy" %}
+            {{ t.premium_economy }}
+        {% elif flight.class == "Business" %}
+            {{ t.business }}
+        {% elif flight.class == "First" %}
+            {{ t.first_class }}
+        {% else %}
+            {{ flight.class }}
+        {% endif %}
+    </p>
+    <p><strong>{{ t.price_label }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
 </div>
 
-<div class="full-width">
-                    <button type="submit" class="btn">Continue to Seat Selection</button>
-                </div>
-            </form>
-        </div>
+    <div class="card benefits-box">
+        <h2>
+            {{ t.whats_included }}
+            {% if flight.class == "Economy" %}
+                {{ t.economy }}
+            {% elif flight.class == "Premium Economy" %}
+                {{ t.premium_economy }}
+            {% elif flight.class == "Business" %}
+                {{ t.business }}
+            {% elif flight.class == "First" %}
+                {{ t.first_class }}
+            {% else %}
+                {{ flight.class }}
+            {% endif %}
+        </h2>
+
+        <ul class="benefits-list">
+            <li>
+                <strong>{{ t.baggage }}:</strong>
+                {% if benefits.baggage == "1 cabin bag" %}
+                    {{ t.benefit_cabin_bag_1 }}
+                {% elif benefits.baggage == "1 cabin bag + 1 checked bag" %}
+                    {{ t.benefit_cabin_bag_checked_1 }}
+                {% elif benefits.baggage == "2 checked bags + 1 cabin bag" %}
+                    {{ t.benefit_checked_bags_2_cabin_1 }}
+                {% elif benefits.baggage == "3 checked bags + 2 cabin bags" %}
+                    {{ t.benefit_checked_bags_3_cabin_2 }}
+                {% else %}
+                    {{ benefits.baggage }}
+                {% endif %}
+            </li>
+
+            <li>
+                <strong>{{ t.meal }}:</strong>
+                {% if benefits.meal == "Standard meal" %}
+                    {{ t.benefit_standard_meal }}
+                {% elif benefits.meal == "Premium meal" %}
+                    {{ t.benefit_premium_meal }}
+                {% elif benefits.meal == "Business class dining" %}
+                    {{ t.benefit_business_dining }}
+                {% elif benefits.meal == "First class dining" %}
+                    {{ t.benefit_first_dining }}
+                {% else %}
+                    {{ benefits.meal }}
+                {% endif %}
+            </li>
+
+            <li>
+                <strong>{{ t.seat_selection }}:</strong>
+                {% if benefits.seat_selection == "Standard seat selection" %}
+                    {{ t.benefit_standard_seat_selection }}
+                {% elif benefits.seat_selection == "Included" %}
+                    {{ t.benefit_included }}
+                {% elif benefits.seat_selection == "Priority seat selection" %}
+                    {{ t.benefit_priority_seat_selection }}
+                {% elif benefits.seat_selection == "Luxury suite selection" %}
+                    {{ t.benefit_luxury_suite_selection }}
+                {% else %}
+                    {{ benefits.seat_selection }}
+                {% endif %}
+            </li>
+
+            <li>
+                <strong>{{ t.lounge }}:</strong>
+                {% if benefits.lounge == "Not included" %}
+                    {{ t.benefit_not_included }}
+                {% elif benefits.lounge == "Included" %}
+                    {{ t.benefit_included }}
+                {% else %}
+                    {{ benefits.lounge }}
+                {% endif %}
+            </li>
+
+            <li>
+                <strong>{{ t.flexibility }}:</strong>
+                {% if benefits.flexibility == "Low flexibility" %}
+                    {{ t.benefit_low_flexibility }}
+                {% elif benefits.flexibility == "Medium flexibility" %}
+                    {{ t.benefit_medium_flexibility }}
+                {% elif benefits.flexibility == "High flexibility" %}
+                    {{ t.benefit_high_flexibility }}
+                {% elif benefits.flexibility == "Maximum flexibility" %}
+                    {{ t.benefit_maximum_flexibility }}
+                {% else %}
+                    {{ benefits.flexibility }}
+                {% endif %}
+            </li>
+        </ul>
     </div>
-</body>
-</html>
+
+    <div class="card">
+        <form method="POST" class="form-grid">
+            <div>
+                <label for="first_name">{{ t.first_name }}</label>
+                <input type="text" id="first_name" name="first_name" required>
+            </div>
+
+            <div>
+                <label for="last_name">{{ t.last_name }}</label>
+                <input type="text" id="last_name" name="last_name" required>
+            </div>
+
+            <div>
+                <label for="email">{{ t.email_address }}</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div>
+                <label for="phone">{{ t.phone_number }}</label>
+                <input type="text" id="phone" name="phone" required>
+            </div>
+
+            <div class="full-width">
+                <label for="passport_number">{{ t.passport_number }}</label>
+                <input type="text" id="passport_number" name="passport_number" required>
+            </div>
+
+            <div class="full-width assistance-section">
+                <h3>{{ t.assistance_title }}</h3>
+                <p class="section-subtext">{{ t.assistance_text }}</p>
+
+                <label class="checkbox-row assistance-main-check">
+                    <input type="checkbox" name="assistance_required" value="Yes">
+                    <span>{{ t.assistance_required }}</span>
+                </label>
+
+                <div class="assistance-grid">
+                    <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Wheelchair assistance"> <span>{{ t.wheelchair_assistance }}</span></label>
+                    <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Visual assistance"> <span>{{ t.visual_assistance }}</span></label>
+                    <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Hearing assistance"> <span>{{ t.hearing_assistance }}</span></label>
+                    <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Pregnancy support"> <span>{{ t.pregnancy_support }}</span></label>
+                    <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Travelling with infant"> <span>{{ t.travelling_with_infant }}</span></label>
+                    <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Elderly passenger support"> <span>{{ t.elderly_support }}</span></label>
+                    <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Medical assistance"> <span>{{ t.medical_assistance }}</span></label>
+                    <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Extra boarding time"> <span>{{ t.extra_boarding_time }}</span></label>
+                    <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Airport/security assistance"> <span>{{ t.airport_security_assistance }}</span></label>
+                    <label class="assistance-option"><input type="checkbox" name="assistance_options" value="Special seating request"> <span>{{ t.special_seating_request }}</span></label>
+                </div>
+
+                <div class="assistance-notes">
+                    <label for="other_assistance">{{ t.other_assistance }}</label>
+                    <textarea id="other_assistance" name="other_assistance" rows="3" placeholder="{{ t.other_assistance_placeholder }}"></textarea>
+                </div>
+            </div>
+
+            <div class="full-width">
+                <button type="submit" class="btn">{{ t.continue_to_extras }}</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

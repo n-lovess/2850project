@@ -1,34 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Review Booking</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
+{% extends "base.html" %}
 
-<div class="container">
-    <h1>Review Your Booking</h1>
+{% block title %}{{ t.review_title or 'Review Your Booking' }}{% endblock %}
 
-    <h2>Flight Details</h2>
-    <p>From: {{ flight.from }} → {{ flight.to }}</p>
-    <p>Date: {{ search_data.depart_date }}</p>
-    <p>Departure: {{ flight.departure_time }}</p>
-    <p>Arrival: {{ flight.arrival_time }}</p>
-    <p>Class: {{ flight.class }}</p>
-    <p>Seat: {{ selected_seat }}</p>
-    <p>Price: £{{ flight.price }}</p>
+{% block content %}
+    <h1>{{ t.review_title or 'Review Your Booking' }}</h1>
+    <p class="subtitle">{{ t.review_subtitle or 'Please review your flight, passenger details, and selected extras before continuing to payment.' }}</p>
 
-    <h2>Passenger Details</h2>
-    <p>Name: {{ passenger.first_name }} {{ passenger.last_name }}</p>
-    <p>Email: {{ passenger.email }}</p>
-    <p>Passport: {{ passenger.passport_number }}</p>
+    <div class="card summary-card">
+        <h2>{{ t.flight_details or 'Flight Details' }}</h2>
+        <p><strong>{{ t.route or 'Route' }}:</strong> {{ flight.from }} → {{ flight.to }}</p>
+        <p><strong>{{ t.date or 'Date' }}:</strong> {{ search_data.depart_date }}</p>
+        <p><strong>{{ t.departure or 'Departure' }}:</strong> {{ flight.departure_time }}</p>
+        <p><strong>{{ t.arrival or 'Arrival' }}:</strong> {{ flight.arrival_time }}</p>
+        <p>
+            <strong>{{ t.class_label or 'Class' }}:</strong>
+            {% if flight.class == "Economy" %}
+                {{ t.economy or 'Economy' }}
+            {% elif flight.class == "Premium Economy" %}
+                {{ t.premium_economy or 'Premium Economy' }}
+            {% elif flight.class == "Business" %}
+                {{ t.business or 'Business' }}
+            {% elif flight.class == "First" %}
+                {{ t.first_class or 'First' }}
+            {% else %}
+                {{ flight.class }}
+            {% endif %}
+        </p>
+        <p><strong>{{ t.seat or 'Seat' }}:</strong> {{ selected_seat }}</p>
+        <p><strong>{{ t.fare or 'Fare' }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
+    </div>
 
-    <br>
+    <div class="card">
+        <h2>{{ t.selected_extras or 'Selected Extras' }}</h2>
+        <p><strong>{{ t.baggage or 'Baggage' }}:</strong> {{ extras.get('baggage', t.no_baggage or 'No extra baggage') }}</p>
+        <p><strong>{{ t.meal or 'Meal' }}:</strong> {{ extras.get('meal_choice', t.no_meal or 'No Meal') }}</p>
+        <p><strong>{{ t.travel_insurance or 'Travel Insurance' }}:</strong> {{ extras.get('insurance', t.no_insurance or 'No Travel Insurance') }}</p>
+    </div>
 
-    <a href="{{ url_for('seat_selection') }}">⬅ Back</a>
-    <a href="{{ url_for('payment') }}">Continue to Payment ➡</a>
+    <div class="card">
+        <h2>{{ t.passenger_details_title or 'Passenger Details' }}</h2>
+        <p><strong>{{ t.name or 'Name' }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
+        <p><strong>{{ t.email_address or 'Email Address' }}:</strong> {{ passenger.email }}</p>
+        <p><strong>{{ t.passport_number or 'Passport Number' }}:</strong> {{ passenger.passport_number }}</p>
+    </div>
 
-</div>
-
-</body>
-</html>
+    <div class="button-group">
+        <a href="{{ url_for('seat_selection') }}" class="btn secondary-btn">← {{ t.back or 'Back' }}</a>
+        <a href="{{ url_for('payment') }}" class="btn">{{ t.continue_payment or 'Continue to Payment' }} →</a>
+    </div>
+{% endblock %}
