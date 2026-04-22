@@ -27,6 +27,12 @@
                 {{ selected_currency }} {{ convert_price(insurance_price, selected_currency) }}
             </p>
         {% endif %}
+        {% if seat_price and seat_price > 0 %}
+    <p>
+        <strong>{{ t.seat or 'Seat' }}{% if seat_type %} ({{ seat_type }}){% endif %}:</strong>
+        {{ selected_currency }} {{ convert_price(seat_price, selected_currency) }}
+    </p>
+{% endif %}
 
         <hr>
 
