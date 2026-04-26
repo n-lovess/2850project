@@ -3,139 +3,178 @@
 {% block title %}{{ t.seat_selection_title or 'Seat Selection' }}{% endblock %}
 
 {% block content %}
-    <h1>{{ t.choose_seat or 'Choose your seat' }}</h1>
-    <p class="subtitle">{{ t.choose_seat_subtitle or 'Pick your preferred cabin area and seat.' }}</p>
+<h1>{{ t.choose_seat or 'Choose your seat' }}</h1>
+<p class="subtitle">Choose {{ passenger_count }} seat{% if passenger_count > 1 %}s{% endif %}, one for each passenger.</p>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="flash-message flash-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
 
-    <div class="card summary-card">
-        <h2>{{ flight.airline }}</h2>
-        <p><strong>{{ t.route or 'Route' }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
-        <p><strong>{{ t.time or 'Time' }}:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
-        <p>
-            <strong>{{ t.class_label or 'Class' }}:</strong>
-            {% if flight.class == "Economy" %}
-                {{ t.economy or 'Economy' }}
-            {% elif flight.class == "Premium Economy" %}
-                {{ t.premium_economy or 'Premium Economy' }}
-            {% elif flight.class == "Business" %}
-                {{ t.business or 'Business' }}
-            {% elif flight.class == "First" %}
-                {{ t.first_class or 'First' }}
-            {% else %}
-                {{ flight.class }}
-            {% endif %}
-        </p>
-        <p><strong>{{ t.fare or 'Fare' }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
-    </div>
+<div class="card summary-card">
+    <h2>{{ flight.airline }}</h2>
+    <p><strong>{{ t.route or 'Route' }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+    <p><strong>{{ t.time or 'Time' }}:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
+    <p><strong>{{ t.passengers if t.passengers is defined else 'Passengers' }}:</strong> {{ passenger_count }}</p>
+    <p><strong>{{ t.class_label or 'Class' }}:</strong> {{ flight.class }}</p>
+    <p><strong>{{ t.fare or 'Fare' }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }} per passenger</p>
+</div>
 
-    <div class="card seat-page-card">
-        <div class="seat-page-layout">
+<div class="card seat-page-card">
+    <div class="seat-page-layout">
 
-            <div class="seat-left-panel">
-                <div class="seat-legend-box">
-                    <h3>{{ t.seat_prices or 'Seat prices' }}</h3>
-                    <ul class="seat-price-list">
-                        <li><strong>{{ t.window_seat or 'Window Seat' }}</strong> – {{ selected_currency }} {{ convert_price(10, selected_currency) }}</li>
-                        <li><strong>{{ t.aisle_seat or 'Aisle Seat' }}</strong> – {{ selected_currency }} {{ convert_price(8, selected_currency) }}</li>
-                        <li><strong>{{ t.middle_seat or 'Middle Seat' }}</strong> – {{ selected_currency }} {{ convert_price(5, selected_currency) }}</li>
-                        <li><strong>{{ t.exit_seat or 'Emergency Exit Seat' }}</strong> – {{ selected_currency }} {{ convert_price(25, selected_currency) }} <span class="small-text">({{ t.extra_legroom or 'extra legroom' }})</span></li>
-                        <li><strong>{{ t.no_selection or 'No Seat Selection' }}</strong> – {{ selected_currency }} {{ convert_price(0, selected_currency) }} <span class="small-text">({{ t.random_seat or 'seat randomly allocated' }})</span></li>
-                    </ul>
-                </div>
-
-                <div class="seat-legend-status">
-                    <div class="legend-item"><span class="legend-box available-box"></span> {{ t.available or 'Available' }}</div>
-                    <div class="legend-item"><span class="legend-box unavailable-box"></span> {{ t.unavailable or 'Unavailable' }}</div>
-                    <div class="legend-item"><span class="legend-box selected-box"></span> {{ t.selected or 'Selected' }}</div>
-                </div>
+        <div class="seat-left-panel">
+            <div class="seat-legend-box">
+                <h3>{{ t.seat_prices or 'Seat prices' }}</h3>
+                <ul class="seat-price-list">
+                    <li><strong>{{ t.window_seat or 'Window Seat' }}</strong> – {{ selected_currency }} {{ convert_price(10, selected_currency) }}</li>
+                    <li><strong>{{ t.aisle_seat or 'Aisle Seat' }}</strong> – {{ selected_currency }} {{ convert_price(8, selected_currency) }}</li>
+                    <li><strong>{{ t.middle_seat or 'Middle Seat' }}</strong> – {{ selected_currency }} {{ convert_price(5, selected_currency) }}</li>
+                    <li><strong>{{ t.exit_seat or 'Emergency Exit Seat' }}</strong> – {{ selected_currency }} {{ convert_price(25, selected_currency) }} <span class="small-text">({{ t.extra_legroom or 'extra legroom' }})</span></li>
+                    <li><strong>{{ t.no_selection or 'No Seat Selection' }}</strong> – {{ selected_currency }} {{ convert_price(0, selected_currency) }} <span class="small-text">({{ t.random_seat or 'seat randomly allocated' }})</span></li>
+                </ul>
             </div>
 
-            <div class="seat-right-panel">
-                <form method="POST" id="seatForm">
-                    <input type="hidden" name="seat" id="selectedSeatInput">
+            <div class="seat-legend-status">
+                <div class="legend-item"><span class="legend-box available-box"></span> {{ t.available or 'Available' }}</div>
+                <div class="legend-item"><span class="legend-box unavailable-box"></span> {{ t.unavailable or 'Unavailable' }}</div>
+                <div class="legend-item"><span class="legend-box selected-box"></span> {{ t.selected or 'Selected' }}</div>
+            </div>
 
-                    {% for section in seat_sections %}
-                        <div class="cabin-section">
-                            <div class="cabin-header {{ section.color_class }}">
-                                {{ section.cabin }}
-                            </div>
-
-                            <div class="cabin-seat-map">
-                                {% for row in section.rows %}
-                                    <div class="cabin-row">
-                                        <div class="row-number">{{ row.row_number }}</div>
-
-                                        <div class="seat-row-grid">
-                                            {% for seat in row.seats %}
-                                                {% if loop.index == 3 or loop.index == 5 or loop.index == 7 %}
-                                                    <div class="aisle-gap"></div>
-                                                {% endif %}
-
-                                                <button
-                                                    type="button"
-                                                    class="seat-tile {{ section.color_class }} {% if not seat.available %}unavailable{% endif %}"
-                                                    {% if not seat.available %}disabled{% endif %}
-                                                    data-seat="{{ seat.seat }}"
-                                                    data-seat-type="{{ seat.type }}"
-                                                    data-seat-price="{{ seat.price }}"
-                                                    data-seat-price-converted="{{ convert_price(seat.price, selected_currency) }}"
-                                                    title="{{ seat.seat }} • {{ seat.type }} • £{{ seat.price }}"
-                                                >
-                                                    {{ seat.letter }}
-                                                </button>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    {% endfor %}
-
-                    <div class="selected-seat-card">
-                        <p><strong>{{ t.selected_seat or 'Selected Seat' }}:</strong> <span id="selectedSeatText">{{ t.none or 'None' }}</span></p>
-                        <p><strong>{{ t.seat_type or 'Seat Type' }}:</strong> <span id="selectedSeatType">—</span></p>
-                        <p><strong>{{ t.seat_price or 'Seat Price' }}:</strong> <span id="selectedSeatPrice">—</span></p>
-                    </div>
-
-                    <div class="button-group">
-                        <button type="submit" class="btn">{{ t.continue_review or 'Continue to Review Booking' }}</button>
-                    </div>
-                </form>
+            <div class="selected-seat-card">
+                <h3>Selected seats</h3>
+                {% for passenger in passengers %}
+                    <p>
+                        <strong>{{ passenger.first_name }} {{ passenger.last_name }}:</strong>
+                        <span id="selectedSeatText{{ loop.index }}">None</span>
+                        <span class="small-text" id="selectedSeatMeta{{ loop.index }}"></span>
+                    </p>
+                {% endfor %}
             </div>
         </div>
+
+        <div class="seat-right-panel">
+            <form method="POST" id="seatForm">
+                {% for passenger in passengers %}
+                    <input type="hidden" name="seat_{{ loop.index }}" id="selectedSeatInput{{ loop.index }}">
+                {% endfor %}
+
+                {% for section in seat_sections %}
+                    <div class="cabin-section">
+                        <div class="cabin-header {{ section.color_class }}">
+                            {{ section.cabin }}
+                        </div>
+
+                        <div class="cabin-seat-map">
+                            {% for row in section.rows %}
+                                <div class="cabin-row">
+                                    <div class="row-number">{{ row.row_number }}</div>
+
+                                    <div class="seat-row-grid">
+                                        {% for seat in row.seats %}
+                                            {% if loop.index == 3 or loop.index == 5 or loop.index == 7 %}
+                                                <div class="aisle-gap"></div>
+                                            {% endif %}
+
+                                            <button
+                                                type="button"
+                                                class="seat-tile {{ section.color_class }} {% if not seat.available %}unavailable{% endif %}"
+                                                {% if not seat.available %}disabled{% endif %}
+                                                data-seat="{{ seat.seat }}"
+                                                data-seat-type="{{ seat.type }}"
+                                                data-seat-price-converted="{{ convert_price(seat.price, selected_currency) }}"
+                                                title="{{ seat.seat }} • {{ seat.type }} • {{ selected_currency }} {{ convert_price(seat.price, selected_currency) }}"
+                                            >
+                                                {{ seat.letter }}
+                                            </button>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <div class="button-group">
+                    <button type="submit" class="btn">{{ t.continue_review or 'Continue to Review Booking' }}</button>
+                </div>
+            </form>
+        </div>
     </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+    const passengerCount = {{ passenger_count }};
+    const selectedSeats = [];
     const seatButtons = document.querySelectorAll(".seat-tile:not(.unavailable)");
-    const selectedSeatInput = document.getElementById("selectedSeatInput");
-    const selectedSeatText = document.getElementById("selectedSeatText");
-    const selectedSeatType = document.getElementById("selectedSeatType");
-    const selectedSeatPrice = document.getElementById("selectedSeatPrice");
+
+    function refreshSelectedSeatDisplay() {
+        for (let i = 1; i <= passengerCount; i++) {
+            const seatCode = selectedSeats[i - 1];
+            const input = document.getElementById("selectedSeatInput" + i);
+            const text = document.getElementById("selectedSeatText" + i);
+            const meta = document.getElementById("selectedSeatMeta" + i);
+
+            if (!seatCode) {
+                input.value = "";
+                text.textContent = "None";
+                meta.textContent = "";
+                continue;
+            }
+
+            const button = document.querySelector(`.seat-tile[data-seat="${seatCode}"]`);
+            const seatType = button.getAttribute("data-seat-type");
+            const seatPrice = button.getAttribute("data-seat-price-converted");
+
+            input.value = seatCode;
+            text.textContent = seatCode;
+            meta.textContent = ` — ${seatType} — {{ selected_currency }} ${seatPrice}`;
+        }
+
+        seatButtons.forEach((button) => {
+            const seatCode = button.getAttribute("data-seat");
+            const originalLetter = seatCode.replace(/[0-9]/g, "");
+            const passengerIndex = selectedSeats.indexOf(seatCode);
+
+            button.classList.remove("selected");
+
+            if (passengerIndex !== -1) {
+                button.classList.add("selected");
+                button.textContent = originalLetter + " " + (passengerIndex + 1);
+            } else {
+                button.textContent = originalLetter;
+            }
+        });
+    }
 
     seatButtons.forEach((button) => {
         button.addEventListener("click", function () {
-            seatButtons.forEach((btn) => btn.classList.remove("selected"));
-
-            button.classList.add("selected");
-
             const seatCode = button.getAttribute("data-seat");
-            const seatType = button.getAttribute("data-seat-type");
-            const seatPriceConverted = button.getAttribute("data-seat-price-converted");
+            const existingIndex = selectedSeats.indexOf(seatCode);
 
-            selectedSeatInput.value = seatCode;
-            selectedSeatText.textContent = seatCode;
-            selectedSeatType.textContent = seatType;
-            selectedSeatPrice.textContent = "{{ selected_currency }} " + seatPriceConverted;
+            if (existingIndex !== -1) {
+                selectedSeats.splice(existingIndex, 1);
+            } else {
+                if (selectedSeats.length >= passengerCount) {
+                    selectedSeats.shift();
+                }
+                selectedSeats.push(seatCode);
+            }
+
+            refreshSelectedSeatDisplay();
         });
+    });
+
+    document.getElementById("seatForm").addEventListener("submit", function (event) {
+        if (selectedSeats.length !== passengerCount) {
+            event.preventDefault();
+            alert(`Please choose ${passengerCount} seats before continuing.`);
+        }
     });
 </script>
 {% endblock %}

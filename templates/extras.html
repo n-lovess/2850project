@@ -3,47 +3,34 @@
 {% block title %}{{ t.extras_title or 'Choose Your Extras' }}{% endblock %}
 
 {% block content %}
-    <h1>{{ t.extras_title or 'Choose Your Extras' }}</h1>
-    <p class="subtitle">{{ t.extras_subtitle or 'Select any extras for your trip before continuing.' }}</p>
+<h1>{{ t.extras_title or 'Choose Your Extras' }}</h1>
+<p class="subtitle">Choose baggage and meal preferences for each passenger.</p>
 
-    <div class="card summary-card">
-        <h2>{{ t.your_flight or 'Your Flight' }}</h2>
-        <p><strong>{{ t.airline_label or 'Airline' }}:</strong> {{ session.selected_flight.airline }}</p>
-        <p><strong>{{ t.route or 'Route' }}:</strong> {{ session.selected_flight.from }} → {{ session.selected_flight.to }}</p>
-        <p>
-            <strong>{{ t.class_label or 'Class' }}:</strong>
-            {% if session.selected_flight.class == "Economy" %}
-                {{ t.economy or 'Economy' }}
-            {% elif session.selected_flight.class == "Premium Economy" %}
-                {{ t.premium_economy or 'Premium Economy' }}
-            {% elif session.selected_flight.class == "Business" %}
-                {{ t.business or 'Business' }}
-            {% elif session.selected_flight.class == "First" %}
-                {{ t.first_class or 'First' }}
-            {% else %}
-                {{ session.selected_flight.class }}
-            {% endif %}
-        </p>
-        <p><strong>{{ t.base_price or 'Base Price' }}:</strong> {{ selected_currency }} {{ convert_price(session.selected_flight.price, selected_currency) }}</p>
-    </div>
+<div class="card summary-card">
+    <h2>{{ t.your_flight or 'Your Flight' }}</h2>
+    <p><strong>{{ t.airline_label or 'Airline' }}:</strong> {{ flight.airline }}</p>
+    <p><strong>{{ t.route or 'Route' }}:</strong> {{ flight.from }} → {{ flight.to }}</p>
+    <p><strong>{{ t.class_label or 'Class' }}:</strong> {{ flight.class }}</p>
+    <p><strong>{{ t.base_price or 'Base Price' }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }} per passenger</p>
+    <p><strong>{{ t.passengers or 'Passengers' }}:</strong> {{ passenger_count }}</p>
+</div>
 
-    <div class="card">
-        <form method="POST" class="form-grid">
+<div class="card">
+    <form method="POST" class="form-grid">
+        {% for passenger in passengers %}
+            <div class="full-width passenger-extra-card manage-note">
+                <h2>Passenger {{ loop.index }} Extras</h2>
+                <p><strong>{{ passenger.first_name }} {{ passenger.last_name }}</strong></p>
 
-            <div class="full-width">
-                <h2>{{ t.baggage_options or 'Baggage Options' }}</h2>
-                <label for="baggage">{{ t.checked_baggage or 'Checked Baggage' }}</label>
-                <select id="baggage" name="baggage" required>
+                <label for="baggage_{{ loop.index }}">{{ t.checked_baggage or 'Checked Baggage' }}</label>
+                <select id="baggage_{{ loop.index }}" name="baggage_{{ loop.index }}" required>
                     <option value="No checked bag">{{ t.no_checked_bag or 'No checked bag' }}</option>
                     <option value="1 checked bag (+£30)">{{ t.one_checked_bag or '1 checked bag' }} (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})</option>
                     <option value="2 checked bags (+£60)">{{ t.two_checked_bags or '2 checked bags' }} (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})</option>
                 </select>
-            </div>
 
-            <div class="full-width">
-                <h2>{{ t.meal_preference or 'Meal Preference' }}</h2>
-                <label for="meal_choice">{{ t.choose_your_meal or 'Choose your meal' }}</label>
-                <select id="meal_choice" name="meal_choice" required>
+                <label for="meal_choice_{{ loop.index }}">{{ t.choose_your_meal or 'Choose your meal' }}</label>
+                <select id="meal_choice_{{ loop.index }}" name="meal_choice_{{ loop.index }}" required>
                     <option value="Standard Meal">{{ t.standard_meal or 'Standard Meal' }}</option>
                     <option value="Halal Meal">{{ t.halal_meal or 'Halal Meal' }}</option>
                     <option value="Vegetarian Meal">{{ t.vegetarian_meal or 'Vegetarian Meal' }}</option>
@@ -52,49 +39,45 @@
                     <option value="No Meal">{{ t.no_meal or 'No Meal' }}</option>
                 </select>
             </div>
+        {% endfor %}
 
-            <div class="full-width insurance-section">
-                <h2>{{ t.travel_insurance or 'Travel Insurance' }}</h2>
-                <p class="section-subtext">{{ t.insurance_text or 'Protect your journey with optional travel cover before you pay.' }}</p>
+        <div class="full-width insurance-section">
+            <h2>{{ t.travel_insurance or 'Travel Insurance' }}</h2>
+            <p class="section-subtext">{{ t.insurance_text or 'Protect your journey with optional travel cover before you pay.' }}</p>
 
-                <div class="insurance-card">
-                    <div class="insurance-top">
-                        <div>
-                            <span class="insurance-badge">{{ t.recommended or 'Recommended' }}</span>
-                            <h3>{{ t.travel_protection or 'AirGo Travel Protection' }}</h3>
-                            <p class="insurance-price">
-                                {{ t.only_per_booking or 'Only' }}
-                                {{ selected_currency }} {{ convert_price(25, selected_currency) }}
-                                {{ t.per_booking or 'per booking' }}
-                            </p>
-                        </div>
-                    </div>
+            <div class="insurance-card">
+                <span class="insurance-badge">{{ t.recommended or 'Recommended' }}</span>
+                <h3>{{ t.travel_protection or 'AirGo Travel Protection' }}</h3>
+                <p class="insurance-price">
+                    {{ t.only_per_booking or 'Only' }}
+                    {{ selected_currency }} {{ convert_price(25, selected_currency) }}
+                    {{ t.per_booking or 'per booking' }}
+                </p>
 
-                    <ul class="insurance-benefits">
-                        <li>{{ t.insurance_benefit_1 or 'Flight changes up to 24 hours before departure' }}</li>
-                        <li>{{ t.insurance_benefit_2 or 'Support during delays and travel disruption' }}</li>
-                        <li>{{ t.insurance_benefit_3 or 'Emergency travel assistance when needed' }}</li>
-                        <li>{{ t.insurance_benefit_4 or 'Added flexibility and peace of mind' }}</li>
-                    </ul>
+                <ul class="insurance-benefits">
+                    <li>{{ t.insurance_benefit_1 or 'Flight changes up to 24 hours before departure' }}</li>
+                    <li>{{ t.insurance_benefit_2 or 'Support during delays and travel disruption' }}</li>
+                    <li>{{ t.insurance_benefit_3 or 'Emergency travel assistance when needed' }}</li>
+                    <li>{{ t.insurance_benefit_4 or 'Added flexibility and peace of mind' }}</li>
+                </ul>
 
-                    <div class="insurance-options">
-                        <label class="insurance-option">
-                            <input type="radio" name="insurance" value="Travel Insurance (+£25)" required>
-                            <span>{{ t.add_travel_insurance or 'Add Travel Insurance' }}</span>
-                        </label>
+                <div class="insurance-options">
+                    <label class="insurance-option">
+                        <input type="radio" name="insurance" value="Travel Insurance (+£25)" required>
+                        <span>{{ t.add_travel_insurance or 'Add Travel Insurance' }}</span>
+                    </label>
 
-                        <label class="insurance-option">
-                            <input type="radio" name="insurance" value="No Travel Insurance" required>
-                            <span>{{ t.continue_without_insurance or 'No, continue without insurance' }}</span>
-                        </label>
-                    </div>
+                    <label class="insurance-option">
+                        <input type="radio" name="insurance" value="No Travel Insurance" required>
+                        <span>{{ t.continue_without_insurance or 'No, continue without insurance' }}</span>
+                    </label>
                 </div>
             </div>
+        </div>
 
-            <div class="full-width">
-                <button type="submit" class="btn">{{ t.continue_to_seat_selection or 'Continue to Seat Selection' }}</button>
-            </div>
-
-        </form>
-    </div>
+        <div class="full-width">
+            <button type="submit" class="btn">{{ t.continue_to_seat_selection or 'Continue to Seat Selection' }}</button>
+        </div>
+    </form>
+</div>
 {% endblock %}

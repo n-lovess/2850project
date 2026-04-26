@@ -11,8 +11,6 @@ import unicodedata
 import requests
 import time
 import hashlib
-import pycountry
-from babel.numbers import get_territory_currencies
 
 EXCHANGE_RATES = {"GBP": 1}
 LAST_FETCH = 0
@@ -830,6 +828,7 @@ SAMPLE_FLIGHTS = [
         "to_city": "Paris",
         "to_code": "CDG",
         "destination_group": "Paris Airports",
+        "flight_number": "AG1200",
         "departure_time": "08:00",
         "arrival_time": "10:15",
         "price": 120,
@@ -847,6 +846,7 @@ SAMPLE_FLIGHTS = [
         "to_city": "Paris",
         "to_code": "ORY",
         "destination_group": "Paris Airports",
+        "flight_number": "AG1250",
         "departure_time": "12:30",
         "arrival_time": "14:45",
         "price": 185,
@@ -864,6 +864,7 @@ SAMPLE_FLIGHTS = [
         "to_city": "Dubai",
         "to_code": "DXB",
         "destination_group": "Dubai Airports",
+        "flight_number": "AG1300",
         "departure_time": "18:20",
         "arrival_time": "03:35",
         "price": 310,
@@ -881,6 +882,7 @@ SAMPLE_FLIGHTS = [
         "to_city": "Dubai",
         "to_code": "DXB",
         "destination_group": "Dubai Airports",
+        "flight_number": "AG1400",
         "departure_time": "09:45",
         "arrival_time": "18:10",
         "price": 275,
@@ -898,6 +900,7 @@ SAMPLE_FLIGHTS = [
         "to_city": "London",
         "to_code": "LHR",
         "destination_group": "London Airports",
+        "flight_number": "AG1350",
         "departure_time": "14:00",
         "arrival_time": "18:45",
         "price": 420,
@@ -915,6 +918,7 @@ SAMPLE_FLIGHTS = [
         "to_city": "New York",
         "to_code": "JFK",
         "destination_group": "New York Airports",
+        "flight_number": "AG1500",
         "departure_time": "10:00",
         "arrival_time": "13:25",
         "price": 510,
@@ -1066,9 +1070,66 @@ def init_db():
             requested_destination_airport TEXT DEFAULT '',
             requested_destination_city TEXT DEFAULT '',
             requested_destination_code TEXT DEFAULT '',
+            passenger_count INTEGER NOT NULL DEFAULT 1,
+            refund_reason TEXT DEFAULT '',
+            refund_custom_reason TEXT DEFAULT '',
+            refund_passengers INTEGER NOT NULL DEFAULT 0,
+            refund_status TEXT NOT NULL DEFAULT 'None',
+            refund_amount REAL NOT NULL DEFAULT 0,
+            refund_processed INTEGER NOT NULL DEFAULT 0,
+            original_price REAL NOT NULL DEFAULT 0,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)
+
+    booking_columns = [row["name"] for row in conn.execute("PRAGMA table_info(bookings)").fetchall()]
+    missing_columns = {
+        "passenger_count": "INTEGER NOT NULL DEFAULT 1",
+        "refund_reason": "TEXT DEFAULT ''",
+        "refund_custom_reason": "TEXT DEFAULT ''",
+        "refund_passengers": "INTEGER NOT NULL DEFAULT 0",
+        "refund_status": "TEXT NOT NULL DEFAULT 'None'",
+        "refund_amount": "REAL NOT NULL DEFAULT 0",
+        "refund_processed": "INTEGER NOT NULL DEFAULT 0",
+        "original_price": "REAL NOT NULL DEFAULT 0",
+        "refund_passenger_ids": "TEXT DEFAULT ''",
+    }
+
+    for column_name, column_definition in missing_columns.items():
+        if column_name not in booking_columns:
+            conn.execute(f"ALTER TABLE bookings ADD COLUMN {column_name} {column_definition}")
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS passengers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            booking_id INTEGER NOT NULL,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            passport_number TEXT NOT NULL,
+            assistance_required TEXT DEFAULT '',
+            assistance_options TEXT DEFAULT '',
+            other_assistance TEXT DEFAULT '',
+            baggage TEXT DEFAULT 'No checked bag',
+            meal_choice TEXT DEFAULT 'No Meal',
+            baggage_price REAL NOT NULL DEFAULT 0,
+            seat TEXT NOT NULL,
+            FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
+        )
+    """)
+
+    passenger_columns = [row["name"] for row in conn.execute("PRAGMA table_info(passengers)").fetchall()]
+    passenger_missing_columns = {
+        "baggage": "TEXT DEFAULT 'No checked bag'",
+        "meal_choice": "TEXT DEFAULT 'No Meal'",
+        "baggage_price": "REAL NOT NULL DEFAULT 0",
+        "status": "TEXT NOT NULL DEFAULT 'Active'",
+    }
+
+    for column_name, column_definition in passenger_missing_columns.items():
+        if column_name not in passenger_columns:
+            conn.execute(f"ALTER TABLE passengers ADD COLUMN {column_name} {column_definition}")
 
     admin_email = "admin@airgo.com"
     existing_admin = conn.execute(
@@ -1086,7 +1147,6 @@ def init_db():
             generate_password_hash("admin123")
         ))
 
-    # Create flights table if not exists
     conn.execute("""
         CREATE TABLE IF NOT EXISTS flights (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1105,7 +1165,6 @@ def init_db():
         )
     """)
 
-    # Check if flights table is empty and seed it
     flight_count = conn.execute("SELECT COUNT(*) as cnt FROM flights").fetchone()["cnt"]
     if flight_count == 0:
         conn.executemany("""
@@ -1123,9 +1182,7 @@ def init_db():
             ("AirGo", "London City", "London", "LCY", "John F. Kennedy", "New York", "JFK", "10:00", "13:25", 510, "Premium Economy", 8),
         ])
 
-    # Add indexes for performance
     conn.execute("CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id)")
-
     conn.commit()
     conn.close()
 
@@ -1212,8 +1269,30 @@ def is_admin():
 
 
 def get_booked_seats_for_flight(flight):
+    flight_date = session.get("search_data", {}).get("depart_date", "")
     conn = get_db_connection()
-    rows = conn.execute("""
+
+    passenger_rows = conn.execute("""
+        SELECT passengers.seat
+        FROM passengers
+        JOIN bookings ON passengers.booking_id = bookings.id
+        WHERE bookings.airline = ?
+          AND bookings.departure_airport = ?
+          AND bookings.destination_airport = ?
+          AND bookings.departure_time = ?
+          AND bookings.arrival_time = ?
+          AND bookings.flight_date = ?
+          AND bookings.flight_status != 'Cancelled'
+    """, (
+        flight["airline"],
+        flight["from"],
+        flight["to"],
+        flight["departure_time"],
+        flight["arrival_time"],
+        flight_date
+    )).fetchall()
+
+    legacy_rows = conn.execute("""
         SELECT seat FROM bookings
         WHERE airline = ?
           AND departure_airport = ?
@@ -1221,17 +1300,27 @@ def get_booked_seats_for_flight(flight):
           AND departure_time = ?
           AND arrival_time = ?
           AND flight_date = ?
+          AND flight_status != 'Cancelled'
     """, (
         flight["airline"],
         flight["from"],
         flight["to"],
         flight["departure_time"],
         flight["arrival_time"],
-        session.get("search_data", {}).get("depart_date", "")
+        flight_date
     )).fetchall()
+
     conn.close()
 
-    return {row["seat"] for row in rows}
+    booked = {row["seat"] for row in passenger_rows if row["seat"]}
+    for row in legacy_rows:
+        if row["seat"]:
+            for seat in str(row["seat"]).split(","):
+                seat = seat.strip()
+                if seat:
+                    booked.add(seat)
+
+    return booked
 
 
 def get_seat_layout():
@@ -1760,41 +1849,51 @@ def passenger_details(flight_id):
         flash("Selected flight was not found.", "error")
         return redirect(url_for("home"))
 
+    search_data = session.get("search_data", {})
+    passenger_count = int(search_data.get("passengers", 1) or 1)
+    passenger_count = max(1, passenger_count)
+
     if request.method == "POST":
-        assistance_required = request.form.get("assistance_required")
-        assistance_options = request.form.getlist("assistance_options")
-        other_assistance = request.form.get("other_assistance")
+        passengers = []
 
-        passenger_data = {
-            "first_name": request.form.get("first_name", "").strip(),
-            "last_name": request.form.get("last_name", "").strip(),
-            "email": request.form.get("email", "").strip(),
-            "phone": request.form.get("phone", "").strip(),
-            "passport_number": request.form.get("passport_number", "").strip(),
-            "assistance_required": assistance_required,
-            "assistance_options": assistance_options,
-            "other_assistance": other_assistance
-        }
+        for i in range(1, passenger_count + 1):
+            assistance_options = request.form.getlist(f"assistance_options_{i}")
 
-        required_fields = [
-            passenger_data["first_name"],
-            passenger_data["last_name"],
-            passenger_data["email"],
-            passenger_data["phone"],
-            passenger_data["passport_number"],
-        ]
+            passenger = {
+                "first_name": request.form.get(f"first_name_{i}", "").strip(),
+                "last_name": request.form.get(f"last_name_{i}", "").strip(),
+                "email": request.form.get(f"email_{i}", "").strip(),
+                "phone": request.form.get(f"phone_{i}", "").strip(),
+                "passport_number": request.form.get(f"passport_number_{i}", "").strip(),
+                "assistance_required": request.form.get(f"assistance_required_{i}", ""),
+                "assistance_options": assistance_options,
+                "other_assistance": request.form.get(f"other_assistance_{i}", "").strip()
+            }
 
-        if not all(required_fields):
-            flash("Please fill in all passenger details.", "error")
-            return render_template(
-                "passenger_details.html",
-                flight=selected_flight,
-                benefits=CLASS_BENEFITS.get(selected_flight["class"], {}),
-            )
+            required_fields = [
+                passenger["first_name"],
+                passenger["last_name"],
+                passenger["email"],
+                passenger["phone"],
+                passenger["passport_number"],
+            ]
+
+            if not all(required_fields):
+                flash(f"Please fill in all details for passenger {i}.", "error")
+                return render_template(
+                    "passenger_details.html",
+                    flight=selected_flight,
+                    benefits=CLASS_BENEFITS.get(selected_flight["class"], {}),
+                    passenger_count=passenger_count,
+                    t=get_translation()
+                )
+
+            passengers.append(passenger)
 
         session["selected_flight"] = selected_flight
-        session["passenger_data"] = passenger_data
+        session["passenger_data"] = passengers
         session.pop("selected_seat", None)
+        session.pop("selected_seats", None)
 
         if not session.get("user_id"):
             session["post_login_redirect"] = url_for("extras")
@@ -1807,121 +1906,169 @@ def passenger_details(flight_id):
         "passenger_details.html",
         flight=selected_flight,
         benefits=CLASS_BENEFITS.get(selected_flight["class"], {}),
+        passenger_count=passenger_count,
+        t=get_translation()
     )
 
 
 @app.route("/extras", methods=["GET", "POST"])
 def extras():
+    selected_flight = session.get("selected_flight")
+    passengers = session.get("passenger_data", [])
+
+    if not selected_flight or not passengers:
+        flash("Please select a flight and enter passenger details first.", "error")
+        return redirect(url_for("home"))
+
+    passenger_count = len(passengers)
+
+    def baggage_price_from_choice(choice):
+        if "1 checked bag" in choice:
+            return 30
+        if "2 checked bags" in choice:
+            return 60
+        return 0
+
     if request.method == "POST":
-        baggage = request.form.get("baggage")
-        meal_choice = request.form.get("meal_choice")
-        insurance = request.form.get("insurance")
+        passenger_extras = []
+
+        for i, passenger in enumerate(passengers, start=1):
+            baggage = request.form.get(f"baggage_{i}", "No checked bag")
+            meal_choice = request.form.get(f"meal_choice_{i}", "No Meal")
+            passenger_extras.append({
+                "passenger_number": i,
+                "first_name": passenger.get("first_name", ""),
+                "last_name": passenger.get("last_name", ""),
+                "baggage": baggage,
+                "meal_choice": meal_choice,
+                "baggage_price": baggage_price_from_choice(baggage)
+            })
+
+        insurance = request.form.get("insurance", "No Travel Insurance")
+
+        baggage_summary = ", ".join([
+            f"Passenger {item['passenger_number']}: {item['baggage']}"
+            for item in passenger_extras
+        ])
+        meal_summary = ", ".join([
+            f"Passenger {item['passenger_number']}: {item['meal_choice']}"
+            for item in passenger_extras
+        ])
 
         session["extras"] = {
-            "baggage": baggage,
-            "meal_choice": meal_choice,
-            "insurance": insurance
+            "passenger_extras": passenger_extras,
+            "insurance": insurance,
+            "baggage": baggage_summary,
+            "meal_choice": meal_summary,
+            "total_baggage_price": sum(item["baggage_price"] for item in passenger_extras)
         }
 
         return redirect(url_for("seat_selection"))
 
-    return render_template("extras.html")
-
+    return render_template(
+        "extras.html",
+        flight=selected_flight,
+        passengers=passengers,
+        passenger_count=passenger_count,
+        t=get_translation()
+    )
 
 @app.route("/seat-selection", methods=["GET", "POST"])
 def seat_selection():
     selected_flight = session.get("selected_flight")
-    passenger_data = session.get("passenger_data")
+    passengers = session.get("passenger_data")
 
-    if not selected_flight or not passenger_data:
+    if not selected_flight or not passengers:
         flash("Please select a flight and enter passenger details first.", "error")
         return redirect(url_for("home"))
 
-    if request.method == "POST":
-        selected_seat = request.form.get("seat", "").strip()
+    passenger_count = len(passengers)
 
-        if not selected_seat:
-            flash("Please choose a seat before continuing.", "error")
+    if request.method == "POST":
+        selected_seats = []
+        for i in range(1, passenger_count + 1):
+            seat = request.form.get(f"seat_{i}", "").strip()
+            if seat:
+                selected_seats.append(seat)
+
+        if len(selected_seats) != passenger_count:
+            flash(f"Please choose {passenger_count} seats before continuing.", "error")
             seat_sections = generate_seat_map(selected_flight)
-            return render_template(
-                "seat_selection.html",
-                flight=selected_flight,
-                seat_sections=seat_sections
-            )
+            return render_template("seat_selection.html", flight=selected_flight, seat_sections=seat_sections, passengers=passengers, passenger_count=passenger_count, t=get_translation())
+
+        if len(set(selected_seats)) != len(selected_seats):
+            flash("Please choose a different seat for each passenger.", "error")
+            seat_sections = generate_seat_map(selected_flight)
+            return render_template("seat_selection.html", flight=selected_flight, seat_sections=seat_sections, passengers=passengers, passenger_count=passenger_count, t=get_translation())
 
         booked_seats = get_booked_seats_for_flight(selected_flight)
         flight_date = session.get("search_data", {}).get("depart_date", "")
-        random_unavailable = generate_seeded_unavailable_seats(
-            selected_flight,
-            flight_date,
-            booked_seats
-        )
+        random_unavailable = generate_seeded_unavailable_seats(selected_flight, flight_date, booked_seats)
         all_unavailable = booked_seats.union(random_unavailable)
 
-        if selected_seat in all_unavailable:
-            flash("That seat is no longer available. Please choose another seat.", "error")
+        if any(seat in all_unavailable for seat in selected_seats):
+            flash("One or more selected seats are no longer available. Please choose again.", "error")
             seat_sections = generate_seat_map(selected_flight)
-            return render_template(
-                "seat_selection.html",
-                flight=selected_flight,
-                seat_sections=seat_sections
-            )
+            return render_template("seat_selection.html", flight=selected_flight, seat_sections=seat_sections, passengers=passengers, passenger_count=passenger_count, t=get_translation())
 
-        session["selected_seat"] = selected_seat
+        session["selected_seats"] = selected_seats
+        session["selected_seat"] = selected_seats[0]
         return redirect(url_for("review_booking"))
 
     seat_sections = generate_seat_map(selected_flight)
-    return render_template(
-        "seat_selection.html",
-        flight=selected_flight,
-        seat_sections=seat_sections
-    )
+    return render_template("seat_selection.html", flight=selected_flight, seat_sections=seat_sections, passengers=passengers, passenger_count=passenger_count, t=get_translation())
 
 
 @app.route("/review-booking")
 def review_booking():
     selected_flight = session.get("selected_flight")
-    passenger_data = session.get("passenger_data")
-    selected_seat = session.get("selected_seat")
+    passengers = session.get("passenger_data")
+    selected_seats = session.get("selected_seats")
     search_data = session.get("search_data", {})
     extras = session.get("extras", {})
 
-    if not selected_flight or not passenger_data or not selected_seat:
+    if not selected_flight or not passengers or not selected_seats:
         flash("Please complete passenger details and seat selection first.", "error")
         return redirect(url_for("home"))
 
-    return render_template(
-        "review_booking.html",
-        flight=selected_flight,
-        passenger=passenger_data,
-        selected_seat=selected_seat,
-        search_data=search_data,
-        extras=extras
-    )
+    return render_template("review_booking.html", flight=selected_flight, passengers=passengers, passenger=passengers[0], selected_seats=selected_seats, selected_seat=", ".join(selected_seats), search_data=search_data, extras=extras, t=get_translation())
 
 
-def calculate_price(selected_flight, extras, selected_seat):
-    base_fare = selected_flight["price"]
-
-    baggage_price = 0
-    if "1 checked bag" in extras.get("baggage", ""):
-        baggage_price = 30
-    elif "2 checked bags" in extras.get("baggage", ""):
-        baggage_price = 60
-
-    insurance_price = 25 if "Insurance" in extras.get("insurance", "") else 0
-
-    seat_price = 0
-    seat_type = ""
+def get_seat_price_and_type(selected_flight, selected_seat):
     seat_sections = generate_seat_map(selected_flight)
-
     for section in seat_sections:
         for row in section["rows"]:
             for seat in row["seats"]:
                 if seat["seat"] == selected_seat:
-                    seat_price = seat["price"]
-                    seat_type = seat["type"]
-                    break
+                    return seat["price"], seat["type"]
+    return 0, ""
+
+
+def calculate_price(selected_flight, extras, selected_seats):
+    if isinstance(selected_seats, str):
+        selected_seats = [selected_seats]
+
+    passenger_count = len(selected_seats)
+    base_fare = selected_flight["price"] * passenger_count
+
+    passenger_extras = extras.get("passenger_extras", [])
+    if passenger_extras:
+        baggage_price = sum(float(item.get("baggage_price", 0) or 0) for item in passenger_extras)
+    else:
+        baggage_price = 0
+        if "1 checked bag" in extras.get("baggage", ""):
+            baggage_price = 30
+        elif "2 checked bags" in extras.get("baggage", ""):
+            baggage_price = 60
+
+    insurance_price = 25 if "Insurance" in extras.get("insurance", "") else 0
+
+    seat_price = 0
+    seat_types = []
+    for seat_code in selected_seats:
+        current_price, current_type = get_seat_price_and_type(selected_flight, seat_code)
+        seat_price += current_price
+        seat_types.append(current_type)
 
     total_price = base_fare + baggage_price + insurance_price + seat_price
 
@@ -1930,24 +2077,24 @@ def calculate_price(selected_flight, extras, selected_seat):
         "baggage_price": baggage_price,
         "insurance_price": insurance_price,
         "seat_price": seat_price,
-        "seat_type": seat_type,
+        "seat_type": ", ".join([seat_type for seat_type in seat_types if seat_type]),
         "total_price": total_price
     }
 
 @app.route("/payment", methods=["GET", "POST"])
 def payment():
     selected_flight = session.get("selected_flight")
-    passenger_data = session.get("passenger_data")
-    selected_seat = session.get("selected_seat")
+    passengers = session.get("passenger_data")
+    selected_seats = session.get("selected_seats")
     search_data = session.get("search_data", {})
     extras = session.get("extras", {})
 
-    if not selected_flight or not passenger_data:
+    if not selected_flight or not passengers:
         flash("Please select a flight and enter passenger details first.", "error")
         return redirect(url_for("home"))
 
-    if not selected_seat:
-        flash("Please choose a seat before payment.", "error")
+    if not selected_seats:
+        flash("Please choose seats before payment.", "error")
         return redirect(url_for("seat_selection"))
 
     if not session.get("user_id"):
@@ -1955,7 +2102,7 @@ def payment():
         flash("Please log in to complete your booking.", "error")
         return redirect(url_for("login"))
 
-    price_data = calculate_price(selected_flight, extras, selected_seat)
+    price_data = calculate_price(selected_flight, extras, selected_seats)
 
     if request.method == "POST":
         payment_data = {
@@ -1965,152 +2112,107 @@ def payment():
             "cvv": request.form.get("cvv", "").strip()
         }
 
+        def render_payment():
+            return render_template("payment.html", flight=selected_flight, passengers=passengers, passenger=passengers[0], selected_seats=selected_seats, selected_seat=", ".join(selected_seats), extras=extras, search_data=search_data, **price_data)
+
         if not request.form.get("accept_terms"):
             flash("You must accept the Terms & Conditions before completing your booking.", "error")
-            return render_template(
-                "payment.html",
-                flight=selected_flight,
-                passenger=passenger_data,
-                selected_seat=selected_seat,
-                extras=extras,
-                search_data=search_data,
-                **price_data
-            )
+            return render_payment()
 
         if not all(payment_data.values()):
             flash("Please fill in all payment fields.", "error")
-            return render_template(
-                "payment.html",
-                flight=selected_flight,
-                passenger=passenger_data,
-                selected_seat=selected_seat,
-                extras=extras,
-                 search_data=search_data,
-                **price_data
-            )
+            return render_payment()
 
         booking_reference = generate_booking_reference()
-        points_earned = calculate_points(selected_flight["price"])
         flight_date = search_data.get("depart_date", "")
+        total_price = price_data["total_price"]
+        points_earned = calculate_points(total_price)
+        passenger_count = len(passengers)
+        main_passenger = passengers[0]
+        seat_summary = ", ".join(selected_seats)
+        passenger_extras = extras.get("passenger_extras", [])
+        meal_summary = extras.get("meal_choice", "No Meal")
+        total_checked_bags = 0
+        for item in passenger_extras:
+            if "1 checked bag" in item.get("baggage", ""):
+                total_checked_bags += 1
+            elif "2 checked bags" in item.get("baggage", ""):
+                total_checked_bags += 2
 
         conn = get_db_connection()
-        conn.execute("""
+        cursor = conn.execute("""
             INSERT INTO bookings (
-                user_id,
-                booking_reference,
-                first_name,
-                last_name,
-                email,
-                phone,
-                passport_number,
-                airline,
-                departure_airport,
-                departure_city,
-                departure_code,
-                destination_airport,
-                destination_city,
-                destination_code,
-                flight_date,
-                departure_time,
-                arrival_time,
-                ticket_class,
-                meal_choice,
-                seat,
-                price,
-                points_earned,
-                trip_type,
-                change_request,
-                change_status,
-                flight_status,
-                extra_baggage,
-                priority_boarding,
-                wifi_package,
-                lounge_access,
-                requested_route,
-                requested_date,
-                requested_departure_airport,
-                requested_departure_city,
-                requested_departure_code,
-                requested_destination_airport,
-                requested_destination_city,
-                requested_destination_code
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                user_id, booking_reference, first_name, last_name, email, phone, passport_number,
+                airline, departure_airport, departure_city, departure_code, destination_airport,
+                destination_city, destination_code, flight_date, departure_time, arrival_time,
+                ticket_class, meal_choice, seat, price, points_earned, trip_type, change_request,
+                change_status, flight_status, extra_baggage, priority_boarding, wifi_package,
+                lounge_access, requested_route, requested_date, requested_departure_airport,
+                requested_departure_city, requested_departure_code, requested_destination_airport,
+                requested_destination_city, requested_destination_code, passenger_count,
+                refund_reason, refund_custom_reason, refund_passengers, refund_status,
+                refund_amount, refund_processed, original_price
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            session["user_id"],
-            booking_reference,
-            passenger_data["first_name"],
-            passenger_data["last_name"],
-            passenger_data["email"],
-            passenger_data["phone"],
-            passenger_data["passport_number"],
-            selected_flight["airline"],
-            selected_flight["from"],
-            selected_flight["from_city"],
-            selected_flight["from_code"],
-            selected_flight["to"],
-            selected_flight["to_city"],
-            selected_flight["to_code"],
-            flight_date,
-            selected_flight["departure_time"],
-            selected_flight["arrival_time"],
-            selected_flight["class"],
-            extras.get("meal_choice", "No Meal"),
-            selected_seat,
-            selected_flight["price"],
-            points_earned,
-            search_data.get("trip_type", "return"),
-            "",
-            "None",
-            DEFAULT_FLIGHT_STATUS,
-            0,
-            0,
-            0,
-            0,
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
+            session["user_id"], booking_reference, main_passenger["first_name"], main_passenger["last_name"],
+            main_passenger["email"], main_passenger["phone"], main_passenger["passport_number"],
+            selected_flight["airline"], selected_flight["from"], selected_flight["from_city"], selected_flight["from_code"],
+            selected_flight["to"], selected_flight["to_city"], selected_flight["to_code"], flight_date,
+            selected_flight["departure_time"], selected_flight["arrival_time"], selected_flight["class"],
+            meal_summary, seat_summary, total_price, points_earned,
+            search_data.get("trip_type", "return"), "", "None", DEFAULT_FLIGHT_STATUS,
+            total_checked_bags, 0, 0, 0, "", "", "", "", "", "", "", "", passenger_count,
+            "", "", 0, "None", 0, 0, total_price
         ))
+
+        booking_id = cursor.lastrowid
+
+        for index, (passenger, seat) in enumerate(zip(passengers, selected_seats)):
+            extra = passenger_extras[index] if index < len(passenger_extras) else {}
+            conn.execute("""
+                INSERT INTO passengers (
+                    booking_id, first_name, last_name, email, phone, passport_number,
+                    assistance_required, assistance_options, other_assistance,
+                    baggage, meal_choice, baggage_price, seat
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                booking_id, passenger["first_name"], passenger["last_name"], passenger["email"], passenger["phone"],
+                passenger["passport_number"], passenger.get("assistance_required", ""), ", ".join(passenger.get("assistance_options", [])),
+                passenger.get("other_assistance", ""), extra.get("baggage", "No checked bag"),
+                extra.get("meal_choice", "No Meal"), extra.get("baggage_price", 0), seat
+            ))
+
         conn.commit()
         conn.close()
 
         session["booking_reference"] = booking_reference
         session["points_earned"] = points_earned
+        session["confirmed_booking_id"] = booking_id
 
         return redirect(url_for("confirmation"))
 
-    return render_template(
-        "payment.html",
-        flight=selected_flight,
-        passenger=passenger_data,
-        selected_seat=selected_seat,
-        extras=extras,
-        search_data=search_data,
-        **price_data
-    )
+    return render_template("payment.html", flight=selected_flight, passengers=passengers, passenger=passengers[0], selected_seats=selected_seats, selected_seat=", ".join(selected_seats), extras=extras, search_data=search_data, **price_data)
 
 
 @app.route("/confirmation")
 def confirmation():
     selected_flight = session.get("selected_flight")
-    passenger_data = session.get("passenger_data")
-    selected_seat = session.get("selected_seat")
+    passengers = session.get("passenger_data")
+    selected_seats = session.get("selected_seats")
     booking_reference = session.get("booking_reference")
     points_earned = session.get("points_earned", 0)
 
-    if not selected_flight or not passenger_data or not booking_reference:
+    if not selected_flight or not passengers or not booking_reference:
         flash("No booking confirmation found.", "error")
         return redirect(url_for("home"))
 
     return render_template(
         "confirmation.html",
         flight=selected_flight,
-        passenger=passenger_data,
-        selected_seat=selected_seat,
+        passenger=passengers[0],
+        passengers=passengers,
+        selected_seat=", ".join(selected_seats or []),
+        selected_seats=selected_seats or [],
         booking_reference=booking_reference,
         benefits=CLASS_BENEFITS.get(selected_flight["class"], {}),
         points_earned=points_earned,
@@ -2138,9 +2240,22 @@ def bookings():
         WHERE user_id = ?
     """, (session["user_id"],)).fetchone()["total"]
 
+    passenger_rows = conn.execute("""
+    SELECT * FROM passengers
+    WHERE booking_id IN (
+        SELECT id FROM bookings WHERE user_id = ?
+    )
+    ORDER BY id
+    """, (session["user_id"],)).fetchall()
+
     conn.close()
 
     enriched_bookings = [enrich_booking_for_display(row) for row in rows]
+    passengers_by_booking = {}
+    for passenger in passenger_rows:
+        passengers_by_booking.setdefault(passenger["booking_id"], []).append(passenger)
+    for booking in enriched_bookings:
+        booking["passengers"] = passengers_by_booking.get(booking["id"], [])
     tier_info = get_tier_info(total_points)
 
     return render_template(
@@ -2392,34 +2507,151 @@ def boarding_pass(booking_id):
         return redirect(url_for("login"))
 
     conn = get_db_connection()
+
     booking = conn.execute("""
         SELECT * FROM bookings
         WHERE id = ? AND user_id = ?
     """, (booking_id, session["user_id"])).fetchone()
-    conn.close()
 
     if not booking:
+        conn.close()
         flash("Boarding pass not found.", "error")
         return redirect(url_for("bookings"))
 
-    return render_template("boarding_pass.html", booking=booking)
+    passengers = conn.execute("""
+        SELECT * FROM passengers
+        WHERE booking_id = ?
+        ORDER BY id
+    """, (booking_id,)).fetchall()
 
+    active_passengers = [p for p in passengers if p["status"] != "Cancelled"]
 
-@app.route("/cancel-booking/<int:booking_id>", methods=["POST"])
-def cancel_booking(booking_id):
+    if not active_passengers:
+        display_status = "Cancelled"
+    else:
+        display_status = booking["flight_status"]
+
+    conn.close()
+
+    if not passengers:
+        passengers = [{
+            "first_name": booking["first_name"],
+            "last_name": booking["last_name"],
+            "email": booking["email"],
+            "phone": booking["phone"],
+            "passport_number": booking["passport_number"],
+            "seat": booking["seat"],
+            "status": "Active"
+        }]
+
+    matched_flight = None
+
+    for flight in SAMPLE_FLIGHTS:
+        if (
+            flight["airline"] == booking["airline"]
+            and flight["from"] == booking["departure_airport"]
+            and flight["to"] == booking["destination_airport"]
+            and flight["departure_time"] == booking["departure_time"]
+            and flight["arrival_time"] == booking["arrival_time"]
+        ):
+            matched_flight = flight
+            break
+
+    flight_number = ""
+
+    if matched_flight:
+        flight_number = matched_flight.get("flight_number", "")
+
+    return render_template(
+        "boarding_pass.html",
+        booking=booking,
+        passengers=passengers,
+        flight_number=flight_number,
+        display_status=display_status,
+        t=get_translation()
+    )
+
+@app.route("/request-refund/<int:booking_id>", methods=["POST"])
+def request_refund(booking_id):
     if not session.get("user_id"):
         flash("Please log in first.", "error")
         return redirect(url_for("login"))
 
+    refund_reason = request.form.get("refund_reason", "").strip()
+    refund_custom_reason = request.form.get("refund_custom_reason", "").strip()
+    refund_passenger_ids = request.form.getlist("refund_passenger_ids")
+    refund_passengers = len(refund_passenger_ids)
+
     conn = get_db_connection()
-    conn.execute("""
-        DELETE FROM bookings
+
+    if refund_passengers < 1:
+        conn.close()
+        flash("Please select at least one passenger for refund.", "error")
+        return redirect(url_for("bookings"))
+
+    booking = conn.execute("""
+        SELECT * FROM bookings
         WHERE id = ? AND user_id = ?
-    """, (booking_id, session["user_id"]))
+    """, (booking_id, session["user_id"])).fetchone()
+
+    if not booking:
+        conn.close()
+        flash("Booking not found.", "error")
+        return redirect(url_for("bookings"))
+
+    if booking["refund_status"] == "Pending":
+        conn.close()
+        flash("A refund request is already pending for this booking.", "error")
+        return redirect(url_for("bookings"))
+
+    selected_passengers = conn.execute(f"""
+        SELECT * FROM passengers
+        WHERE booking_id = ?
+        AND id IN ({",".join(["?"] * len(refund_passenger_ids))})
+        AND status = 'Active'
+    """, [booking_id] + refund_passenger_ids).fetchall()
+
+    if len(selected_passengers) != refund_passengers:
+        conn.close()
+        flash("One or more selected passengers are invalid or already cancelled.", "error")
+        return redirect(url_for("bookings"))
+
+    if refund_passengers > booking["passenger_count"]:
+        conn.close()
+        flash("Invalid number of passengers selected for refund.", "error")
+        return redirect(url_for("bookings"))
+
+    if refund_reason == "Other" and not refund_custom_reason:
+        conn.close()
+        flash("Please explain your refund reason.", "error")
+        return redirect(url_for("bookings"))
+
+    estimated_refund = round((booking["price"] / booking["passenger_count"]) * refund_passengers, 2)
+
+    conn.execute("""
+        UPDATE bookings
+        SET refund_reason = ?,
+            refund_custom_reason = ?,
+            refund_passengers = ?,
+            refund_passenger_ids = ?,
+            refund_status = 'Pending',
+            refund_amount = ?,
+            refund_processed = 0
+        WHERE id = ? AND user_id = ?
+    """, (
+        refund_reason,
+        refund_custom_reason,
+        refund_passengers,
+        ",".join(refund_passenger_ids),
+        estimated_refund,
+        booking_id,
+        session["user_id"]
+    ))
+
     conn.commit()
     conn.close()
 
-    flash("Booking cancelled successfully.", "success")
+    flash("Refund request submitted successfully.", "success")
     return redirect(url_for("bookings"))
 
 
@@ -2516,6 +2748,111 @@ def admin_update_flight_status(booking_id):
     flash("Flight status updated.", "success")
     return redirect(url_for("admin_dashboard"))
 
+@app.route("/admin/update-refund-status/<int:booking_id>", methods=["POST"])
+def admin_update_refund_status(booking_id):
+    if not is_admin():
+        flash("Admin access only.", "error")
+        return redirect(url_for("home"))
+
+    new_status = request.form.get("refund_status", "").strip()
+
+    if new_status not in ["Pending", "Approved", "Rejected"]:
+        flash("Invalid refund status.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    conn = get_db_connection()
+
+    booking = conn.execute("""
+        SELECT * FROM bookings
+        WHERE id = ?
+    """, (booking_id,)).fetchone()
+
+    if not booking:
+        conn.close()
+        flash("Booking not found.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    if new_status == "Approved":
+        refund_ids = [
+            passenger_id.strip()
+            for passenger_id in (booking["refund_passenger_ids"] or "").split(",")
+            if passenger_id.strip()
+        ]
+
+        if refund_ids:
+            conn.execute(f"""
+                UPDATE passengers
+                SET status = 'Cancelled'
+                WHERE booking_id = ?
+                AND id IN ({",".join(["?"] * len(refund_ids))})
+            """, [booking_id] + refund_ids)
+
+        active_count = conn.execute("""
+            SELECT COUNT(*) AS total
+            FROM passengers
+            WHERE booking_id = ? AND status != 'Cancelled'
+        """, (booking_id,)).fetchone()["total"]
+
+        new_price = max(0, round(booking["price"] - booking["refund_amount"], 2))
+        new_points = calculate_points(new_price)
+
+        new_flight_status = "Cancelled" if active_count == 0 else booking["flight_status"]
+
+        conn.execute("""
+            UPDATE bookings
+            SET refund_status = ?,
+                refund_processed = 1,
+                passenger_count = ?,
+                price = ?,
+                points_earned = ?,
+                flight_status = ?,
+                refund_passenger_ids = ''
+            WHERE id = ?
+        """, (
+            new_status,
+            active_count,
+            new_price,
+            new_points,
+            new_flight_status,
+            booking_id
+        ))
+
+    elif new_status == "Rejected":
+        conn.execute("""
+            UPDATE bookings
+            SET refund_status = ?,
+                refund_passengers = 0,
+                refund_amount = 0,
+                refund_passenger_ids = ''
+            WHERE id = ?
+        """, (new_status, booking_id))
+
+    else:
+        conn.execute("""
+            UPDATE bookings
+            SET refund_status = ?
+            WHERE id = ?
+        """, (new_status, booking_id))
+
+    conn.commit()
+    conn.close()
+
+    flash("Refund status updated.", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
+    conn = get_db_connection()
+    conn.execute("""
+        UPDATE bookings
+        SET refund_status = ?
+        WHERE id = ?
+    """, (status, booking_id))
+
+    conn.commit()
+    conn.close()
+
+    flash("Refund status updated.", "success")
+    return redirect(url_for("admin_dashboard"))
 
 def get_exchange_rates():
     global EXCHANGE_RATES, LAST_FETCH
@@ -2551,102 +2888,91 @@ def normalize_search_text(text):
     return text
 
 
-def get_currency_name_from_pycountry(code):
-    currency = pycountry.currencies.get(alpha_3=code)
-    if currency and getattr(currency, "name", None):
-        return currency.name
-    return code
+CURRENCY_NAMES = {
+    "GBP": "British Pound", "USD": "US Dollar", "EUR": "Euro", "TRY": "Turkish Lira", "AED": "UAE Dirham",
+    "CAD": "Canadian Dollar", "AUD": "Australian Dollar", "NZD": "New Zealand Dollar", "JPY": "Japanese Yen",
+    "CNY": "Chinese Yuan", "INR": "Indian Rupee", "IRR": "Iranian Rial", "RUB": "Russian Ruble",
+    "KRW": "South Korean Won", "THB": "Thai Baht", "CHF": "Swiss Franc", "SEK": "Swedish Krona",
+    "NOK": "Norwegian Krone", "DKK": "Danish Krone", "SAR": "Saudi Riyal", "QAR": "Qatari Riyal",
+    "KWD": "Kuwaiti Dinar", "BHD": "Bahraini Dinar", "OMR": "Omani Rial", "ZAR": "South African Rand",
+    "BRL": "Brazilian Real", "MXN": "Mexican Peso", "ARS": "Argentine Peso", "CLP": "Chilean Peso",
+    "COP": "Colombian Peso", "EGP": "Egyptian Pound", "MAD": "Moroccan Dirham", "ILS": "Israeli New Shekel",
+    "PKR": "Pakistani Rupee", "BDT": "Bangladeshi Taka", "IDR": "Indonesian Rupiah", "MYR": "Malaysian Ringgit",
+    "SGD": "Singapore Dollar", "HKD": "Hong Kong Dollar", "TWD": "New Taiwan Dollar", "PHP": "Philippine Peso",
+    "VND": "Vietnamese Dong", "PLN": "Polish Zloty", "CZK": "Czech Koruna", "HUF": "Hungarian Forint",
+    "RON": "Romanian Leu", "BGN": "Bulgarian Lev", "UAH": "Ukrainian Hryvnia", "ISK": "Icelandic Krona",
+    "NGN": "Nigerian Naira", "KES": "Kenyan Shilling", "GHS": "Ghanaian Cedi"
+}
+
+CURRENCY_SYMBOLS = {
+    "GBP": "£", "USD": "$", "EUR": "€", "TRY": "₺", "AED": "د.إ", "CAD": "$", "AUD": "$", "NZD": "$",
+    "JPY": "¥", "CNY": "¥", "INR": "₹", "IRR": "﷼", "RUB": "₽", "KRW": "₩", "THB": "฿",
+    "CHF": "CHF", "SEK": "kr", "NOK": "kr", "DKK": "kr", "SAR": "﷼", "QAR": "﷼", "KWD": "د.ك",
+    "BHD": ".د.ب", "OMR": "﷼", "ZAR": "R", "BRL": "R$", "MXN": "$", "ARS": "$", "CLP": "$",
+    "COP": "$", "EGP": "E£", "MAD": "MAD", "ILS": "₪", "PKR": "₨", "BDT": "৳", "IDR": "Rp",
+    "MYR": "RM", "SGD": "$", "HKD": "$", "TWD": "NT$", "PHP": "₱", "VND": "₫", "PLN": "zł",
+    "CZK": "Kč", "HUF": "Ft", "RON": "lei", "BGN": "лв", "UAH": "₴", "NGN": "₦", "KES": "KSh", "GHS": "₵"
+}
+
+CURRENCY_EXTRA_ALIASES = {
+    "GBP": ["uk", "britain", "great britain", "united kingdom", "england", "scotland", "wales", "pound", "sterling"],
+    "USD": ["usa", "us", "united states", "america", "american", "dollar"],
+    "EUR": ["europe", "european union", "eurozone", "euro"],
+    "TRY": ["turkey", "turkiye", "türkiye", "turkish", "lira"],
+    "AED": ["uae", "united arab emirates", "emirates", "emirati", "dirham", "dubai", "abu dhabi"],
+    "CAD": ["canada", "canadian"], "AUD": ["australia", "australian", "aus"], "NZD": ["new zealand", "kiwi"],
+    "JPY": ["japan", "japanese", "yen"], "CNY": ["china", "chinese", "yuan", "renminbi"],
+    "INR": ["india", "indian", "rupee"], "IRR": ["iran", "iranian", "rial"],
+    "SAR": ["saudi", "saudi arabia", "riyal"], "QAR": ["qatar", "qatari", "riyal"],
+    "KWD": ["kuwait", "kuwaiti", "dinar"], "BHD": ["bahrain", "bahraini", "dinar"], "OMR": ["oman", "omani", "rial"],
+    "KRW": ["korea", "south korea", "korean", "won"], "THB": ["thailand", "thai", "baht"],
+    "CHF": ["switzerland", "swiss", "franc"], "ZAR": ["south africa", "south african", "rand"],
+    "BRL": ["brazil", "brazilian", "real"], "MXN": ["mexico", "mexican", "peso"],
+    "ARS": ["argentina", "argentine", "peso"], "CLP": ["chile", "chilean", "peso"], "COP": ["colombia", "colombian", "peso"],
+    "EGP": ["egypt", "egyptian", "pound"], "MAD": ["morocco", "moroccan", "dirham"], "ILS": ["israel", "israeli", "shekel"],
+    "PKR": ["pakistan", "pakistani", "rupee"], "BDT": ["bangladesh", "bangladeshi", "taka"],
+    "IDR": ["indonesia", "indonesian", "rupiah"], "MYR": ["malaysia", "malaysian", "ringgit"],
+    "SGD": ["singapore", "singaporean"], "HKD": ["hong kong", "hongkong"], "TWD": ["taiwan", "taiwanese"],
+    "PHP": ["philippines", "philippine", "filipino", "peso"], "VND": ["vietnam", "vietnamese", "dong"],
+    "PLN": ["poland", "polish", "zloty"], "CZK": ["czech", "czechia", "czech republic", "koruna"],
+    "HUF": ["hungary", "hungarian", "forint"], "RON": ["romania", "romanian", "leu"],
+    "BGN": ["bulgaria", "bulgarian", "lev"], "UAH": ["ukraine", "ukrainian", "hryvnia"],
+    "ISK": ["iceland", "icelandic", "krona"], "NGN": ["nigeria", "nigerian", "naira"],
+    "KES": ["kenya", "kenyan", "shilling"], "GHS": ["ghana", "ghanaian", "cedi"]
+}
+
+
+def get_currency_display_name(code):
+    return CURRENCY_NAMES.get(code, code)
 
 
 def get_currency_symbol_for_code(code):
-    symbols = {
-        "GBP": "£",
-        "USD": "$",
-        "EUR": "€",
-        "TRY": "₺",
-        "AED": "د.إ",
-        "CAD": "$",
-        "AUD": "$",
-        "NZD": "$",
-        "JPY": "¥",
-        "CNY": "¥",
-        "INR": "₹",
-        "IRR": "﷼",
-        "RUB": "₽",
-        "KRW": "₩",
-        "THB": "฿",
-        "CHF": "CHF",
-        "SEK": "kr",
-        "NOK": "kr",
-        "DKK": "kr",
-        "SAR": "﷼",
-        "QAR": "﷼",
-        "KWD": "د.ك",
-        "BHD": ".د.ب",
-        "OMR": "﷼",
-    }
-    return symbols.get(code, "")
+    return CURRENCY_SYMBOLS.get(code, "")
 
 
 def build_currency_metadata():
     rates = get_exchange_rates()
-    available_codes = sorted(rates.keys())
-
-    currency_to_territories = {}
-
-    for country in list(pycountry.countries):
-        alpha2 = getattr(country, "alpha_2", None)
-        if not alpha2:
-            continue
-
-        try:
-            currencies = get_territory_currencies(alpha2)
-        except Exception:
-            currencies = []
-
-        for currency_code in currencies:
-            currency_to_territories.setdefault(currency_code, []).append(country)
-
     available_currencies = []
-
-    for code in available_codes:
-        aliases = set()
-        name = get_currency_name_from_pycountry(code)
+    for code in sorted(rates.keys()):
+        name = get_currency_display_name(code)
         symbol = get_currency_symbol_for_code(code)
-
+        aliases = set()
         aliases.add(normalize_search_text(code))
         aliases.add(normalize_search_text(name))
-
         for token in normalize_search_text(name).split():
             aliases.add(token)
-
+        for alias in CURRENCY_EXTRA_ALIASES.get(code, []):
+            aliases.add(normalize_search_text(alias))
+            for token in normalize_search_text(alias).split():
+                aliases.add(token)
         if symbol:
             aliases.add(normalize_search_text(symbol))
-
-        for country in currency_to_territories.get(code, []):
-            country_name = getattr(country, "name", "")
-            official_name = getattr(country, "official_name", "")
-            common_name = getattr(country, "common_name", "")
-            alpha2 = getattr(country, "alpha_2", "")
-            alpha3 = getattr(country, "alpha_3", "")
-
-            for value in [country_name, official_name, common_name, alpha2, alpha3]:
-                normalized = normalize_search_text(value)
-                if normalized:
-                    aliases.add(normalized)
-                    for token in normalized.split():
-                        aliases.add(token)
-
-            for extra_alias in COUNTRY_NAME_ALIASES.get(alpha2, []):
-                aliases.add(normalize_search_text(extra_alias))
-
         available_currencies.append({
             "code": code,
             "name": name,
             "symbol": symbol,
             "aliases": sorted(a for a in aliases if a)
         })
-
     return available_currencies
 
 @app.context_processor
@@ -2692,9 +3018,6 @@ def set_currency():
 # JSON API
 # ==============
 
-if __name__ == "__main__":
-    init_db()
-    app.run(host="0.0.0.0", port=5000, debug=True)
 
 @app.route("/api/flights", methods=["GET"])
 def api_get_flights():
@@ -2875,179 +3198,22 @@ def api_admin_peak_times():
             "data": None,
             "error": "Forbidden: Admin access only"
         }), 403
-    
+
     conn = get_db_connection()
+    rows = conn.execute("""
+        SELECT flight_date, COUNT(*) as booking_count
+        FROM bookings
+        GROUP BY flight_date
+        ORDER BY booking_count DESC
+        LIMIT 10
+    """).fetchall()
+    conn.close()
 
-def get_exchange_rates():
-    global EXCHANGE_RATES, LAST_FETCH
+    return jsonify({
+        "data": [dict(row) for row in rows],
+        "error": None
+    })
 
-    if time.time() - LAST_FETCH < CACHE_DURATION:
-        return EXCHANGE_RATES
-
-    try:
-        response = requests.get("https://open.er-api.com/v6/latest/GBP")
-        data = response.json()
-
-        if data.get("result") == "success":
-            EXCHANGE_RATES = data["rates"]
-            LAST_FETCH = time.time()
-
-    except Exception as e:
-        print("Currency API failed:", e)
-
-    return EXCHANGE_RATES
-
-
-def convert_price(amount, currency):
-    rates = get_exchange_rates()
-    rate = rates.get(currency, 1)
-    return round(amount * rate, 2)
-
-def normalize_search_text(text):
-    text = (text or "").strip().lower()
-    text = unicodedata.normalize("NFKD", text)
-    text = "".join(char for char in text if not unicodedata.combining(char))
-    text = re.sub(r"[^a-z0-9\s]", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
-
-
-def get_currency_name_from_pycountry(code):
-    currency = pycountry.currencies.get(alpha_3=code)
-    if currency and getattr(currency, "name", None):
-        return currency.name
-    return code
-
-
-def get_currency_symbol_for_code(code):
-    symbols = {
-        "GBP": "£",
-        "USD": "$",
-        "EUR": "€",
-        "TRY": "₺",
-        "AED": "د.إ",
-        "CAD": "$",
-        "AUD": "$",
-        "NZD": "$",
-        "JPY": "¥",
-        "CNY": "¥",
-        "INR": "₹",
-        "IRR": "﷼",
-        "RUB": "₽",
-        "KRW": "₩",
-        "THB": "฿",
-        "CHF": "CHF",
-        "SEK": "kr",
-        "NOK": "kr",
-        "DKK": "kr",
-        "SAR": "﷼",
-        "QAR": "﷼",
-        "KWD": "د.ك",
-        "BHD": ".د.ب",
-        "OMR": "﷼",
-    }
-    return symbols.get(code, "")
-
-
-def build_currency_metadata():
-    rates = get_exchange_rates()
-    available_codes = sorted(rates.keys())
-
-    currency_to_territories = {}
-
-    for country in list(pycountry.countries):
-        alpha2 = getattr(country, "alpha_2", None)
-        if not alpha2:
-            continue
-
-        try:
-            currencies = get_territory_currencies(alpha2)
-        except Exception:
-            currencies = []
-
-        for currency_code in currencies:
-            currency_to_territories.setdefault(currency_code, []).append(country)
-
-    available_currencies = []
-
-    for code in available_codes:
-        aliases = set()
-        name = get_currency_name_from_pycountry(code)
-        symbol = get_currency_symbol_for_code(code)
-
-        aliases.add(normalize_search_text(code))
-        aliases.add(normalize_search_text(name))
-
-        for token in normalize_search_text(name).split():
-            aliases.add(token)
-
-        if symbol:
-            aliases.add(normalize_search_text(symbol))
-
-        for country in currency_to_territories.get(code, []):
-            country_name = getattr(country, "name", "")
-            official_name = getattr(country, "official_name", "")
-            common_name = getattr(country, "common_name", "")
-            alpha2 = getattr(country, "alpha_2", "")
-            alpha3 = getattr(country, "alpha_3", "")
-
-            for value in [country_name, official_name, common_name, alpha2, alpha3]:
-                normalized = normalize_search_text(value)
-                if normalized:
-                    aliases.add(normalized)
-                    for token in normalized.split():
-                        aliases.add(token)
-
-            for extra_alias in COUNTRY_NAME_ALIASES.get(alpha2, []):
-                aliases.add(normalize_search_text(extra_alias))
-
-        available_currencies.append({
-            "code": code,
-            "name": name,
-            "symbol": symbol,
-            "aliases": sorted(a for a in aliases if a)
-        })
-
-    return available_currencies
-
-@app.context_processor
-def inject_currency():
-    return {
-        "selected_currency": session.get("currency", "GBP"),
-        "convert_price": convert_price,
-        "available_currencies": build_currency_metadata(),
-        "t": get_translation()
-    }
-@app.context_processor
-def inject_translations():
-    return dict(t=get_translation())
-@app.route("/set-language/<lang>")
-def set_language(lang):
-    allowed_languages = ["en", "fr", "ar"]
-
-    if lang in allowed_languages:
-        session["lang"] = lang
-    else:
-        session["lang"] = "en"
-
-    return redirect(request.referrer or url_for("home"))
-
-@app.route("/set-currency", methods=["POST"])
-def set_currency():
-    currency = request.form.get("currency", "GBP").upper()
-
-    rates = get_exchange_rates()
-    if currency in rates:
-        session["currency"] = currency
-    else:
-        session["currency"] = "GBP"
-
-    next_url = request.form.get("next_url", "").strip()
-
-    if next_url:
-        return redirect(next_url)
-
-    return redirect(url_for("home"))
 if __name__ == "__main__":
     init_db()
     app.run(host="0.0.0.0", port=5000, debug=True)

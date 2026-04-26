@@ -1589,3 +1589,15 @@ select:focus {
 form .btn {
     margin-top: 18px;
 }
+
+.success-text {
+    color: #17803d;
+    font-weight: 700;
+    margin-left: 10px;
+}
+
+.danger-text {
+    color: #c0392b;
+    font-weight: 700;
+    margin-left: 10px;
+}

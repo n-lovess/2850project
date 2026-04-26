@@ -1,51 +1,78 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t.boarding_pass }}{% endblock %}
+{% block title %}{{ t.boarding_pass if t.boarding_pass is defined else 'Boarding Pass' }}{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="card p-4 shadow-sm">
-
-        <h2 class="mb-4 text-center">{{ t.boarding_pass }}</h2>
-
-        <div class="row">
-            <div class="col-md-6">
-                <p><strong>{{ t.passenger_label }}:</strong> {{ booking.first_name }} {{ booking.last_name }}</p>
-                <p><strong>{{ t.flight_label }}:</strong> {{ booking.airline }}</p>
-                <p><strong>{{ t.route }}:</strong> {{ booking.departure_city }} → {{ booking.destination_city }}</p>
-                <p><strong>{{ t.date }}:</strong> {{ booking.flight_date }}</p>
-                <p><strong>{{ t.time }}:</strong> {{ booking.departure_time }} - {{ booking.arrival_time }}</p>
-            </div>
-
-            <div class="col-md-6">
-                <p><strong>{{ t.seat }}:</strong> {{ booking.seat }}</p>
-                <p><strong>{{ t.ticket_class_label }}:</strong>
-    {% if booking.ticket_class == "Economy" %}
-        {{ t.class_economy }}
-    {% elif booking.ticket_class == "Premium Economy" %}
-        {{ t.class_premium }}
-    {% elif booking.ticket_class == "Business" %}
-        {{ t.class_business }}
-    {% elif booking.ticket_class == "First" %}
-        {{ t.class_first }}
+<div class="container">
+    {% for passenger in passengers %}
+        <div class="boarding-pass" style="margin-bottom: 40px;">
+            <div class="boarding-pass-header">
+                <div>
+                    <h1>AirGo Boarding Pass</h1>
+                    <p class="subtitle">Electronic travel document</p>
+                </div>
+                <div class="boarding-badge">
+    {% if passenger.status == "Cancelled" %}
+        Cancelled
     {% else %}
-        {{ booking.ticket_class }}
+        {{ booking.flight_status }}
     {% endif %}
-</p>
-                <p><strong>{{ t.boarding_gate }}:</strong> {{ booking.gate or t.not_assigned }}</p>
-                <p><strong>{{ t.boarding_group }}:</strong> {{ booking.group or t.not_assigned }}</p>
-                <p><strong>{{ t.booking_reference }}:</strong> {{ booking.booking_reference }}</p>
+</div>
+
+            <div class="boarding-grid">
+                <div class="boarding-box">
+                    <span class="boarding-label">{{ t.passenger_label if t.passenger_label is defined else 'Passenger' }}</span>
+                    <span class="boarding-value">{{ passenger.first_name }} {{ passenger.last_name }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">From</span>
+                    <span class="boarding-value">{{ booking.departure_city }} ({{ booking.departure_code }})</span>
+                    <span class="small-text">{{ booking.departure_airport }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">To</span>
+                    <span class="boarding-value">{{ booking.destination_city }} ({{ booking.destination_code }})</span>
+                    <span class="small-text">{{ booking.destination_airport }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">{{ t.date if t.date is defined else 'Flight Date' }}</span>
+                    <span class="boarding-value">{{ booking.flight_date }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">{{ t.departure if t.departure is defined else 'Departure' }}</span>
+                    <span class="boarding-value">{{ booking.departure_time }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">{{ t.arrival if t.arrival is defined else 'Arrival' }}</span>
+                    <span class="boarding-value">{{ booking.arrival_time }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">{{ t.class_label if t.class_label is defined else 'Class' }}</span>
+                    <span class="boarding-value">{{ booking.ticket_class }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">{{ t.seat if t.seat is defined else 'Seat' }}</span>
+                    <span class="boarding-value">{{ passenger.seat }}</span>
+                </div>
+
+                <div class="boarding-box">
+                    <span class="boarding-label">Flight</span>
+                    <span class="boarding-value">{{ flight_number }}</span>
+                </div>
             </div>
         </div>
+    {% endfor %}
 
-        <hr>
-
-        <div class="text-center">
-            <button onclick="window.print()" class="btn btn-primary">
-                {{ t.print_boarding_pass }}
-            </button>
-        </div>
-
+    <div class="button-group">
+        <button onclick="window.print()" class="btn">{{ t.print_boarding_pass if t.print_boarding_pass is defined else 'Print Boarding Passes' }}</button>
+        <a href="{{ url_for('bookings') }}" class="btn secondary-btn">Back to Manage Booking</a>
     </div>
 </div>
 {% endblock %}

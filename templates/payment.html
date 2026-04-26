@@ -1,152 +1,88 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t.payment_title or 'Payment' }}{% endblock %}
+{% block title %}{{ t.payment_title if t.payment_title is defined else 'Payment' }}{% endblock %}
 
 {% block content %}
-    <h1>{{ t.payment_title or 'Payment' }}</h1>
+<h1>{{ t.payment_title if t.payment_title is defined else 'Payment' }}</h1>
 
-    <div class="card summary-card">
-        <h2>{{ t.fare_details or 'Fare Details' }}</h2>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
 
-        <p>
-            <strong>{{ t.base_price or 'Base Price' }}:</strong>
-            {{ selected_currency }} {{ convert_price(base_fare, selected_currency) }}
-            <span class="small-text">({{ t.includes_taxes or 'includes taxes & fees' }})</span>
-        </p>
-
-        {% if baggage_price and baggage_price > 0 %}
-            <p>
-                <strong>{{ t.baggage or 'Baggage' }}:</strong>
-                {{ selected_currency }} {{ convert_price(baggage_price, selected_currency) }}
-            </p>
-        {% endif %}
-
-        {% if insurance_price and insurance_price > 0 %}
-            <p>
-                <strong>{{ t.travel_insurance or 'Travel Insurance' }}:</strong>
-                {{ selected_currency }} {{ convert_price(insurance_price, selected_currency) }}
-            </p>
-        {% endif %}
-        {% if seat_price and seat_price > 0 %}
-    <p>
-        <strong>{{ t.seat or 'Seat' }}{% if seat_type %} ({{ seat_type }}){% endif %}:</strong>
-        {{ selected_currency }} {{ convert_price(seat_price, selected_currency) }}
+<div class="card">
+    <h2>{{ t.fare_details if t.fare_details is defined else 'Fare Details' }}</h2>
+    <p><strong>Base fares:</strong> {{ selected_currency }} {{ convert_price(base_fare, selected_currency) }} <span class="small-text">({{ passengers|length }} passengers)</span></p>
+    <p><strong>Baggage:</strong> {{ selected_currency }} {{ convert_price(baggage_price, selected_currency) }}</p>
+    <p><strong>Seat selection:</strong> {{ selected_currency }} {{ convert_price(seat_price, selected_currency) }}</p>
+    <p><strong>{{ t.travel_insurance if t.travel_insurance is defined else 'Travel Insurance' }}:</strong> {{ selected_currency }} {{ convert_price(insurance_price, selected_currency) }}</p>
+    <hr>
+    <p style="font-size: 18px; font-weight: bold;">
+        {{ t.total if t.total is defined else 'Total' }}: {{ selected_currency }} {{ convert_price(total_price, selected_currency) }}
     </p>
-{% endif %}
+</div>
 
-        <hr>
+<div class="card summary-card">
+    <h2>{{ t.booking_summary if t.booking_summary is defined else 'Booking Summary' }}</h2>
+    <p><strong>{{ t.flight_label if t.flight_label is defined else 'Flight' }}:</strong> {{ flight.airline }}</p>
+    <p><strong>{{ t.route if t.route is defined else 'Route' }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+    <p><strong>{{ t.class_label if t.class_label is defined else 'Class' }}:</strong> {{ flight.class }}</p>
+    <p><strong>Seats:</strong> {{ selected_seat }}</p>
 
-        <p>
-            <strong>{{ t.total or 'Total' }}:</strong>
-            {{ selected_currency }} {{ convert_price(total_price, selected_currency) }}
-        </p>
-    </div>
-
-    <div class="card">
-        <h2>{{ t.booking_summary or 'Booking Summary' }}</h2>
-
-        <p><strong>{{ t.passenger_label or 'Passenger' }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
-        <p><strong>{{ t.flight_label or 'Flight' }}:</strong> {{ flight.airline }}</p>
-        <p><strong>{{ t.route or 'Route' }}:</strong> {{ flight.from }} → {{ flight.to }}</p>
-        <p><strong>{{ t.date or 'Date' }}:</strong> {{ search_data.depart_date if search_data is defined else '' }}</p>
-        <p><strong>{{ t.seat or 'Seat' }}:</strong> {{ selected_seat }}</p>
-    </div>
-
-    <div class="card">
-        <form method="POST" class="form-grid">
-            <div class="full-width">
-                <label for="card_name">{{ t.name_on_card or 'Name on Card' }}</label>
-                <input type="text" id="card_name" name="card_name" required>
-            </div>
-
-            <div class="full-width">
-                <label for="card_number">{{ t.card_number or 'Card Number' }}</label>
-                <input type="text" id="card_number" name="card_number" required>
-            </div>
-
-            <div>
-                <label for="expiry_date">{{ t.expiry_date or 'Expiry Date' }}</label>
-                <input type="text" id="expiry_date" name="expiry_date" placeholder="{{ t.expiry_placeholder or 'MM/YY' }}" required>
-            </div>
-
-            <div>
-                <label for="cvv">{{ t.cvv or 'CVV' }}</label>
-                <input type="text" id="cvv" name="cvv" required>
-            </div>
-
-            <div class="full-width">
-                <label class="checkbox-row">
-                    <input type="checkbox" name="accept_terms" value="yes" required>
-                    <span>
-                        {{ t.agree_terms_1 or 'I agree to the' }}
-                        <button type="button" class="terms-link-btn" onclick="openTermsModal()">
-                            {{ t.terms_conditions or 'Terms & Conditions' }}
-                        </button>
-                    </span>
-                </label>
-            </div>
-
-            <div class="full-width">
-                <label class="checkbox-row">
-                    <input type="checkbox" name="offers_opt_in" value="yes">
-                    <span>{{ t.receive_offers or 'I would like to receive offers and updates' }}</span>
-                </label>
-            </div>
-
-            <div class="full-width">
-                <button type="submit" class="btn">{{ t.complete_booking or 'Complete Booking' }}</button>
-            </div>
-        </form>
-    </div>
-
-    <div id="termsModal" class="terms-modal">
-        <div class="terms-modal-content">
-            <span class="close-modal" onclick="closeTermsModal()">&times;</span>
-
-            <h2>{{ t.terms_conditions or 'Terms & Conditions' }}</h2>
-
-            <h3>{{ t.booking_terms or 'Booking Terms' }}</h3>
-            <p>{{ t.booking_terms_text or '' }}</p>
-
-            <h3>{{ t.payments or 'Payments' }}</h3>
-            <p>{{ t.payments_text or '' }}</p>
-
-            <h3>{{ t.changes_cancellations or 'Changes and Cancellations' }}</h3>
-            <p>{{ t.changes_cancellations_text or '' }}</p>
-
-            <h3>{{ t.passenger_responsibility or 'Passenger Responsibility' }}</h3>
-            <p>{{ t.passenger_responsibility_text or '' }}</p>
-
-            <h3>{{ t.special_requests or 'Special Requests' }}</h3>
-            <p>{{ t.special_requests_text or '' }}</p>
-
-            <h3>{{ t.notifications_offers or 'Notifications and Offers' }}</h3>
-            <p>{{ t.notifications_offers_text or '' }}</p>
+    {% for passenger in passengers %}
+        <div class="manage-note">
+            <strong>Passenger {{ loop.index }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}<br>
+            <strong>Email:</strong> {{ passenger.email }}<br>
+            <strong>Seat:</strong> {{ selected_seats[loop.index0] }}<br>
+            {% set extra = extras.get('passenger_extras', [])[loop.index0] if extras.get('passenger_extras') and extras.get('passenger_extras')|length > loop.index0 else None %}
+            {% if extra %}
+                <strong>Baggage:</strong> {{ extra.baggage }}<br>
+                <strong>Meal:</strong> {{ extra.meal_choice }}
+            {% endif %}
         </div>
-    </div>
-{% endblock %}
+    {% endfor %}
+</div>
 
-{% block scripts %}
-<script>
-    function openTermsModal() {
-        const modal = document.getElementById("termsModal");
-        if (modal) {
-            modal.style.display = "flex";
-        }
-    }
+<div class="card">
+    <form method="POST" class="form-grid">
+        <div class="full-width">
+            <label for="card_name">{{ t.name_on_card if t.name_on_card is defined else 'Name on Card' }}</label>
+            <input type="text" id="card_name" name="card_name" required>
+        </div>
 
-    function closeTermsModal() {
-        const modal = document.getElementById("termsModal");
-        if (modal) {
-            modal.style.display = "none";
-        }
-    }
+        <div class="full-width">
+            <label for="card_number">{{ t.card_number if t.card_number is defined else 'Card Number' }}</label>
+            <input type="text" id="card_number" name="card_number" maxlength="16" required>
+        </div>
 
-    window.addEventListener("click", function(event) {
-        const modal = document.getElementById("termsModal");
-        if (event.target === modal) {
-            closeTermsModal();
-        }
-    });
-</script>
+        <div>
+            <label for="expiry_date">{{ t.expiry_date if t.expiry_date is defined else 'Expiry Date' }}</label>
+            <input type="month" id="expiry_date" name="expiry_date" required>
+        </div>
+
+        <div>
+            <label for="cvv">{{ t.cvv if t.cvv is defined else 'CVV' }}</label>
+            <input type="password" id="cvv" name="cvv" maxlength="4" required>
+        </div>
+
+        <div class="full-width terms-box">
+            <label class="checkbox-row">
+                <input type="checkbox" id="accept_terms" name="accept_terms" required>
+                <span>{{ t.agree_terms_1 if t.agree_terms_1 is defined else 'I agree to the' }} {{ t.terms_conditions if t.terms_conditions is defined else 'Terms & Conditions' }}</span>
+            </label>
+
+            <label class="checkbox-row">
+                <input type="checkbox" id="subscribe_offers" name="subscribe_offers">
+                <span>{{ t.receive_offers if t.receive_offers is defined else 'I would like to receive offers and updates' }}</span>
+            </label>
+        </div>
+
+        <div class="full-width">
+            <button type="submit" class="btn">{{ t.complete_booking if t.complete_booking is defined else 'Complete Booking' }}</button>
+        </div>
+    </form>
+</div>
 {% endblock %}

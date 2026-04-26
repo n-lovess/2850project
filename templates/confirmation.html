@@ -1,57 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t.confirmation_page_title }}{% endblock %}
+{% block title %}{{ t.confirmation_page_title if t.confirmation_page_title is defined else 'Booking Confirmation' }}{% endblock %}
 
 {% block content %}
 <div class="card confirmation-card">
     <div class="confirm-tick">&#10003;</div>
-    <h1>{{ t.booking_confirmed }}</h1>
-    <p class="success-message">{{ t.booking_success_message }}</p>
+    <h1>{{ t.booking_confirmed if t.booking_confirmed is defined else 'Booking Confirmed' }}</h1>
+    <p class="success-message">{{ t.booking_success_message if t.booking_success_message is defined else 'Your flight has been booked successfully' }}</p>
 
     <div class="booking-ref-box">
-        <div class="booking-ref-label">{{ t.booking_reference }}</div>
+        <div class="booking-ref-label">{{ t.booking_reference if t.booking_reference is defined else 'Booking Reference' }}</div>
         <div class="booking-ref-code">{{ booking_reference }}</div>
     </div>
 
-    <p><strong>{{ t.passenger_label }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
-    <p><strong>{{ t.email_label }}:</strong> {{ passenger.email }}</p>
-    <p><strong>{{ t.flight_label }}:</strong> {{ flight.airline }}</p>
-    <p><strong>{{ t.route }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
-    <p><strong>{{ t.departure_time_label }}:</strong> {{ flight.departure_time }}</p>
-    <p><strong>{{ t.arrival_time_label }}:</strong> {{ flight.arrival_time }}</p>
-    <p><strong>{{ t.ticket_class_label }}:</strong>
-    {% if flight.class == "Economy" %}
-        {{ t.class_economy }}
-    {% elif flight.class == "Premium Economy" %}
-        {{ t.class_premium }}
-    {% elif flight.class == "Business" %}
-        {{ t.class_business }}
-    {% elif flight.class == "First" %}
-        {{ t.class_first }}
-    {% else %}
-        {{ flight.class }}
-    {% endif %}
-</p>
-    <p><strong>{{ t.meal }}:</strong> {{ passenger.meal_choice or extras.meal_choice if extras is defined else '' }}</p>
-    <p><strong>{{ t.seat }}:</strong> {{ selected_seat }}</p>
-    <p><strong>{{ t.total_paid }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }}</p>
+    <p><strong>{{ t.flight_label if t.flight_label is defined else 'Flight' }}:</strong> {{ flight.airline }}</p>
+    <p><strong>{{ t.route if t.route is defined else 'Route' }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+    <p><strong>{{ t.departure_time_label if t.departure_time_label is defined else 'Departure Time' }}:</strong> {{ flight.departure_time }}</p>
+    <p><strong>{{ t.arrival_time_label if t.arrival_time_label is defined else 'Arrival Time' }}:</strong> {{ flight.arrival_time }}</p>
+    <p><strong>{{ t.ticket_class_label if t.ticket_class_label is defined else 'Ticket Class' }}:</strong> {{ flight.class }}</p>
+    <p><strong>Seats:</strong> {{ selected_seat }}</p>
 
-    <div class="points-badge">+{{ points_earned }} {{ t.points_earned }}</div>
-
-    <div class="card benefits-box left-text">
-        <h2>{{ t.whats_included }}</h2>
-        <ul class="benefits-list">
-            <li><strong>{{ t.baggage }}:</strong> {{ benefits.baggage }}</li>
-            <li><strong>{{ t.meal }}:</strong> {{ benefits.meal }}</li>
-            <li><strong>{{ t.seat_selection }}:</strong> {{ benefits.seat_selection }}</li>
-            <li><strong>{{ t.lounge }}:</strong> {{ benefits.lounge }}</li>
-            <li><strong>{{ t.flexibility }}:</strong> {{ benefits.flexibility }}</li>
-        </ul>
+    <div class="card">
+        <h2>Passengers</h2>
+        {% for passenger in passengers %}
+            <div class="manage-note">
+                <strong>Passenger {{ loop.index }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}<br>
+                <strong>Email:</strong> {{ passenger.email }}<br>
+                <strong>Seat:</strong> {{ selected_seats[loop.index0] }}<br>
+                {% set extra = extras.get('passenger_extras', [])[loop.index0] if extras.get('passenger_extras') and extras.get('passenger_extras')|length > loop.index0 else None %}
+                {% if extra %}
+                    <strong>Baggage:</strong> {{ extra.baggage }}<br>
+                    <strong>Meal:</strong> {{ extra.meal_choice }}
+                {% endif %}
+            </div>
+        {% endfor %}
     </div>
 
+    <div class="points-badge">+{{ points_earned }} {{ t.points_earned if t.points_earned is defined else 'points earned' }}</div>
+
     <div class="button-group">
-        <a href="{{ url_for('home') }}" class="btn">{{ t.book_another_flight }}</a>
-        <a href="{{ url_for('bookings') }}" class="btn secondary-btn">{{ t.manage_my_bookings }}</a>
+        <a href="{{ url_for('home') }}" class="btn">{{ t.book_another_flight if t.book_another_flight is defined else 'Book Another Flight' }}</a>
+        <a href="{{ url_for('bookings') }}" class="btn secondary-btn">{{ t.manage_my_bookings if t.manage_my_bookings is defined else 'Manage My Bookings' }}</a>
     </div>
 </div>
 {% endblock %}
