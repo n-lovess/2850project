@@ -11,13 +11,17 @@
                     <h1>AirGo Boarding Pass</h1>
                     <p class="subtitle">Electronic travel document</p>
                 </div>
+
                 <div class="boarding-badge">
-    {% if passenger.status == "Cancelled" %}
-        Cancelled
-    {% else %}
-        {{ booking.flight_status }}
-    {% endif %}
-</div>
+                    {% if passenger.status == "Cancelled" %}
+                        Cancelled
+                    {% elif passenger.status == "Changed" %}
+                        Changed
+                    {% else %}
+                        {{ booking.flight_status }}
+                    {% endif %}
+                </div>
+            </div>
 
             <div class="boarding-grid">
                 <div class="boarding-box">
@@ -27,19 +31,33 @@
 
                 <div class="boarding-box">
                     <span class="boarding-label">From</span>
-                    <span class="boarding-value">{{ booking.departure_city }} ({{ booking.departure_code }})</span>
-                    <span class="small-text">{{ booking.departure_airport }}</span>
+                    {% if passenger.status == "Changed" %}
+                        <span class="boarding-value">{{ passenger.changed_departure_city }} ({{ passenger.changed_departure_code }})</span>
+                        <span class="small-text">{{ passenger.changed_departure_airport }}</span>
+                    {% else %}
+                        <span class="boarding-value">{{ booking.departure_city }} ({{ booking.departure_code }})</span>
+                        <span class="small-text">{{ booking.departure_airport }}</span>
+                    {% endif %}
                 </div>
 
                 <div class="boarding-box">
                     <span class="boarding-label">To</span>
-                    <span class="boarding-value">{{ booking.destination_city }} ({{ booking.destination_code }})</span>
-                    <span class="small-text">{{ booking.destination_airport }}</span>
+                    {% if passenger.status == "Changed" %}
+                        <span class="boarding-value">{{ passenger.changed_destination_city }} ({{ passenger.changed_destination_code }})</span>
+                        <span class="small-text">{{ passenger.changed_destination_airport }}</span>
+                    {% else %}
+                        <span class="boarding-value">{{ booking.destination_city }} ({{ booking.destination_code }})</span>
+                        <span class="small-text">{{ booking.destination_airport }}</span>
+                    {% endif %}
                 </div>
 
                 <div class="boarding-box">
                     <span class="boarding-label">{{ t.date if t.date is defined else 'Flight Date' }}</span>
-                    <span class="boarding-value">{{ booking.flight_date }}</span>
+                    {% if passenger.status == "Changed" and passenger.changed_flight_date %}
+                        <span class="boarding-value">{{ passenger.changed_flight_date }}</span>
+                    {% else %}
+                        <span class="boarding-value">{{ booking.flight_date }}</span>
+                    {% endif %}
                 </div>
 
                 <div class="boarding-box">

@@ -1125,6 +1125,13 @@ def init_db():
         "meal_choice": "TEXT DEFAULT 'No Meal'",
         "baggage_price": "REAL NOT NULL DEFAULT 0",
         "status": "TEXT NOT NULL DEFAULT 'Active'",
+        "changed_departure_airport": "TEXT DEFAULT ''",
+        "changed_departure_city": "TEXT DEFAULT ''",
+        "changed_departure_code": "TEXT DEFAULT ''",
+        "changed_destination_airport": "TEXT DEFAULT ''",
+        "changed_destination_city": "TEXT DEFAULT ''",
+        "changed_destination_code": "TEXT DEFAULT ''",
+        "changed_flight_date": "TEXT DEFAULT ''"
     }
 
     for column_name, column_definition in passenger_missing_columns.items():
@@ -2255,7 +2262,22 @@ def bookings():
     for passenger in passenger_rows:
         passengers_by_booking.setdefault(passenger["booking_id"], []).append(passenger)
     for booking in enriched_bookings:
-        booking["passengers"] = passengers_by_booking.get(booking["id"], [])
+        booking_passengers = passengers_by_booking.get(booking["id"], [])
+        booking["passengers"] = booking_passengers
+
+        requested_ids = [
+            passenger_id.strip()
+            for passenger_id in (booking.get("requested_passenger_ids", "") or "").split(",")
+            if passenger_id.strip()
+        ]
+
+        requested_names = []
+
+        for passenger in booking_passengers:
+            if str(passenger["id"]) in requested_ids:
+                requested_names.append(f"{passenger['first_name']} {passenger['last_name']}")
+
+        booking["requested_passenger_names"] = requested_names
     tier_info = get_tier_info(total_points)
 
     return render_template(
@@ -2264,7 +2286,8 @@ def bookings():
         total_points=total_points,
         common_meal_options=COMMON_MEAL_OPTIONS,
         tier_info=tier_info,
-        extra_prices=EXTRA_PRICES
+        extra_prices=EXTRA_PRICES,
+        today=date.today().isoformat(),
     )
 
 
@@ -2422,9 +2445,17 @@ def request_change(booking_id):
         return redirect(url_for("login"))
 
     requested_departure = request.form.get("requested_departure", "").strip()
+    change_passenger_ids = request.form.getlist("change_passenger_ids")
     requested_destination = request.form.get("requested_destination", "").strip()
     requested_date = request.form.get("requested_date", "").strip()
     request_reason = request.form.get("request_reason", "").strip()
+    if requested_date and requested_date < date.today().isoformat():
+        flash("You cannot request a change to a date that has already passed.", "error")
+        return redirect(url_for("bookings"))
+
+    if not change_passenger_ids:
+        flash("Please select at least one passenger to change.", "error")
+        return redirect(url_for("bookings"))
 
     if not requested_departure and not requested_destination and not requested_date and not request_reason:
         flash("Please enter at least one change request detail.", "error")
@@ -2466,6 +2497,8 @@ def request_change(booking_id):
         flash("Booking not found.", "error")
         return redirect(url_for("bookings"))
 
+    request_reason = request.form.get("request_reason", "").strip()
+
     conn.execute("""
         UPDATE bookings
         SET change_request = ?,
@@ -2477,7 +2510,8 @@ def request_change(booking_id):
             requested_departure_code = ?,
             requested_destination_airport = ?,
             requested_destination_city = ?,
-            requested_destination_code = ?
+            requested_destination_code = ?,
+            requested_passenger_ids = ?
         WHERE id = ? AND user_id = ?
     """, (
         request_summary,
@@ -2490,11 +2524,14 @@ def request_change(booking_id):
         destination_airport["name"] if destination_airport else "",
         destination_airport["city"] if destination_airport else "",
         destination_airport["code"] if destination_airport else "",
+        ",".join(change_passenger_ids),
         booking_id,
         session["user_id"]
     ))
     conn.commit()
     conn.close()
+
+    change_passenger_ids = request.form.getlist("change_passenger_ids")
 
     flash("Flight change request submitted.", "success")
     return redirect(url_for("bookings"))
@@ -2714,7 +2751,43 @@ def admin_update_change_status(booking_id):
     """, (new_status, booking_id))
 
     if new_status == "Approved":
-        apply_approved_change_to_booking(conn, booking)
+        passenger_ids = [
+            pid.strip()
+            for pid in (booking["requested_passenger_ids"] or "").split(",")
+            if pid.strip()
+        ]
+
+        if passenger_ids:
+            conn.execute(f"""
+                UPDATE passengers
+                SET status = 'Changed',
+                    changed_departure_airport = ?,
+                    changed_departure_city = ?,
+                    changed_departure_code = ?,
+                    changed_destination_airport = ?,
+                    changed_destination_city = ?,
+                    changed_destination_code = ?,
+                    changed_flight_date = ?
+                WHERE booking_id = ?
+                AND id IN ({",".join(["?"] * len(passenger_ids))})
+                AND status != 'Cancelled'
+            """, [
+                booking["requested_departure_airport"] or booking["departure_airport"],
+                booking["requested_departure_city"] or booking["departure_city"],
+                booking["requested_departure_code"] or booking["departure_code"],
+                booking["requested_destination_airport"] or booking["destination_airport"],
+                booking["requested_destination_city"] or booking["destination_city"],
+                booking["requested_destination_code"] or booking["destination_code"],
+                booking["requested_date"] or booking["flight_date"],
+                booking_id,
+                *passenger_ids
+            ])
+
+        conn.execute("""
+            UPDATE bookings
+            SET change_status = ?
+            WHERE id = ?
+        """, (new_status, booking_id))
 
     conn.commit()
     conn.close()

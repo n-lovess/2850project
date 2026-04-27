@@ -24,7 +24,7 @@
             <div class="tier-progress-bar">
                 <div class="tier-progress-fill" style="width: {{ tier_info.progress_percent }}%;"></div>
             </div>
-            <p class="small-text">{{ tier_info.points_to_next }} {{ t.points_to }} {{ tier_info.next_tier }}</p>
+            <p class="small-text">{{ tier_info.points_to }} {{ t.points_to }} {{ tier_info.next_tier }}</p>
         </div>
     {% else %}
         <p class="small-text">{{ t.highest_tier }}</p>
@@ -35,86 +35,93 @@
     {% for booking in bookings %}
     <div class="card manage-card">
         <p class="booking-meta">
-    {{ booking.airline }} •
-    {% if booking.ticket_class == "Economy" %}
-        {{ t.class_economy }}
-    {% elif booking.ticket_class == "Premium Economy" %}
-        {{ t.class_premium }}
-    {% elif booking.ticket_class == "Business" %}
-        {{ t.class_business }}
-    {% elif booking.ticket_class == "First" %}
-        {{ t.class_first }}
-    {% else %}
-        {{ booking.ticket_class }}
-    {% endif %}
-    • {{ booking.trip_type|replace("_", " ")|title }}
-</p>
+            {{ booking.airline }} •
+            {% if booking.ticket_class == "Economy" %}
+                {{ t.class_economy }}
+            {% elif booking.ticket_class == "Premium Economy" %}
+                {{ t.class_premium }}
+            {% elif booking.ticket_class == "Business" %}
+                {{ t.class_business }}
+            {% elif booking.ticket_class == "First" %}
+                {{ t.class_first }}
+            {% else %}
+                {{ booking.ticket_class }}
+            {% endif %}
+            • {{ booking.trip_type|replace("_", " ")|title }}
+        </p>
 
-        <h2>{{ booking.departure_city }} → {{ booking.destination_city }}</h2>
+        <h2>
+            {{ booking.departure_city }} →
+            {% set changed_destinations = booking.passengers
+                | selectattr("status", "equalto", "Changed")
+                | map(attribute="changed_destination_city")
+                | list %}
+
+            {% if changed_destinations %}
+                {{ booking.destination_city }}/{{ changed_destinations | unique | join("/") }}
+            {% else %}
+                {{ booking.destination_city }}
+            {% endif %}
+        </h2>
 
         <p><strong>{{ t.booking_reference }}:</strong> {{ booking.booking_reference }}</p>
-        <p><strong>{{ t.passenger_label }}:</strong> {{ booking.first_name }} {{ booking.last_name }}</p>
-        <p><strong>{{ t.email_label }}:</strong> {{ booking.email }}</p>
         <p><strong>{{ t.route }}:</strong> {{ booking.departure_airport }} → {{ booking.destination_airport }}</p>
         <p><strong>{{ t.date }}:</strong> {{ booking.flight_date }}</p>
         <p><strong>{{ t.time }}:</strong> {{ booking.departure_time }} - {{ booking.arrival_time }}</p>
-        <p><strong>{{ t.seat }}:</strong> {{ booking.seat }}</p>
         <p><strong>{{ t.meal }}:</strong> {{ booking.meal_choice }}</p>
         <p><strong>{{ t.flight_status }}:</strong> {{ booking.flight_status }}</p>
         <p><strong>{{ t.total_paid }}:</strong> {{ selected_currency }} {{ convert_price(booking.price, selected_currency) }}</p>
         <p><strong>{{ t.change_status }}:</strong> {{ booking.change_status }}</p>
+
+        {% if booking.requested_passenger_names %}
+            <p><strong>Passengers affected:</strong> {{ booking.requested_passenger_names | join(", ") }}</p>
+        {% endif %}
 
         {% if booking.refund_status != "None" %}
             <p><strong>Refund Status:</strong> {{ booking.refund_status }}</p>
         {% endif %}
 
         {% if booking.change_request %}
-        <div class="manage-note">
-            <strong>{{ t.latest_request }}:</strong> {{ booking.change_request }}
-        </div>
+            <div class="manage-note">
+                <strong>{{ t.latest_request }}:</strong> {{ booking.change_request }}
+            </div>
         {% endif %}
 
         <div class="points-badge">+{{ booking.points_earned }} {{ t.points_earned }}</div>
 
-        <!-- ACTIONS -->
         <div class="manage-grid">
-
-            <!-- Meal -->
             <div class="manage-box">
                 <h3>{{ t.update_meal }}</h3>
                 <form action="{{ url_for('update_meal', booking_id=booking.id) }}" method="POST">
                     <label>{{ t.meal }}</label>
                     <select name="meal_choice">
                         {% for meal in common_meal_options %}
-                        <option value="{{ meal }}" {% if booking.meal_choice == meal %}selected{% endif %}>{{ meal }}</option>
+                            <option value="{{ meal }}" {% if booking.meal_choice == meal %}selected{% endif %}>{{ meal }}</option>
                         {% endfor %}
                     </select>
                     <button class="btn">{{ t.save }}</button>
                 </form>
             </div>
 
-            <!-- Upgrade -->
             <div class="manage-box">
                 <h3>{{ t.upgrade_cabin }}</h3>
                 {% if booking.available_upgrades %}
-                <form action="{{ url_for('upgrade_booking', booking_id=booking.id) }}" method="POST">
-                    <select name="new_class">
-                        {% for upgrade_class, extra_cost in booking.available_upgrades.items() %}
-                        <option value="{{ upgrade_class }}">{{ upgrade_class }} (+{{ selected_currency }} {{ convert_price(extra_cost, selected_currency) }})</option>
-                        {% endfor %}
-                    </select>
-                    <button class="btn secondary-btn">{{ t.upgrade }}</button>
-                </form>
+                    <form action="{{ url_for('upgrade_booking', booking_id=booking.id) }}" method="POST">
+                        <select name="new_class">
+                            {% for upgrade_class, extra_cost in booking.available_upgrades.items() %}
+                                <option value="{{ upgrade_class }}">{{ upgrade_class }} (+{{ selected_currency }} {{ convert_price(extra_cost, selected_currency) }})</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn secondary-btn">{{ t.upgrade }}</button>
+                    </form>
                 {% else %}
-                <p>{{ t.no_upgrade }}</p>
+                    <p>{{ t.no_upgrade }}</p>
                 {% endif %}
             </div>
 
-            <!-- Extras -->
             <div class="manage-box">
                 <h3>{{ t.travel_extras }}</h3>
                 <form action="{{ url_for('update_extras', booking_id=booking.id) }}" method="POST">
-
                     <label>{{ t.extra_baggage }}</label>
                     <input type="number" name="extra_baggage" value="{{ booking.extra_baggage }}">
 
@@ -126,115 +133,131 @@
                 </form>
             </div>
 
-            <!-- Change -->
             <div class="manage-box">
                 <h3>{{ t.request_change }}</h3>
                 <form action="{{ url_for('request_change', booking_id=booking.id) }}" method="POST">
-
                     <label>{{ t.new_departure }}</label>
-                    <input type="text" name="requested_departure">
+                    <div class="airport-input-wrapper">
+                        <input type="text" name="requested_departure" class="airport-input" autocomplete="off" placeholder="e.g. London Heathrow (LHR)">
+                        <div class="airport-suggestions"></div>
+                    </div>
 
                     <label>{{ t.new_destination }}</label>
-                    <input type="text" name="requested_destination">
+                    <div class="airport-input-wrapper">
+                        <input type="text" name="requested_destination" class="airport-input" autocomplete="off" placeholder="e.g. Madrid Barajas (MAD)">
+                        <div class="airport-suggestions"></div>
+                    </div>
 
                     <label>{{ t.new_date }}</label>
-                    <input type="date" name="requested_date">
+                    <input type="date" name="requested_date" min="{{ today }}">
 
                     <label>{{ t.reason }}</label>
                     <input type="text" name="request_reason">
 
+                    <label>Select passengers</label>
+                    <div class="passenger-change-list">
+                        {% for passenger in booking.passengers %}
+                            {% if passenger.status != "Cancelled" %}
+                                <label class="checkbox-row">
+                                    <input type="checkbox" name="change_passenger_ids" value="{{ passenger.id }}">
+                                    {{ passenger.first_name }} {{ passenger.last_name }}
+                                    {% if passenger.seat %}- Seat {{ passenger.seat }}{% endif %}
+                                </label>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+
                     <button class="btn secondary-btn">{{ t.submit_request }}</button>
                 </form>
             </div>
-
         </div>
 
         <div class="button-group">
             <a href="{{ url_for('boarding_pass', booking_id=booking.id) }}" class="btn">{{ t.view_boarding_pass }}</a>
         </div>
 
-<div class="manage-box">
-    <h3>Passengers</h3>
+        <div class="manage-box">
+            <h3>Passengers</h3>
 
-    {% if booking.passengers %}
-        {% for passenger in booking.passengers %}
-            <p>
-                <strong>{{ passenger.first_name }} {{ passenger.last_name }}</strong>
-                {% if passenger.seat %}
-                    - Seat {{ passenger.seat }}
-                {% endif %}
-
-                {% if passenger.status == "Cancelled" %}
-                    <span class="danger-text">Cancelled</span>
-                {% else %}
-                    <span class="success-text">Active</span>
-                {% endif %}
-            </p>
-        {% endfor %}
-    {% else %}
-        <p>{{ booking.first_name }} {{ booking.last_name }} - Seat {{ booking.seat }}</p>
-    {% endif %}
-</div>
-
-<div class="manage-box">
-    <h3>Request Refund</h3>
-
-    {% if booking.refund_status == "Pending" %}
-        <p><strong>Refund Status:</strong> Pending</p>
-        <p><strong>Requested Refund:</strong> {{ selected_currency }} {{ convert_price(booking.refund_amount, selected_currency) }}</p>
-        <p><strong>Passengers Requested:</strong> {{ booking.refund_passengers }}</p>
-
-    {% elif booking.refund_status == "Approved" %}
-        <p><strong>Refund Status:</strong> Approved</p>
-        <p><strong>Refund Amount:</strong> {{ selected_currency }} {{ convert_price(booking.refund_amount, selected_currency) }}</p>
-        <p><strong>Remaining Passengers:</strong> {{ booking.passenger_count }}</p>
-        <p>No more refund requests can be made for this booking.</p>
-
-    {% elif booking.refund_status == "Rejected" %}
-        <p><strong>Refund Status:</strong> Rejected</p>
-    {% endif %}
-
-    {% if booking.refund_status != "Pending" and booking.flight_status != "Cancelled" and booking.passenger_count > 0 %}
-        <form action="{{ url_for('request_refund', booking_id=booking.id) }}" method="POST" class="manage-form">
-
-            <label>Reason for refund</label>
-            <select name="refund_reason" required>
-                <option value="Change of plans">Change of plans</option>
-                <option value="Found cheaper flight">Found cheaper flight</option>
-                <option value="Medical reason">Medical reason</option>
-                <option value="Visa/passport issue">Visa/passport issue</option>
-                <option value="Airline schedule issue">Airline schedule issue</option>
-                <option value="Other">Other</option>
-            </select>
-
-            <label>Select passenger to refund</label>
-
-            <div class="passenger-refund-list">
+            {% if booking.passengers %}
                 {% for passenger in booking.passengers %}
-                    {% if passenger.status != "Cancelled" %}
-                        <label class="checkbox-row">
-                            <input
-                                type="checkbox"
-                                name="refund_passenger_ids"
-                                value="{{ passenger.id }}"
-                            >
-                            {{ passenger.first_name }} {{ passenger.last_name }}
-                            {% if passenger.seat %}
-                                - Seat {{ passenger.seat }}
+                    <p>
+                        <strong>{{ passenger.first_name }} {{ passenger.last_name }}</strong>
+
+                        {% if passenger.status == "Changed" %}
+                            - {{ passenger.changed_departure_airport }} → {{ passenger.changed_destination_airport }}
+                            {% if passenger.changed_flight_date %}
+                                on {{ passenger.changed_flight_date }}
                             {% endif %}
-                        </label>
-                    {% endif %}
+                        {% else %}
+                            - {{ booking.departure_airport }} → {{ booking.destination_airport }}
+                        {% endif %}
+
+                        {% if passenger.seat %}
+                            - Seat {{ passenger.seat }}
+                        {% endif %}
+
+                        {% if passenger.status == "Cancelled" %}
+                            <span class="danger-text">Cancelled</span>
+                        {% elif passenger.status == "Changed" %}
+                            <span class="success-text">Changed</span>
+                        {% else %}
+                            <span class="success-text">Active</span>
+                        {% endif %}
+                    </p>
                 {% endfor %}
-            </div>
+            {% else %}
+                <p>{{ booking.first_name }} {{ booking.last_name }} - Seat {{ booking.seat }}</p>
+            {% endif %}
+        </div>
 
-            <label>Other reason</label>
-            <input type="text" name="refund_custom_reason" placeholder="Only fill this in if you selected Other">
+        <div class="manage-box">
+            <h3>Request Refund</h3>
 
-            <button type="submit" class="btn danger-btn">Submit Refund Request</button>
-        </form>
-    {% endif %}
-    </div>
+            {% if booking.refund_status == "Pending" %}
+                <p><strong>Refund Status:</strong> Pending</p>
+                <p><strong>Requested Refund:</strong> {{ selected_currency }} {{ convert_price(booking.refund_amount, selected_currency) }}</p>
+                <p><strong>Passengers Requested:</strong> {{ booking.refund_passengers }}</p>
+            {% elif booking.refund_status == "Approved" %}
+                <p><strong>Refund Status:</strong> Approved</p>
+                <p><strong>Refund Amount:</strong> {{ selected_currency }} {{ convert_price(booking.refund_amount, selected_currency) }}</p>
+                <p><strong>Remaining Passengers:</strong> {{ booking.passenger_count }}</p>
+            {% elif booking.refund_status == "Rejected" %}
+                <p><strong>Refund Status:</strong> Rejected</p>
+            {% endif %}
 
+            {% if booking.refund_status != "Pending" and booking.flight_status != "Cancelled" and booking.passenger_count > 0 %}
+                <form action="{{ url_for('request_refund', booking_id=booking.id) }}" method="POST" class="manage-form">
+                    <label>Reason for refund</label>
+                    <select name="refund_reason" required>
+                        <option value="Change of plans">Change of plans</option>
+                        <option value="Found cheaper flight">Found cheaper flight</option>
+                        <option value="Medical reason">Medical reason</option>
+                        <option value="Visa/passport issue">Visa/passport issue</option>
+                        <option value="Airline schedule issue">Airline schedule issue</option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                    <label>Select passenger to refund</label>
+                    <div class="passenger-refund-list">
+                        {% for passenger in booking.passengers %}
+                            {% if passenger.status != "Cancelled" %}
+                                <label class="checkbox-row">
+                                    <input type="checkbox" name="refund_passenger_ids" value="{{ passenger.id }}">
+                                    {{ passenger.first_name }} {{ passenger.last_name }}
+                                    {% if passenger.seat %}- Seat {{ passenger.seat }}{% endif %}
+                                </label>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <label>Other reason</label>
+                    <input type="text" name="refund_custom_reason" placeholder="Only fill this in if you selected Other">
+
+                    <button type="submit" class="btn danger-btn">Submit Refund Request</button>
+                </form>
+            {% endif %}
+        </div>
     </div>
     {% endfor %}
 {% else %}
@@ -249,4 +272,49 @@
         </div>
     </div>
 {% endif %}
+
+<script>
+document.querySelectorAll(".airport-input").forEach((input) => {
+    const wrapper = input.closest(".airport-input-wrapper");
+    const suggestionsBox = wrapper.querySelector(".airport-suggestions");
+
+    input.addEventListener("input", async () => {
+        const query = input.value.trim();
+
+        if (query.length < 2) {
+            suggestionsBox.innerHTML = "";
+            suggestionsBox.style.display = "none";
+            return;
+        }
+
+        const response = await fetch(`/airport-suggestions?q=${encodeURIComponent(query)}`);
+        const airports = await response.json();
+
+        suggestionsBox.innerHTML = "";
+
+        airports.forEach((airport) => {
+            const option = document.createElement("div");
+            option.className = "airport-suggestion-item";
+            option.textContent = `${airport.name} (${airport.code}) - ${airport.city}`;
+
+            option.addEventListener("click", () => {
+                input.value = `${airport.name} (${airport.code})`;
+                suggestionsBox.innerHTML = "";
+                suggestionsBox.style.display = "none";
+            });
+
+            suggestionsBox.appendChild(option);
+        });
+
+        suggestionsBox.style.display = airports.length ? "block" : "none";
+    });
+
+    document.addEventListener("click", (event) => {
+        if (!wrapper.contains(event.target)) {
+            suggestionsBox.innerHTML = "";
+            suggestionsBox.style.display = "none";
+        }
+    });
+});
+</script>
 {% endblock %}

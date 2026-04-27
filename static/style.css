@@ -1601,3 +1601,38 @@ form .btn {
     font-weight: 700;
     margin-left: 10px;
 }
+
+.airport-input-wrapper {
+    position: relative;
+}
+
+.airport-input-wrapper .airport-suggestions {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #d6e0f2;
+    border-radius: 14px;
+    margin-top: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 9999;
+    box-shadow: 0 12px 30px rgba(20, 40, 90, 0.14);
+}
+
+.airport-suggestion-item {
+    padding: 12px 14px;
+    cursor: pointer;
+    font-weight: 600;
+    border-bottom: 1px solid #edf1f8;
+}
+
+.airport-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.airport-suggestion-item:hover {
+    background: #eef4ff;
+}
