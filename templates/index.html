@@ -3,310 +3,329 @@
 {% block title %}AirGo{% endblock %}
 
 {% block content %}
-    <h1>{{ t.welcome }}</h1>
-    <p class="subtitle">{{ t.subtitle }}</p>
+<h1>{{ t.welcome }}</h1>
+<p class="subtitle">{{ t.subtitle }}</p>
 
-    <!-- Loading spinner overlay -->
-    <div class="spinner-overlay" id="loading-spinner">
-        <div class="spinner"></div>
-    </div>
+<div class="spinner-overlay" id="loading-spinner">
+    <div class="spinner"></div>
+</div>
 
-    <div aria-live="polite" aria-atomic="true">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash-message flash-{{ category }}" role="alert">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
+<div aria-live="polite" aria-atomic="true">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
 
-    <div class="card">
-        <form action="{{ url_for('results') }}" method="POST" class="form-grid" autocomplete="off" aria-label="Flight search form">
-            <div class="full-width">
-                <label for="trip_type">{{ t.trip_type }}</label>
-                <select id="trip_type" name="trip_type" onchange="toggleTripType()" required aria-label="Select trip type">
-                    <option value="return">{{ t.return_trip }}</option>
-                    <option value="one_way">{{ t.one_way }}</option>
-                    <option value="multi_city">{{ t.multi_city }}</option>
-                </select>
-            </div>
+<div class="card">
+    <form action="{{ url_for('results') }}" method="POST" class="form-grid" autocomplete="off" aria-label="Flight search form">
+        <div class="full-width">
+            <label for="trip_type">{{ t.trip_type }}</label>
+            <select id="trip_type" name="trip_type" onchange="toggleTripType()" required>
+                <option value="return">{{ t.return_trip }}</option>
+                <option value="one_way">{{ t.one_way }}</option>
+                <option value="multi_city">{{ t.multi_city }}</option>
+            </select>
+        </div>
 
-            <div class="airport-suggestions">
-                <label for="departure">{{ t.from_label }}</label>
-                <input type="text" id="departure" name="departure" placeholder="{{ t.example_departure }}" required aria-label="Departure airport or city">
-                <div id="departure-suggestions" class="suggestions-list"></div>
-            </div>
-
-            <div class="airport-suggestions">
-                <label for="destination">{{ t.to_label }}</label>
-                <input type="text" id="destination" name="destination" placeholder="{{ t.example_departure }}" required aria-label="Destination airport or city">
-                <div id="destination-suggestions" class="suggestions-list"></div>
-            </div>
-
-            <div>
-                <label for="depart_date">{{ t.departure_date }}</label>
-                <input type="date" id="depart_date" name="depart_date" required min="{{ today }}" aria-label="Departure date">
-            </div>
-
-            <div id="return-date-group">
-                <label for="return_date">{{ t.return_date }}</label>
-                <input type="date" id="return_date" name="return_date" min="{{ today }}" aria-label="Return date">
-            </div>
-
-            <div id="multi-city-fields" class="full-width" style="display: none;">
-                <div class="multi-city-box">
-                    <h3>{{ t.second_flight }}</h3>
-                    <div class="form-grid">
-                        <div class="airport-suggestions">
-                            <label for="departure_2">{{ t.from_label }}</label>
-                            <input type="text" id="departure_2" name="departure_2" placeholder="{{ t.example_departure }}">
-                            <div id="departure-2-suggestions" class="suggestions-list"></div>
-                        </div>
-
-                        <div class="airport-suggestions">
-                            <label for="destination_2">{{ t.to_label }}</label>
-                            <input type="text" id="destination_2" name="destination_2" placeholder="{{ t.example_departure }}">
-                            <div id="destination-2-suggestions" class="suggestions-list"></div>
-                        </div>
-
-                        <div>
-                            <label for="depart_date_2">{{ t.departure_date }}</label>
-                            <input type="date" id="depart_date_2" name="depart_date_2" min="{{ today }}">
-                        </div>
-                    </div>
+        <div id="normal-flight-fields" class="full-width">
+            <div class="form-grid">
+                <div class="airport-suggestions">
+                    <label for="departure">{{ t.from_label }}</label>
+                    <input type="text" id="departure" name="departure" placeholder="Departure Airport">
+                    <div id="departure-suggestions" class="suggestions-list"></div>
                 </div>
-            </div>
 
-            <div>
-                <label for="passengers">{{ t.passengers }}</label>
-                <input type="number" id="passengers" name="passengers" min="1" value="1" required aria-label="Number of passengers">
-            </div>
+                <div class="airport-suggestions">
+                    <label for="destination">{{ t.to_label }}</label>
+                    <input type="text" id="destination" name="destination" placeholder="Arrival Airport">
+                    <div id="destination-suggestions" class="suggestions-list"></div>
+                </div>
 
-            <div>
-                <label for="ticket_class">{{ t.class_label }}</label>
-                <select id="ticket_class" name="ticket_class" aria-label="Travel class">
-                    <option value="Any">{{ t.any_class }}</option>
-                    <option value="Economy">{{ t.economy }}</option>
-                    <option value="Premium Economy">{{ t.premium_economy }}</option>
-                    <option value="Business">{{ t.business }}</option>
-                    <option value="First">{{ t.first_class }}</option>
-                </select>
-            </div>
+                <div>
+                    <label for="depart_date">{{ t.departure_date }}</label>
+                    <input type="date" id="depart_date" name="depart_date" min="{{ today }}">
+                </div>
 
-            <div class="full-width">
-                <button type="submit" class="btn" aria-label="Search for flights" id="search-btn">{{ t.search }}</button>
-            </div>
-        </form>
-    </div>
-
-    <section class="popular-destinations-section" aria-labelledby="popular-destinations-heading">
-        <div class="popular-destinations-header">
-            <div>
-                <p class="popular-destinations-eyebrow">{{ t.popular_routes }}</p>
-                <h2 id="popular-destinations-heading">{{ t.explore_destinations }}</h2>
-                <p class="popular-destinations-text">
-                    {{ t.choose_destination }}
-                </p>
+                <div id="return-date-group">
+                    <label for="return_date">{{ t.return_date }}</label>
+                    <input type="date" id="return_date" name="return_date" min="{{ today }}">
+                </div>
             </div>
         </div>
 
-        <div class="popular-destinations-grid">
-            <button type="button" class="destination-card" onclick="setPopularDestination('Istanbul (IST)')">
-                <div class="destination-card-image-wrap">
-                    <img src="{{ url_for('static', filename='images/istanbul.jpg') }}" alt="Istanbul" class="destination-card-image">
-                    <span class="destination-card-badge">Top Choice</span>
-                </div>
-                <div class="destination-card-content">
-                    <div>
-                        <h3>Istanbul</h3>
-                        <p>Türkiye</p>
-                    </div>
-                    <span class="destination-code">IST</span>
-                </div>
-            </button>
+        <div id="multi-city-fields" class="full-width" style="display: none;">
+            <div id="multi-city-flights"></div>
 
-            <button type="button" class="destination-card" onclick="setPopularDestination('Leeds (LBA)')">
-                <div class="destination-card-image-wrap">
-                    <img src="{{ url_for('static', filename='images/leeds.jpg') }}" alt="Leeds" class="destination-card-image">
-                    <span class="destination-card-badge">Popular in UK</span>
-                </div>
-                <div class="destination-card-content">
-                    <div>
-                        <h3>Leeds</h3>
-                        <p>{{ t.uk }}</p>
-                    </div>
-                    <span class="destination-code">LBA</span>
-                </div>
-            </button>
-
-            <button type="button" class="destination-card" onclick="setPopularDestination('New York (JFK)')">
-                <div class="destination-card-image-wrap">
-                    <img src="{{ url_for('static', filename='images/newyork.jpg') }}" alt="New York" class="destination-card-image">
-                    <span class="destination-card-badge">Long-haul favourite</span>
-                </div>
-                <div class="destination-card-content">
-                    <div>
-                        <h3>New York</h3>
-                        <p>{{ t.usa }}</p>
-                    </div>
-                    <span class="destination-code">JFK</span>
-                </div>
+            <button type="button" id="add-flight-btn" class="btn secondary-btn">
+                Add Another Flight
             </button>
         </div>
-    </section>
+
+        <div>
+            <label for="passengers">{{ t.passengers }}</label>
+            <input type="number" id="passengers" name="passengers" min="1" value="1" required>
+        </div>
+
+        <div>
+            <label for="ticket_class">{{ t.class_label }}</label>
+            <select id="ticket_class" name="ticket_class">
+                <option value="Any">{{ t.any_class }}</option>
+                <option value="Economy">{{ t.economy }}</option>
+                <option value="Premium Economy">{{ t.premium_economy }}</option>
+                <option value="Business">{{ t.business }}</option>
+                <option value="First">{{ t.first_class }}</option>
+            </select>
+        </div>
+
+        <div class="full-width">
+            <button type="submit" class="btn" id="search-btn">{{ t.search }}</button>
+        </div>
+    </form>
+</div>
+
+<section class="popular-destinations-section" aria-labelledby="popular-destinations-heading">
+    <div class="popular-destinations-header">
+        <div>
+            <p class="popular-destinations-eyebrow">{{ t.popular_routes }}</p>
+            <h2 id="popular-destinations-heading">{{ t.explore_destinations }}</h2>
+            <p class="popular-destinations-text">{{ t.choose_destination }}</p>
+        </div>
+    </div>
+
+    <div class="popular-destinations-grid">
+        <button type="button" class="destination-card" onclick="setPopularDestination('Istanbul (IST)')">
+            <div class="destination-card-image-wrap">
+                <img src="{{ url_for('static', filename='images/istanbul.jpg') }}" alt="Istanbul" class="destination-card-image">
+                <span class="destination-card-badge">Top Choice</span>
+            </div>
+            <div class="destination-card-content">
+                <div>
+                    <h3>Istanbul</h3>
+                    <p>Türkiye</p>
+                </div>
+                <span class="destination-code">IST</span>
+            </div>
+        </button>
+
+        <button type="button" class="destination-card" onclick="setPopularDestination('Leeds (LBA)')">
+            <div class="destination-card-image-wrap">
+                <img src="{{ url_for('static', filename='images/leeds.jpg') }}" alt="Leeds" class="destination-card-image">
+                <span class="destination-card-badge">Popular in UK</span>
+            </div>
+            <div class="destination-card-content">
+                <div>
+                    <h3>Leeds</h3>
+                    <p>{{ t.uk }}</p>
+                </div>
+                <span class="destination-code">LBA</span>
+            </div>
+        </button>
+
+        <button type="button" class="destination-card" onclick="setPopularDestination('New York (JFK)')">
+            <div class="destination-card-image-wrap">
+                <img src="{{ url_for('static', filename='images/newyork.jpg') }}" alt="New York" class="destination-card-image">
+                <span class="destination-card-badge">Long-haul favourite</span>
+            </div>
+            <div class="destination-card-content">
+                <div>
+                    <h3>New York</h3>
+                    <p>{{ t.usa }}</p>
+                </div>
+                <span class="destination-code">JFK</span>
+            </div>
+        </button>
+    </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    function toggleTripType() {
-        const tripType = document.getElementById("trip_type").value;
-        const returnGroup = document.getElementById("return-date-group");
-        const multiCityFields = document.getElementById("multi-city-fields");
-        const returnDate = document.getElementById("return_date");
+let multiCityCount = 0;
+
+function toggleTripType() {
+    const tripType = document.getElementById("trip_type").value;
+    const normalFields = document.getElementById("normal-flight-fields");
+    const multiFields = document.getElementById("multi-city-fields");
+    const returnGroup = document.getElementById("return-date-group");
+    const returnDate = document.getElementById("return_date");
+
+    if (tripType === "multi_city") {
+        normalFields.style.display = "none";
+        multiFields.style.display = "block";
+
+        document.getElementById("departure").required = false;
+        document.getElementById("destination").required = false;
+        document.getElementById("depart_date").required = false;
+        document.getElementById("return_date").required = false;
+
+        if (multiCityCount === 0) {
+            addMultiCityFlight();
+            addMultiCityFlight();
+        }
+    } else {
+        normalFields.style.display = "block";
+        multiFields.style.display = "none";
+
+        document.getElementById("departure").required = true;
+        document.getElementById("destination").required = true;
+        document.getElementById("depart_date").required = true;
+
+        clearMultiCityFlights();
 
         if (tripType === "one_way") {
             returnGroup.style.display = "none";
-            multiCityFields.style.display = "none";
             returnDate.value = "";
-        } else if (tripType === "multi_city") {
-            returnGroup.style.display = "none";
-            multiCityFields.style.display = "block";
-            returnDate.value = "";
+            returnDate.required = false;
         } else {
             returnGroup.style.display = "block";
-            multiCityFields.style.display = "none";
+            returnDate.required = false;
         }
     }
+}
 
-    async function fetchAirportSuggestions(query) {
-        if (!query || query.trim().length < 1) {
-            return [];
-        }
+function clearMultiCityFlights() {
+    document.getElementById("multi-city-flights").innerHTML = "";
+    multiCityCount = 0;
+}
 
-        try {
-            const response = await fetch(`/airport-suggestions?q=${encodeURIComponent(query)}`);
-            if (!response.ok) {
-                return [];
-            }
-            return await response.json();
-        } catch (error) {
-            console.error("Error fetching airport suggestions:", error);
-            return [];
-        }
+function addMultiCityFlight() {
+    multiCityCount += 1;
+
+    const wrapper = document.getElementById("multi-city-flights");
+
+    const section = document.createElement("div");
+    section.className = "multi-city-box flight-section";
+    section.style.marginBottom = "20px";
+
+    section.innerHTML = `
+        <h3>Flight ${multiCityCount}</h3>
+
+        <div class="form-grid">
+            <div class="airport-suggestions">
+                <label for="multi_departure_${multiCityCount}">From</label>
+                <input type="text" id="multi_departure_${multiCityCount}" name="multi_departure[]" placeholder="Departure Airport" required>
+                <div id="multi-departure-${multiCityCount}-suggestions" class="suggestions-list"></div>
+            </div>
+
+            <div class="airport-suggestions">
+                <label for="multi_destination_${multiCityCount}">To</label>
+                <input type="text" id="multi_destination_${multiCityCount}" name="multi_destination[]" placeholder="Arrival Airport" required>
+                <div id="multi-destination-${multiCityCount}-suggestions" class="suggestions-list"></div>
+            </div>
+
+            <div>
+                <label for="multi_depart_date_${multiCityCount}">Departure Date</label>
+                <input type="date" id="multi_depart_date_${multiCityCount}" name="multi_depart_date[]" min="{{ today }}" required>
+            </div>
+
+            ${multiCityCount > 2 ? `
+                <div class="full-width">
+                    <button type="button" class="btn danger-btn" onclick="this.closest('.flight-section').remove()">
+                        Remove Flight
+                    </button>
+                </div>
+            ` : ""}
+        </div>
+    `;
+
+    wrapper.appendChild(section);
+
+    setupAutocomplete(`multi_departure_${multiCityCount}`, `multi-departure-${multiCityCount}-suggestions`);
+    setupAutocomplete(`multi_destination_${multiCityCount}`, `multi-destination-${multiCityCount}-suggestions`);
+}
+
+async function fetchAirportSuggestions(query) {
+    if (!query || query.trim().length < 1) return [];
+
+    try {
+        const response = await fetch(`/airport-suggestions?q=${encodeURIComponent(query)}`);
+        if (!response.ok) return [];
+        return await response.json();
+    } catch (error) {
+        return [];
+    }
+}
+
+function renderSuggestions(inputElement, suggestionsElement, suggestions) {
+    suggestionsElement.innerHTML = "";
+
+    if (!suggestions || suggestions.length === 0) {
+        suggestionsElement.style.display = "none";
+        return;
     }
 
-    function renderSuggestions(inputElement, suggestionsElement, suggestions) {
-        suggestionsElement.innerHTML = "";
+    suggestions.forEach((airport) => {
+        const item = document.createElement("div");
+        item.className = "suggestion-item";
+        item.innerHTML = `
+            <strong>${airport.city}</strong> - ${airport.name}
+            <div class="small-text">${airport.code}</div>
+        `;
 
-        if (!suggestions || suggestions.length === 0) {
-            suggestionsElement.style.display = "none";
-            return;
-        }
-
-        suggestions.forEach((airport) => {
-            const item = document.createElement("div");
-            item.className = "suggestion-item";
-            item.innerHTML = `
-                <strong>${airport.city}</strong> - ${airport.name}
-                <div class="small-text">${airport.code}</div>
-            `;
-
-            item.addEventListener("click", function () {
-                inputElement.value = `${airport.city} (${airport.code})`;
-                suggestionsElement.innerHTML = "";
-                suggestionsElement.style.display = "none";
-            });
-
-            suggestionsElement.appendChild(item);
-        });
-
-        suggestionsElement.style.display = "block";
-    }
-
-    function setupAutocomplete(inputId, suggestionsId) {
-        const inputElement = document.getElementById(inputId);
-        const suggestionsElement = document.getElementById(suggestionsId);
-
-        if (!inputElement || !suggestionsElement) {
-            return;
-        }
-
-        inputElement.addEventListener("input", async function () {
-            const query = inputElement.value.trim();
-
-            if (query.length === 0) {
-                suggestionsElement.innerHTML = "";
-                suggestionsElement.style.display = "none";
-                return;
-            }
-
-            const suggestions = await fetchAirportSuggestions(query);
-            renderSuggestions(inputElement, suggestionsElement, suggestions);
-        });
-
-        inputElement.addEventListener("focus", async function () {
-            const query = inputElement.value.trim();
-            if (query.length > 0) {
-                const suggestions = await fetchAirportSuggestions(query);
-                renderSuggestions(inputElement, suggestionsElement, suggestions);
-            }
-        });
-    }
-
-    document.addEventListener("click", function (event) {
-        const allSuggestionLists = document.querySelectorAll(".suggestions-list");
-
-        allSuggestionLists.forEach((list) => {
-            if (!list.parentElement.contains(event.target)) {
-                list.style.display = "none";
-            }
-        });
-    });
-
-    function setPopularDestination(destinationValue) {
-        const destinationInput = document.getElementById("destination");
-        const suggestionsElement = document.getElementById("destination-suggestions");
-
-        if (!destinationInput) {
-            return;
-        }
-
-        destinationInput.value = destinationValue;
-        destinationInput.focus();
-
-        if (suggestionsElement) {
+        item.addEventListener("click", function () {
+            inputElement.value = `${airport.city} (${airport.code})`;
             suggestionsElement.innerHTML = "";
             suggestionsElement.style.display = "none";
-        }
+        });
 
-        destinationInput.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-
-    // Show loading spinner on form submit
-    document.querySelector('form').addEventListener('submit', function() {
-        document.getElementById('loading-spinner').classList.add('active');
-        document.getElementById('search-btn').disabled = true;
+        suggestionsElement.appendChild(item);
     });
 
-    // Dark mode toggle
-    function toggleDarkMode() {
-        document.body.classList.toggle('dark-mode');
-        localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
-    }
+    suggestionsElement.style.display = "block";
+}
 
-    // Apply saved dark mode preference on load
-    if (localStorage.getItem('darkMode') === 'true' || 
-        (!localStorage.getItem('darkMode') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.body.classList.add('dark-mode');
-    }
+function setupAutocomplete(inputId, suggestionsId) {
+    const inputElement = document.getElementById(inputId);
+    const suggestionsElement = document.getElementById(suggestionsId);
 
-    window.onload = function () {
-        toggleTripType();
-        setupAutocomplete("departure", "departure-suggestions");
-        setupAutocomplete("destination", "destination-suggestions");
-        setupAutocomplete("departure_2", "departure-2-suggestions");
-        setupAutocomplete("destination_2", "destination-2-suggestions");
-    };
+    if (!inputElement || !suggestionsElement) return;
+
+    inputElement.addEventListener("input", async function () {
+        const suggestions = await fetchAirportSuggestions(inputElement.value.trim());
+        renderSuggestions(inputElement, suggestionsElement, suggestions);
+    });
+
+    inputElement.addEventListener("focus", async function () {
+        if (inputElement.value.trim().length > 0) {
+            const suggestions = await fetchAirportSuggestions(inputElement.value.trim());
+            renderSuggestions(inputElement, suggestionsElement, suggestions);
+        }
+    });
+}
+
+document.addEventListener("click", function (event) {
+    document.querySelectorAll(".suggestions-list").forEach((list) => {
+        if (!list.parentElement.contains(event.target)) {
+            list.style.display = "none";
+        }
+    });
+});
+
+function setPopularDestination(destinationValue) {
+    const destinationInput = document.getElementById("destination");
+
+    if (!destinationInput) return;
+
+    destinationInput.value = destinationValue;
+    destinationInput.focus();
+    destinationInput.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+document.getElementById("add-flight-btn").addEventListener("click", addMultiCityFlight);
+
+document.querySelector("form").addEventListener("submit", function () {
+    document.getElementById("loading-spinner").classList.add("active");
+    document.getElementById("search-btn").disabled = true;
+});
+
+window.onload = function () {
+    toggleTripType();
+    setupAutocomplete("departure", "departure-suggestions");
+    setupAutocomplete("destination", "destination-suggestions");
+};
 </script>
 {% endblock %}

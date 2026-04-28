@@ -42,7 +42,8 @@ translations = {
         "second_flight": "Second Flight",
         "passengers": "Passengers",
         "class_label": "Class",
-        "example_departure": "e.g. London or LHR",
+        "example_departure": "Departure Airport",
+        "example_arrival": "Arrival Airport",
 
         "return_trip": "Return",
         "one_way": "One Way",
@@ -99,6 +100,7 @@ translations = {
         "review_subtitle": "Please review your flight, passenger details, and selected extras before continuing to payment.",
         "flight_details": "Flight Details",
         "date": "Date",
+        "time": "Time",
         "departure": "Departure",
         "arrival": "Arrival",
         "seat": "Seat",
@@ -1131,7 +1133,12 @@ def init_db():
         "changed_destination_airport": "TEXT DEFAULT ''",
         "changed_destination_city": "TEXT DEFAULT ''",
         "changed_destination_code": "TEXT DEFAULT ''",
-        "changed_flight_date": "TEXT DEFAULT ''"
+        "changed_flight_date": "TEXT DEFAULT ''",
+        "ticket_class": "TEXT DEFAULT ''",
+        "upgrade_cost": "REAL NOT NULL DEFAULT 0",
+        "priority_boarding": "INTEGER NOT NULL DEFAULT 0",
+        "wifi_package": "INTEGER NOT NULL DEFAULT 0",
+        "lounge_access": "INTEGER NOT NULL DEFAULT 0",
     }
 
     for column_name, column_definition in passenger_missing_columns.items():
@@ -1762,9 +1769,9 @@ def results():
         destination = request.form.get("destination", "").strip()
         depart_date = request.form.get("depart_date", "")
         return_date = request.form.get("return_date", "")
-        departure_2 = request.form.get("departure_2", "").strip()
-        destination_2 = request.form.get("destination_2", "").strip()
-        depart_date_2 = request.form.get("depart_date_2", "")
+        multi_departures = request.form.getlist("multi_departure[]")
+        multi_destinations = request.form.getlist("multi_destination[]")
+        multi_depart_dates = request.form.getlist("multi_depart_date[]")
         passengers = request.form.get("passengers", "1")
         ticket_class = request.form.get("ticket_class", "Any")
 
@@ -1809,12 +1816,17 @@ def results():
             "destination": destination,
             "depart_date": depart_date,
             "return_date": return_date,
-            "departure_2": departure_2,
-            "destination_2": destination_2,
-            "depart_date_2": depart_date_2,
             "passengers": passengers,
-            "ticket_class": ticket_class
-        }
+            "ticket_class": ticket_class,
+            "multi_flights": [
+                {
+                    "departure": multi_departures[i],
+                    "destination": multi_destinations[i],
+                    "depart_date": multi_depart_dates[i]
+                }
+                for i in range(len(multi_departures))
+            ],
+            }
 
         if not matching_flights:
             flash(get_translation()["no_exact_matches"], "info")
@@ -2085,7 +2097,7 @@ def calculate_price(selected_flight, extras, selected_seats):
         "insurance_price": insurance_price,
         "seat_price": seat_price,
         "seat_type": ", ".join([seat_type for seat_type in seat_types if seat_type]),
-        "total_price": total_price
+        "total_price": total_price,
     }
 
 @app.route("/payment", methods=["GET", "POST"])
@@ -2111,7 +2123,29 @@ def payment():
 
     price_data = calculate_price(selected_flight, extras, selected_seats)
 
+    base_points_earned = calculate_points(price_data["base_fare"])
+
+    conn = get_db_connection()
+    current_points = conn.execute("""
+        SELECT COALESCE(SUM(points_earned), 0) AS total_points
+        FROM bookings
+        WHERE user_id = ?
+    """, (session["user_id"],)).fetchone()["total_points"]
+    conn.close()
+
     if request.method == "POST":
+        points_used = int(request.form.get("points_to_use", 0) or 0)
+
+        if points_used < 0:
+            points_used = 0
+
+        if points_used > current_points:
+            flash("You do not have enough points for that discount.", "error")
+            return redirect(url_for("payment"))
+
+        points_discount = points_used / 100
+        final_price = max(0, price_data["total_price"] - points_discount)
+
         payment_data = {
             "card_name": request.form.get("card_name", "").strip(),
             "card_number": request.form.get("card_number", "").strip(),
@@ -2120,7 +2154,21 @@ def payment():
         }
 
         def render_payment():
-            return render_template("payment.html", flight=selected_flight, passengers=passengers, passenger=passengers[0], selected_seats=selected_seats, selected_seat=", ".join(selected_seats), extras=extras, search_data=search_data, **price_data)
+            return render_template(
+                "payment.html",
+                flight=selected_flight,
+                passengers=passengers,
+                passenger=passengers[0],
+                selected_seats=selected_seats,
+                selected_seat=", ".join(selected_seats),
+                extras=extras,
+                search_data=search_data,
+                current_points=current_points,
+                points_used=points_used,
+                points_discount=points_discount,
+                final_price=final_price,
+                **price_data
+            )
 
         if not request.form.get("accept_terms"):
             flash("You must accept the Terms & Conditions before completing your booking.", "error")
@@ -2132,19 +2180,20 @@ def payment():
 
         booking_reference = generate_booking_reference()
         flight_date = search_data.get("depart_date", "")
-        total_price = price_data["total_price"]
-        points_earned = calculate_points(total_price)
         passenger_count = len(passengers)
         main_passenger = passengers[0]
         seat_summary = ", ".join(selected_seats)
         passenger_extras = extras.get("passenger_extras", [])
         meal_summary = extras.get("meal_choice", "No Meal")
+
         total_checked_bags = 0
         for item in passenger_extras:
             if "1 checked bag" in item.get("baggage", ""):
                 total_checked_bags += 1
             elif "2 checked bags" in item.get("baggage", ""):
                 total_checked_bags += 2
+
+        points_earned = base_points_earned - points_used
 
         conn = get_db_connection()
         cursor = conn.execute("""
@@ -2166,16 +2215,17 @@ def payment():
             selected_flight["airline"], selected_flight["from"], selected_flight["from_city"], selected_flight["from_code"],
             selected_flight["to"], selected_flight["to_city"], selected_flight["to_code"], flight_date,
             selected_flight["departure_time"], selected_flight["arrival_time"], selected_flight["class"],
-            meal_summary, seat_summary, total_price, points_earned,
+            meal_summary, seat_summary, final_price, points_earned,
             search_data.get("trip_type", "return"), "", "None", DEFAULT_FLIGHT_STATUS,
             total_checked_bags, 0, 0, 0, "", "", "", "", "", "", "", "", passenger_count,
-            "", "", 0, "None", 0, 0, total_price
+            "", "", 0, "None", 0, 0, final_price
         ))
 
         booking_id = cursor.lastrowid
 
         for index, (passenger, seat) in enumerate(zip(passengers, selected_seats)):
             extra = passenger_extras[index] if index < len(passenger_extras) else {}
+
             conn.execute("""
                 INSERT INTO passengers (
                     booking_id, first_name, last_name, email, phone, passport_number,
@@ -2183,10 +2233,19 @@ def payment():
                     baggage, meal_choice, baggage_price, seat
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                booking_id, passenger["first_name"], passenger["last_name"], passenger["email"], passenger["phone"],
-                passenger["passport_number"], passenger.get("assistance_required", ""), ", ".join(passenger.get("assistance_options", [])),
-                passenger.get("other_assistance", ""), extra.get("baggage", "No checked bag"),
-                extra.get("meal_choice", "No Meal"), extra.get("baggage_price", 0), seat
+                booking_id,
+                passenger["first_name"],
+                passenger["last_name"],
+                passenger["email"],
+                passenger["phone"],
+                passenger["passport_number"],
+                passenger.get("assistance_required", ""),
+                ", ".join(passenger.get("assistance_options", [])),
+                passenger.get("other_assistance", ""),
+                extra.get("baggage", "No checked bag"),
+                extra.get("meal_choice", "No Meal"),
+                extra.get("baggage_price", 0),
+                seat
             ))
 
         conn.commit()
@@ -2197,9 +2256,41 @@ def payment():
         session["confirmed_booking_id"] = booking_id
 
         return redirect(url_for("confirmation"))
+    
+    conn = get_db_connection()
+    available_points = conn.execute("""
+        SELECT COALESCE(SUM(points_earned), 0) AS total
+        FROM bookings
+        WHERE user_id = ?
+    """, (session["user_id"],)).fetchone()["total"]
+    conn.close()
 
-    return render_template("payment.html", flight=selected_flight, passengers=passengers, passenger=passengers[0], selected_seats=selected_seats, selected_seat=", ".join(selected_seats), extras=extras, search_data=search_data, **price_data)
+    max_discount = min(available_points // 100, int(price_data["total_price"]))
 
+    point_options = []
+    for discount in range(5, max_discount + 1, 5):
+        point_options.append({
+            "points": discount * 100,
+            "discount": discount
+        })
+
+    return render_template(
+        "payment.html",
+        flight=selected_flight,
+        passengers=passengers,
+        passenger=passengers[0],
+        selected_seats=selected_seats,
+        selected_seat=", ".join(selected_seats),
+        extras=extras,
+        search_data=search_data,
+        current_points=current_points,
+        points_used=0,
+        points_discount=0,
+        final_price=price_data["total_price"],
+        available_points=available_points,
+        point_options=point_options,
+        **price_data
+    )
 
 @app.route("/confirmation")
 def confirmation():
@@ -2263,7 +2354,6 @@ def bookings():
         passengers_by_booking.setdefault(passenger["booking_id"], []).append(passenger)
     for booking in enriched_bookings:
         booking_passengers = passengers_by_booking.get(booking["id"], [])
-        booking["passengers"] = booking_passengers
 
         requested_ids = [
             passenger_id.strip()
@@ -2276,6 +2366,15 @@ def bookings():
         for passenger in booking_passengers:
             if str(passenger["id"]) in requested_ids:
                 requested_names.append(f"{passenger['first_name']} {passenger['last_name']}")
+
+        passenger_dicts = []
+        for passenger in booking_passengers:
+            passenger_dict = dict(passenger)
+            current_class = passenger_dict.get("ticket_class") or booking["ticket_class"]
+            passenger_dict["available_upgrades"] = get_available_upgrades(current_class)
+            passenger_dicts.append(passenger_dict)
+
+        booking["passengers"] = passenger_dicts
 
         booking["requested_passenger_names"] = requested_names
     tier_info = get_tier_info(total_points)
@@ -2291,106 +2390,130 @@ def bookings():
     )
 
 
-@app.route("/update-meal/<int:booking_id>", methods=["POST"])
-def update_meal(booking_id):
+@app.route("/update-passenger-meal/<int:passenger_id>", methods=["POST"])
+def update_passenger_meal(passenger_id):
     if not session.get("user_id"):
         flash("Please log in first.", "error")
         return redirect(url_for("login"))
 
     new_meal = request.form.get("meal_choice", "").strip()
-    if not new_meal:
-        flash("Please choose a meal option.", "error")
-        return redirect(url_for("bookings"))
 
     conn = get_db_connection()
-    booking = conn.execute("""
-        SELECT id FROM bookings
-        WHERE id = ? AND user_id = ?
-    """, (booking_id, session["user_id"])).fetchone()
+    passenger = conn.execute("""
+        SELECT passengers.*
+        FROM passengers
+        JOIN bookings ON passengers.booking_id = bookings.id
+        WHERE passengers.id = ? AND bookings.user_id = ?
+    """, (passenger_id, session["user_id"])).fetchone()
 
-    if not booking:
+    if not passenger:
         conn.close()
-        flash("Booking not found.", "error")
+        flash("Passenger not found.", "error")
         return redirect(url_for("bookings"))
 
     conn.execute("""
-        UPDATE bookings
+        UPDATE passengers
         SET meal_choice = ?
-        WHERE id = ? AND user_id = ?
-    """, (new_meal, booking_id, session["user_id"]))
+        WHERE id = ?
+    """, (new_meal, passenger_id))
+
     conn.commit()
     conn.close()
 
-    flash("Meal preference updated successfully.", "success")
+    flash("Meal updated for selected passenger.", "success")
     return redirect(url_for("bookings"))
 
 
-@app.route("/update-extras/<int:booking_id>", methods=["POST"])
-def update_extras(booking_id):
+@app.route("/update-passenger-extras/<int:passenger_id>", methods=["POST"])
+def update_passenger_extras(passenger_id):
     if not session.get("user_id"):
         flash("Please log in first.", "error")
         return redirect(url_for("login"))
 
-    extra_baggage = max(0, int(request.form.get("extra_baggage", 0) or 0))
+    baggage = request.form.get("baggage", "No checked bag")
     priority_boarding = 1 if request.form.get("priority_boarding") == "on" else 0
     wifi_package = 1 if request.form.get("wifi_package") == "on" else 0
     lounge_access = 1 if request.form.get("lounge_access") == "on" else 0
 
-    conn = get_db_connection()
-    booking = conn.execute("""
-        SELECT * FROM bookings
-        WHERE id = ? AND user_id = ?
-    """, (booking_id, session["user_id"])).fetchone()
+    baggage_price = 0
+    if "1 checked bag" in baggage:
+        baggage_price = 30
+    elif "2 checked bags" in baggage:
+        baggage_price = 60
 
-    if not booking:
+    extras_price = (
+        baggage_price
+        + priority_boarding * EXTRA_PRICES["priority_boarding"]
+        + wifi_package * EXTRA_PRICES["wifi_package"]
+        + lounge_access * EXTRA_PRICES["lounge_access"]
+    )
+
+    conn = get_db_connection()
+
+    passenger = conn.execute("""
+        SELECT passengers.*, bookings.price, bookings.points_earned
+        FROM passengers
+        JOIN bookings ON passengers.booking_id = bookings.id
+        WHERE passengers.id = ? AND bookings.user_id = ?
+    """, (passenger_id, session["user_id"])).fetchone()
+
+    if not passenger:
         conn.close()
-        flash("Booking not found.", "error")
+        flash("Passenger not found.", "error")
         return redirect(url_for("bookings"))
 
-    old_extras_total = calculate_extras_total(
-        booking["extra_baggage"],
-        booking["priority_boarding"],
-        booking["wifi_package"],
-        booking["lounge_access"]
-    )
-    new_extras_total = calculate_extras_total(
-        extra_baggage,
-        priority_boarding,
-        wifi_package,
-        lounge_access
+    old_extras_price = (
+        float(passenger["baggage_price"] or 0)
+        + int(passenger["priority_boarding"] or 0) * EXTRA_PRICES["priority_boarding"]
+        + int(passenger["wifi_package"] or 0) * EXTRA_PRICES["wifi_package"]
+        + int(passenger["lounge_access"] or 0) * EXTRA_PRICES["lounge_access"]
     )
 
-    new_total_price = booking["price"] - old_extras_total + new_extras_total
-    new_points = calculate_points(new_total_price)
+    booking = conn.execute("""
+        SELECT * FROM bookings
+        WHERE id = ?
+    """, (passenger["booking_id"],)).fetchone()
+
+    new_booking_price = booking["price"] - old_extras_price + extras_price
+    new_points = booking["points_earned"]
 
     conn.execute("""
-        UPDATE bookings
-        SET extra_baggage = ?,
+        UPDATE passengers
+        SET baggage = ?,
+            baggage_price = ?,
             priority_boarding = ?,
             wifi_package = ?,
-            lounge_access = ?,
-            price = ?,
-            points_earned = ?
-        WHERE id = ? AND user_id = ?
+            lounge_access = ?
+        WHERE id = ?
     """, (
-        extra_baggage,
+        baggage,
+        baggage_price,
         priority_boarding,
         wifi_package,
         lounge_access,
-        new_total_price,
-        new_points,
-        booking_id,
-        session["user_id"]
+        passenger_id
     ))
+
+    conn.execute("""
+        UPDATE bookings
+        SET price = ?,
+            points_earned = ?
+        WHERE id = ?
+    """, (
+        new_booking_price,
+        new_points,
+        passenger["booking_id"]
+    ))
+
     conn.commit()
     conn.close()
 
-    flash("Travel extras updated successfully.", "success")
+    flash("Extras updated for selected passenger.", "success")
     return redirect(url_for("bookings"))
 
 
-@app.route("/upgrade-booking/<int:booking_id>", methods=["POST"])
-def upgrade_booking(booking_id):
+@app.route("/upgrade-passenger/<int:passenger_id>", methods=["POST"])
+def upgrade_passenger(passenger_id):
     if not session.get("user_id"):
         flash("Please log in first.", "error")
         return redirect(url_for("login"))
@@ -2398,43 +2521,69 @@ def upgrade_booking(booking_id):
     new_class = request.form.get("new_class", "").strip()
 
     conn = get_db_connection()
-    booking = conn.execute("""
-        SELECT * FROM bookings
-        WHERE id = ? AND user_id = ?
-    """, (booking_id, session["user_id"])).fetchone()
 
-    if not booking:
+    passenger = conn.execute("""
+        SELECT passengers.*, bookings.ticket_class, bookings.price
+        FROM passengers
+        JOIN bookings ON passengers.booking_id = bookings.id
+        WHERE passengers.id = ? AND bookings.user_id = ?
+    """, (passenger_id, session["user_id"])).fetchone()
+
+    if not passenger:
         conn.close()
-        flash("Booking not found.", "error")
+        flash("Passenger not found.", "error")
         return redirect(url_for("bookings"))
 
-    current_class = booking["ticket_class"]
+    current_class = passenger["ticket_class"] or passenger["ticket_class"]
+    booking_current_class = passenger["ticket_class"]
+
+    if not current_class:
+        current_class = booking_current_class
+
     valid_upgrades = get_available_upgrades(current_class)
 
     if new_class not in valid_upgrades:
         conn.close()
-        flash("That upgrade option is not available.", "error")
+        flash("That upgrade option is not available for this passenger.", "error")
         return redirect(url_for("bookings"))
 
-    extra_cost = valid_upgrades[new_class]
-    new_total_price = booking["price"] + extra_cost
-    new_points = calculate_points(new_total_price)
+    upgrade_cost = valid_upgrades[new_class]
+
+    booking = conn.execute("""
+        SELECT * FROM bookings
+        WHERE id = ?
+    """, (passenger["booking_id"],)).fetchone()
+
+    old_upgrade_cost = float(passenger["upgrade_cost"] or 0)
+    new_booking_price = booking["price"] - old_upgrade_cost + upgrade_cost
+    new_points = calculate_points(new_booking_price)
+
+    conn.execute("""
+        UPDATE passengers
+        SET ticket_class = ?,
+            upgrade_cost = ?
+        WHERE id = ?
+    """, (
+        new_class,
+        upgrade_cost,
+        passenger_id
+    ))
 
     conn.execute("""
         UPDATE bookings
-        SET ticket_class = ?, price = ?, points_earned = ?
-        WHERE id = ? AND user_id = ?
+        SET price = ?,
+            points_earned = ?
+        WHERE id = ?
     """, (
-        new_class,
-        new_total_price,
+        new_booking_price,
         new_points,
-        booking_id,
-        session["user_id"]
+        passenger["booking_id"]
     ))
+
     conn.commit()
     conn.close()
 
-    flash(f"Booking upgraded to {new_class}. Extra cost: £{extra_cost}. You can update your meal choice if needed.", "success")
+    flash(f"Passenger upgraded to {new_class}.", "success")
     return redirect(url_for("bookings"))
 
 
@@ -2445,50 +2594,49 @@ def request_change(booking_id):
         return redirect(url_for("login"))
 
     requested_departure = request.form.get("requested_departure", "").strip()
-    change_passenger_ids = request.form.getlist("change_passenger_ids")
     requested_destination = request.form.get("requested_destination", "").strip()
     requested_date = request.form.get("requested_date", "").strip()
     request_reason = request.form.get("request_reason", "").strip()
-    if requested_date and requested_date < date.today().isoformat():
-        flash("You cannot request a change to a date that has already passed.", "error")
+    change_passenger_ids = request.form.getlist("change_passenger_ids")
+
+    if not requested_departure or not requested_destination or not requested_date:
+        flash("Please select a new departure airport, destination airport, and date.", "error")
         return redirect(url_for("bookings"))
 
     if not change_passenger_ids:
         flash("Please select at least one passenger to change.", "error")
         return redirect(url_for("bookings"))
 
-    if not requested_departure and not requested_destination and not requested_date and not request_reason:
-        flash("Please enter at least one change request detail.", "error")
+    if requested_date < date.today().isoformat():
+        flash("You cannot request a change to a date that has already passed.", "error")
         return redirect(url_for("bookings"))
 
-    departure_airport = parse_airport_selection(requested_departure) if requested_departure else None
-    destination_airport = parse_airport_selection(requested_destination) if requested_destination else None
+    departure_airport = parse_airport_selection(requested_departure)
+    destination_airport = parse_airport_selection(requested_destination)
 
-    if requested_departure and not departure_airport:
+    if not departure_airport:
         flash("Please select a valid departure airport from the suggestions.", "error")
         return redirect(url_for("bookings"))
 
-    if requested_destination and not destination_airport:
+    if not destination_airport:
         flash("Please select a valid destination airport from the suggestions.", "error")
         return redirect(url_for("bookings"))
 
-    route_summary_parts = []
-    if departure_airport:
-        route_summary_parts.append(f"{departure_airport['name']} ({departure_airport['code']})")
-    if destination_airport:
-        route_summary_parts.append(f"{destination_airport['name']} ({destination_airport['code']})")
-
-    requested_route_summary = " to ".join(route_summary_parts) if route_summary_parts else "No route specified"
+    requested_route_summary = (
+        f"{departure_airport['name']} ({departure_airport['code']}) "
+        f"to {destination_airport['name']} ({destination_airport['code']})"
+    )
 
     request_summary = (
         f"Requested Route: {requested_route_summary} | "
-        f"Requested Date: {requested_date or 'No date specified'} | "
+        f"Requested Date: {requested_date} | "
         f"Reason: {request_reason or 'No reason given'}"
     )
 
     conn = get_db_connection()
+
     booking = conn.execute("""
-        SELECT id FROM bookings
+        SELECT * FROM bookings
         WHERE id = ? AND user_id = ?
     """, (booking_id, session["user_id"])).fetchone()
 
@@ -2496,8 +2644,11 @@ def request_change(booking_id):
         conn.close()
         flash("Booking not found.", "error")
         return redirect(url_for("bookings"))
-
-    request_reason = request.form.get("request_reason", "").strip()
+    
+    if booking["flight_status"] == "Cancelled" or booking["passenger_count"] <= 0:
+        conn.close()
+        flash("This booking is cancelled, so you cannot request changes.", "error")
+        return redirect(url_for("bookings"))
 
     conn.execute("""
         UPDATE bookings
@@ -2518,20 +2669,19 @@ def request_change(booking_id):
         "Pending",
         requested_route_summary,
         requested_date,
-        departure_airport["name"] if departure_airport else "",
-        departure_airport["city"] if departure_airport else "",
-        departure_airport["code"] if departure_airport else "",
-        destination_airport["name"] if destination_airport else "",
-        destination_airport["city"] if destination_airport else "",
-        destination_airport["code"] if destination_airport else "",
+        departure_airport["name"],
+        departure_airport["city"],
+        departure_airport["code"],
+        destination_airport["name"],
+        destination_airport["city"],
+        destination_airport["code"],
         ",".join(change_passenger_ids),
         booking_id,
         session["user_id"]
     ))
+
     conn.commit()
     conn.close()
-
-    change_passenger_ids = request.form.getlist("change_passenger_ids")
 
     flash("Flight change request submitted.", "success")
     return redirect(url_for("bookings"))
@@ -2555,31 +2705,23 @@ def boarding_pass(booking_id):
         flash("Boarding pass not found.", "error")
         return redirect(url_for("bookings"))
 
+    if booking["flight_status"] == "Cancelled":
+        conn.close()
+        flash("This booking is cancelled, so no boarding pass is available.", "error")
+        return redirect(url_for("bookings"))
+
     passengers = conn.execute("""
         SELECT * FROM passengers
         WHERE booking_id = ?
+          AND status != 'Cancelled'
         ORDER BY id
     """, (booking_id,)).fetchall()
-
-    active_passengers = [p for p in passengers if p["status"] != "Cancelled"]
-
-    if not active_passengers:
-        display_status = "Cancelled"
-    else:
-        display_status = booking["flight_status"]
 
     conn.close()
 
     if not passengers:
-        passengers = [{
-            "first_name": booking["first_name"],
-            "last_name": booking["last_name"],
-            "email": booking["email"],
-            "phone": booking["phone"],
-            "passport_number": booking["passport_number"],
-            "seat": booking["seat"],
-            "status": "Active"
-        }]
+        flash("There are no active passengers for this booking.", "error")
+        return redirect(url_for("bookings"))
 
     matched_flight = None
 
@@ -2594,17 +2736,14 @@ def boarding_pass(booking_id):
             matched_flight = flight
             break
 
-    flight_number = ""
-
-    if matched_flight:
-        flight_number = matched_flight.get("flight_number", "")
+    flight_number = matched_flight.get("flight_number", "") if matched_flight else ""
 
     return render_template(
         "boarding_pass.html",
         booking=booking,
         passengers=passengers,
         flight_number=flight_number,
-        display_status=display_status,
+        display_status=booking["flight_status"],
         t=get_translation()
     )
 

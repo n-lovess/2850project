@@ -15,14 +15,57 @@
 
 <div class="card">
     <h2>{{ t.fare_details if t.fare_details is defined else 'Fare Details' }}</h2>
+
     <p><strong>Base fares:</strong> {{ selected_currency }} {{ convert_price(base_fare, selected_currency) }} <span class="small-text">({{ passengers|length }} passengers)</span></p>
     <p><strong>Baggage:</strong> {{ selected_currency }} {{ convert_price(baggage_price, selected_currency) }}</p>
     <p><strong>Seat selection:</strong> {{ selected_currency }} {{ convert_price(seat_price, selected_currency) }}</p>
     <p><strong>{{ t.travel_insurance if t.travel_insurance is defined else 'Travel Insurance' }}:</strong> {{ selected_currency }} {{ convert_price(insurance_price, selected_currency) }}</p>
-    <hr>
-    <p style="font-size: 18px; font-weight: bold;">
-        {{ t.total if t.total is defined else 'Total' }}: {{ selected_currency }} {{ convert_price(total_price, selected_currency) }}
+
+    <p id="points-discount-row" style="display:none;">
+        <strong>Points discount:</strong> -{{ selected_currency }} <span id="points-discount-amount">0.00</span>
     </p>
+
+    <hr>
+
+    <p style="font-size: 18px; font-weight: bold;">
+        {{ t.total if t.total is defined else 'Total' }}:
+        {{ selected_currency }} <span id="display-total">{{ convert_price(total_price, selected_currency) }}</span>
+    </p>
+</div>
+
+<div class="card">
+    <h2>Use Points</h2>
+    <p><strong>Your points:</strong> {{ available_points }}</p>
+    <p class="small-text">100 points = £1 discount</p>
+
+    <div class="points-options">
+        {% for option in point_options %}
+            <label class="points-option">
+                <input
+                    type="radio"
+                    name="points_to_use"
+                    value="{{ option.points }}"
+                    data-discount="{{ convert_price(option.discount, selected_currency) }}"
+                    data-total="{{ convert_price(total_price, selected_currency) }}"
+                >
+                <strong>{{ selected_currency }} {{ convert_price(option.discount, selected_currency) }} off</strong>
+                <span>{{ option.points }} points</span>
+            </label>
+        {% endfor %}
+
+        <label class="points-option">
+            <input
+                type="radio"
+                name="points_to_use"
+                value="0"
+                data-discount="0"
+                data-total="{{ convert_price(total_price, selected_currency) }}"
+                checked
+            >
+            <strong>No points</strong>
+            <span>Pay full price</span>
+        </label>
+    </div>
 </div>
 
 <div class="card summary-card">
@@ -37,6 +80,7 @@
             <strong>Passenger {{ loop.index }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}<br>
             <strong>Email:</strong> {{ passenger.email }}<br>
             <strong>Seat:</strong> {{ selected_seats[loop.index0] }}<br>
+
             {% set extra = extras.get('passenger_extras', [])[loop.index0] if extras.get('passenger_extras') and extras.get('passenger_extras')|length > loop.index0 else None %}
             {% if extra %}
                 <strong>Baggage:</strong> {{ extra.baggage }}<br>
@@ -48,6 +92,8 @@
 
 <div class="card">
     <form method="POST" class="form-grid">
+        <input type="hidden" id="hidden-points-to-use" name="points_to_use" value="0">
+
         <div class="full-width">
             <label for="card_name">{{ t.name_on_card if t.name_on_card is defined else 'Name on Card' }}</label>
             <input type="text" id="card_name" name="card_name" required>
@@ -85,4 +131,24 @@
         </div>
     </form>
 </div>
+
+<script>
+document.querySelectorAll('input[name="points_to_use"]').forEach((radio) => {
+    radio.addEventListener("change", function () {
+        const total = parseFloat(this.dataset.total);
+        const discount = parseFloat(this.dataset.discount);
+        const newTotal = Math.max(0, total - discount);
+
+        document.getElementById("display-total").textContent = newTotal.toFixed(2);
+        document.getElementById("points-discount-amount").textContent = discount.toFixed(2);
+        document.getElementById("hidden-points-to-use").value = this.value;
+
+        if (discount > 0) {
+            document.getElementById("points-discount-row").style.display = "block";
+        } else {
+            document.getElementById("points-discount-row").style.display = "none";
+        }
+    });
+});
+</script>
 {% endblock %}
