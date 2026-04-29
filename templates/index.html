@@ -3,8 +3,9 @@
 {% block title %}AirGo{% endblock %}
 
 {% block content %}
-<h1>{{ t.welcome }}</h1>
-<p class="subtitle">{{ t.subtitle }}</p>
+<div class="hero-section">
+    <h1>{{ t.welcome }}</h1>
+    <p class="subtitle">{{ t.subtitle }}</p>
 
 <div class="spinner-overlay" id="loading-spinner">
     <div class="spinner"></div>
@@ -85,6 +86,7 @@
             <button type="submit" class="btn" id="search-btn">{{ t.search }}</button>
         </div>
     </form>
+</div>
 </div>
 
 <section class="popular-destinations-section" aria-labelledby="popular-destinations-heading">

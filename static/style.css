@@ -1757,7 +1757,6 @@ select:focus {
 [dir="rtl"] .flight-actions-row {
     direction: rtl;
 }
-<<<<<<< HEAD
 
 /* Empty states */
 .empty-state {
@@ -1910,30 +1909,32 @@ form .btn {
     display: block;
     color: #64748b;
     margin-top: 4px;
-=======
-.navbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  margin-left: 20px;
 }
 
-.brand-name {
-  color: black;
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1;
+.hero-section {
+    background-image: linear-gradient(rgba(5, 15, 50, 0.35), rgba(5, 15, 50, 0.35)), url('/static/hero.jpg');
+    background-size: cover;
+    background-position: center;
+    padding: 40px 20px 20px;
+    text-align: center;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-top: -40px;
+    margin-bottom: 0;
 }
 
-.logo {
-  height: 42px;
-  width: auto;
-  display: block;
+.hero-section h1 {
+    color: white !important;
+    font-size: 36px;
 }
-.brand-name {
-  font-family: 'Great Vibes', cursive;
-  color: black;
-  font-size: 42px;
->>>>>>> 6654803b53a0ba8dadaf099079709515415ea0b2
+
+.hero-section .subtitle {
+    color: #c7d8f6 !important;
+}
+
+.hero-section .card {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(4px);
+    max-width: 900px;
+    margin: 24px auto 0;
 }
