@@ -923,6 +923,59 @@ SAMPLE_FLIGHTS = [
     }
 ]
 
+SAMPLE_HOTELS = [
+    {
+        "id": 1,
+        "name": "AirGo Grand Hotel London",
+        "city": "London",
+        "country": "United Kingdom",
+        "stars": 4,
+        "price_per_night": 120,
+        "room_types": ["Standard", "Deluxe", "Suite"],
+        "description": "Modern city centre hotel with excellent transport links"
+    },
+    {
+        "id": 2,
+        "name": "Paris Riverside Hotel",
+        "city": "Paris",
+        "country": "France",
+        "stars": 4,
+        "price_per_night": 145,
+        "room_types": ["Standard", "Deluxe", "Suite"],
+        "description": "Overlooking the Seine, walking distance from major attractions"
+    },
+    {
+        "id": 3,
+        "name": "Dubai Marina Resort",
+        "city": "Dubai",
+        "country": "United Arab Emirates",
+        "stars": 5,
+        "price_per_night": 220,
+        "room_types": ["Deluxe", "Suite", "Penthouse"],
+        "description": "Luxury waterfront resort with private beach access"
+    },
+    {
+        "id": 4,
+        "name": "Midtown Business Hotel",
+        "city": "New York",
+        "country": "United States",
+        "stars": 4,
+        "price_per_night": 195,
+        "room_types": ["Standard", "Business Class", "Executive Suite"],
+        "description": "Perfect for business travellers in the heart of Manhattan"
+    },
+    {
+        "id": 5,
+        "name": "AirGo Budget Stay London",
+        "city": "London",
+        "country": "United Kingdom",
+        "stars": 3,
+        "price_per_night": 65,
+        "room_types": ["Single", "Double", "Twin"],
+        "description": "Comfortable affordable accommodation near all airports"
+    }
+]
+
 CLASS_BENEFITS = {
     "Economy": {
         "baggage": "1 cabin bag",
@@ -1069,6 +1122,41 @@ def init_db():
         )
     """)
 
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS hotel_bookings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            flight_booking_id INTEGER NULL,
+            hotel_name TEXT NOT NULL,
+            hotel_city TEXT NOT NULL,
+            hotel_country TEXT,
+            check_in TEXT NOT NULL,
+            check_out TEXT NOT NULL,
+            guests INTEGER NOT NULL,
+            room_type TEXT,
+            total_price REAL NOT NULL,
+            booking_reference TEXT NOT NULL UNIQUE,
+            status TEXT NOT NULL DEFAULT 'CONFIRMED',
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (flight_booking_id) REFERENCES bookings (id)
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS booking_change_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            booking_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            booking_type TEXT NOT NULL DEFAULT 'flight',
+            request_type TEXT NOT NULL,
+            requested_value TEXT,
+            notes TEXT,
+            status TEXT NOT NULL DEFAULT 'PENDING',
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     admin_email = "admin@airgo.com"
     existing_admin = conn.execute(
         "SELECT id FROM users WHERE email = ?",
@@ -1097,6 +1185,13 @@ def find_flight_by_id(flight_id):
     for flight in SAMPLE_FLIGHTS:
         if flight["id"] == flight_id:
             return flight
+    return None
+
+
+def find_hotel_by_id(hotel_id):
+    for hotel in SAMPLE_HOTELS:
+        if hotel["id"] == hotel_id:
+            return hotel
     return None
 
 
@@ -1991,6 +2086,12 @@ def confirmation():
         flash("No booking confirmation found.", "error")
         return redirect(url_for("home"))
 
+    # Get last inserted booking id
+    conn = get_db_connection()
+    booking = conn.execute("SELECT id FROM bookings WHERE booking_reference = ?", (booking_reference,)).fetchone()
+    conn.close()
+    booking_id = booking["id"] if booking else None
+
     return render_template(
         "confirmation.html",
         flight=selected_flight,
@@ -1999,7 +2100,9 @@ def confirmation():
         booking_reference=booking_reference,
         benefits=CLASS_BENEFITS.get(selected_flight["class"], {}),
         points_earned=points_earned,
-        extras=session.get("extras", {})
+        extras=session.get("extras", {}),
+        search_data=session.get("search_data", {}),
+        booking_id=booking_id
     )
 
 
@@ -2011,8 +2114,14 @@ def bookings():
         return redirect(url_for("login"))
 
     conn = get_db_connection()
-    rows = conn.execute("""
+    flight_bookings = conn.execute("""
         SELECT * FROM bookings
+        WHERE user_id = ?
+        ORDER BY id DESC
+    """, (session["user_id"],)).fetchall()
+
+    hotel_bookings = conn.execute("""
+        SELECT * FROM hotel_bookings
         WHERE user_id = ?
         ORDER BY id DESC
     """, (session["user_id"],)).fetchall()
@@ -2025,12 +2134,13 @@ def bookings():
 
     conn.close()
 
-    enriched_bookings = [enrich_booking_for_display(row) for row in rows]
+    enriched_bookings = [enrich_booking_for_display(row) for row in flight_bookings]
     tier_info = get_tier_info(total_points)
 
     return render_template(
         "bookings.html",
         bookings=enriched_bookings,
+        hotel_bookings=hotel_bookings,
         total_points=total_points,
         common_meal_options=COMMON_MEAL_OPTIONS,
         tier_info=tier_info,
@@ -2297,14 +2407,30 @@ def cancel_booking(booking_id):
         return redirect(url_for("login"))
 
     conn = get_db_connection()
+    booking = conn.execute("""
+        SELECT id, flight_status FROM bookings
+        WHERE id = ? AND user_id = ?
+    """, (booking_id, session["user_id"])).fetchone()
+
+    if not booking:
+        conn.close()
+        flash("Booking not found.", "error")
+        return redirect(url_for("bookings"))
+
+    if booking["flight_status"] == "CANCELLED":
+        conn.close()
+        flash("This booking is already cancelled.", "error")
+        return redirect(url_for("bookings"))
+
     conn.execute("""
-        DELETE FROM bookings
+        UPDATE bookings
+        SET flight_status = 'CANCELLED'
         WHERE id = ? AND user_id = ?
     """, (booking_id, session["user_id"]))
     conn.commit()
     conn.close()
 
-    flash("Booking cancelled successfully.", "success")
+    flash("Booking cancelled successfully. Your booking will remain in your history marked as cancelled.", "success")
     return redirect(url_for("bookings"))
 
 
@@ -2572,6 +2698,188 @@ def set_currency():
         return redirect(next_url)
 
     return redirect(url_for("home"))
+
+
+@app.route("/hotels")
+def hotels():
+    today = date.today().isoformat()
+    prefill = {
+        "destination": request.args.get("destination", ""),
+        "check_in": request.args.get("check_in", ""),
+        "check_out": request.args.get("check_out", ""),
+        "guests": request.args.get("guests", "1"),
+        "flight_booking_id": request.args.get("flight_booking_id", "")
+    }
+    return render_template("hotels.html", today=today, prefill=prefill)
+
+
+@app.route("/hotels/search")
+def hotel_search():
+    destination = request.args.get("destination", "").strip()
+    check_in = request.args.get("check_in", "").strip()
+    check_out = request.args.get("check_out", "").strip()
+    guests = request.args.get("guests", "1").strip()
+    flight_booking_id = request.args.get("flight_booking_id", "").strip()
+
+    search_params = {
+        "destination": destination,
+        "check_in": check_in,
+        "check_out": check_out,
+        "guests": int(guests) if guests.isdigit() else 1,
+        "flight_booking_id": flight_booking_id
+    }
+
+    if not destination or not check_in or not check_out:
+        flash("Please fill in all search fields.", "error")
+        return redirect(url_for("hotels"))
+
+    try:
+        from datetime import datetime
+        check_in_date = datetime.strptime(check_in, "%Y-%m-%d")
+        check_out_date = datetime.strptime(check_out, "%Y-%m-%d")
+        
+        if check_out_date <= check_in_date:
+            flash("Check out date must be after check in date.", "error")
+            return redirect(url_for("hotels"))
+            
+        nights = (check_out_date - check_in_date).days
+    except ValueError:
+        flash("Invalid date format.", "error")
+        return redirect(url_for("hotels"))
+
+    matching_hotels = [
+        hotel for hotel in SAMPLE_HOTELS
+        if normalize_search_text(destination) in normalize_search_text(hotel["city"])
+    ]
+
+    return render_template(
+        "hotel_results.html",
+        hotels=matching_hotels,
+        search_params=search_params,
+        check_in=check_in,
+        check_out=check_out,
+        nights=nights
+    )
+
+
+@app.route("/hotels/book/<int:hotel_id>", methods=["GET", "POST"])
+def hotel_book(hotel_id):
+    hotel = find_hotel_by_id(hotel_id)
+    if not hotel:
+        flash("Hotel not found.", "error")
+        return redirect(url_for("hotels"))
+
+    if not session.get("user_id"):
+        session["post_login_redirect"] = request.url
+        flash("Please log in to book a hotel.", "error")
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        check_in = request.form.get("check_in", "").strip()
+        check_out = request.form.get("check_out", "").strip()
+        guests = request.form.get("guests", "1").strip()
+        room_type = request.form.get("room_type", "").strip()
+        flight_booking_id = request.form.get("flight_booking_id", "").strip()
+
+        try:
+            from datetime import datetime
+            check_in_date = datetime.strptime(check_in, "%Y-%m-%d")
+            check_out_date = datetime.strptime(check_out, "%Y-%m-%d")
+            nights = (check_out_date - check_in_date).days
+        except ValueError:
+            flash("Invalid date format.", "error")
+            return redirect(request.referrer or url_for("hotels"))
+
+        total_price = hotel["price_per_night"] * nights
+        booking_reference = generate_booking_reference()
+
+        conn = get_db_connection()
+        conn.execute("""
+            INSERT INTO hotel_bookings (
+                user_id,
+                flight_booking_id,
+                hotel_name,
+                hotel_city,
+                hotel_country,
+                check_in,
+                check_out,
+                guests,
+                room_type,
+                total_price,
+                booking_reference
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            session["user_id"],
+            int(flight_booking_id) if flight_booking_id.isdigit() else None,
+            hotel["name"],
+            hotel["city"],
+            hotel["country"],
+            check_in,
+            check_out,
+            int(guests),
+            room_type,
+            total_price,
+            booking_reference
+        ))
+        conn.commit()
+        conn.close()
+
+        # TODO: Add loyalty points calculation for hotel bookings in future
+        # points_earned = calculate_points(total_price)
+
+        return redirect(url_for("hotel_confirm", ref=booking_reference))
+
+    check_in = request.args.get("check_in", "").strip()
+    check_out = request.args.get("check_out", "").strip()
+    guests = request.args.get("guests", "1").strip()
+    flight_booking_id = request.args.get("flight_booking_id", "").strip()
+
+    booking_details = {
+        "check_in": check_in,
+        "check_out": check_out,
+        "guests": int(guests) if guests.isdigit() else 1,
+        "flight_booking_id": flight_booking_id
+    }
+
+    try:
+        from datetime import datetime
+        check_in_date = datetime.strptime(check_in, "%Y-%m-%d")
+        check_out_date = datetime.strptime(check_out, "%Y-%m-%d")
+        nights = (check_out_date - check_in_date).days
+        total_price = hotel["price_per_night"] * nights
+    except:
+        nights = 1
+        total_price = hotel["price_per_night"]
+
+    return render_template(
+        "hotel_booking.html",
+        hotel=hotel,
+        booking_details=booking_details,
+        nights=nights,
+        total_price=total_price,
+        referrer=request.referrer or url_for("hotels")
+    )
+
+
+@app.route("/hotels/confirm")
+def hotel_confirm():
+    booking_ref = request.args.get("ref", "").strip()
+    if not booking_ref:
+        flash("No booking reference provided.", "error")
+        return redirect(url_for("hotels"))
+
+    conn = get_db_connection()
+    booking = conn.execute("""
+        SELECT * FROM hotel_bookings
+        WHERE booking_reference = ? AND user_id = ?
+    """, (booking_ref, session["user_id"])).fetchone()
+    conn.close()
+
+    if not booking:
+        flash("Booking not found.", "error")
+        return redirect(url_for("hotels"))
+
+    return render_template("hotel_confirmation.html", booking=booking)
 
 
 if __name__ == "__main__":

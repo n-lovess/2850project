@@ -56,6 +56,12 @@
         <p><strong>{{ t.total_paid }}:</strong> {{ selected_currency }} {{ convert_price(booking.price, selected_currency) }}</p>
         <p><strong>{{ t.change_status }}:</strong> {{ booking.change_status }}</p>
 
+        {% if booking.change_status == 'Pending' or booking.change_status == 'Approved' or booking.change_status == 'Rejected' %}
+        <div class="status-badge status-pending" style="margin: 12px 0; padding: 10px 14px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 12px; color: #92400e; font-weight: 700;">
+            📋 Modification request: {{ booking.change_status }}
+        </div>
+        {% endif %}
+
         {% if booking.change_request %}
         <div class="manage-note">
             <strong>{{ t.latest_request }}:</strong> {{ booking.change_request }}
@@ -137,6 +143,14 @@
 
         </div>
 
+        <div class="hotel-booking-card">
+            <p><strong>Need a hotel for this trip?</strong></p>
+            <a href="{{ url_for('hotels', destination=booking.destination_city, check_in=booking.flight_date, flight_booking_id=booking.id) }}" class="btn secondary-btn">
+                Find hotels in {{ booking.destination_city }}
+            </a>
+        </div>
+
+        {% if booking.flight_status != 'CANCELLED' %}
         <div class="button-group">
             <a href="{{ url_for('boarding_pass', booking_id=booking.id) }}" class="btn">{{ t.view_boarding_pass }}</a>
         </div>
@@ -144,9 +158,36 @@
         <form action="{{ url_for('cancel_booking', booking_id=booking.id) }}" method="POST">
             <button class="btn danger-btn">{{ t.cancel_booking }}</button>
         </form>
+        {% else %}
+        <p style="margin: 0; color: #dc2626; font-weight: 700; padding: 12px 0;">❌ This booking has been cancelled</p>
+        {% endif %}
 
     </div>
     {% endfor %}
+
+    {% if hotel_bookings %}
+    <h3 style="margin-top: 36px; margin-bottom: 16px;">Hotel Bookings</h3>
+
+    {% for hotel_booking in hotel_bookings %}
+    <div class="card manage-card">
+        <p class="booking-meta">
+            Hotel Booking • {{ hotel_booking.room_type }}
+        </p>
+
+        <h2>{{ hotel_booking.hotel_name }}, {{ hotel_booking.hotel_city }}</h2>
+
+        <p><strong>Booking Reference:</strong> {{ hotel_booking.booking_reference }}</p>
+        <p><strong>Check In:</strong> {{ hotel_booking.check_in }}</p>
+        <p><strong>Check Out:</strong> {{ hotel_booking.check_out }}</p>
+        <p><strong>Guests:</strong> {{ hotel_booking.guests }}</p>
+        <p><strong>Total Paid:</strong> {{ selected_currency }} {{ convert_price(hotel_booking.total_price, selected_currency) }}</p>
+        <p><strong>Status:</strong> {{ hotel_booking.status }}</p>
+
+        <div class="points-badge">🏨 Hotel</div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
 {% else %}
     <div class="card">
         <p>{{ t.no_bookings }}</p>

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Hotels - AirGo{% endblock %}
+
+{% block content %}
+<div class="hotel-search-container">
+    <div class="hotel-search-card">
+        <h2>Search Hotels</h2>
+        
+        <form action="{{ url_for('hotel_search') }}" method="GET" class="booking-form">
+            <div class="form-group">
+                <label for="destination">Destination City</label>
+                <input type="text" id="destination" name="destination" placeholder="e.g. London, Paris" value="{{ prefill.destination if prefill }}" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="check_in">Check In</label>
+                    <input type="date" id="check_in" name="check_in" value="{{ prefill.check_in if prefill else today }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="check_out">Check Out</label>
+                    <input type="date" id="check_out" name="check_out" value="{{ prefill.check_out if prefill }}" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="guests">Number of Guests</label>
+                <select id="guests" name="guests" required>
+                    {% for i in range(1, 7) %}
+                    <option value="{{ i }}" {% if prefill and prefill.guests == i|string %}selected{% endif %}>{{ i }} {% if i == 1 %}Guest{% else %}Guests{% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            {% if prefill and prefill.flight_booking_id %}
+            <input type="hidden" name="flight_booking_id" value="{{ prefill.flight_booking_id }}">
+            {% endif %}
+            
+            <button type="submit" class="btn btn-primary btn-full">Search Hotels</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkIn = document.getElementById('check_in');
+    const checkOut = document.getElementById('check_out');
+    
+    checkIn.min = new Date().toISOString().split('T')[0];
+    
+    checkIn.addEventListener('change', function() {
+        checkOut.min = this.value;
+        if (checkOut.value && checkOut.value < this.value) {
+            checkOut.value = '';
+        }
+    });
+});
+</script>
+{% endblock %}

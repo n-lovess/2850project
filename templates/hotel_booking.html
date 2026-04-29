@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Book Hotel - AirGo{% endblock %}
+
+{% block content %}
+<h2>Book Hotel</h2>
+
+<div class="hotel-booking-container">
+    <div class="hotel-details-panel">
+        <h3>{{ hotel.name }}</h3>
+        
+        <div class="hotel-stars">
+            {% for i in range(hotel.stars) %}★{% endfor %}
+        </div>
+        
+        <p><span class="hotel-info-label">Location:</span> {{ hotel.city }}, {{ hotel.country }}</p>
+        <p>{{ hotel.description }}</p>
+        
+        <div class="hotel-summary-box">
+            <p><span class="hotel-info-label">Check In:</span> {{ booking_details.check_in }}</p>
+            <p><span class="hotel-info-label">Check Out:</span> {{ booking_details.check_out }}</p>
+            <p><span class="hotel-info-label">Guests:</span> {{ booking_details.guests }}</p>
+            <p><span class="hotel-info-label">Nights:</span> {{ nights }}</p>
+        </div>
+    </div>
+
+    <div class="hotel-details-panel">
+        <h3>Booking Details</h3>
+        
+        <form method="POST" class="booking-form">
+            <div class="form-group">
+                <label for="room_type">Room Type</label>
+                <select id="room_type" name="room_type" required>
+                    {% for room_type in hotel.room_types %}
+                    <option value="{{ room_type }}">{{ room_type }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <input type="hidden" name="check_in" value="{{ booking_details.check_in }}">
+            <input type="hidden" name="check_out" value="{{ booking_details.check_out }}">
+            <input type="hidden" name="guests" value="{{ booking_details.guests }}">
+            {% if booking_details.flight_booking_id %}
+            <input type="hidden" name="flight_booking_id" value="{{ booking_details.flight_booking_id }}">
+            {% endif %}
+            
+            <div class="hotel-total-block">
+                <div class="hotel-total-label">Total Price</div>
+                <div class="hotel-total-value">{{ convert_price(total_price, selected_currency) }} {{ selected_currency }}</div>
+            </div>
+            
+            <div style="margin-top: 24px;">
+                <p style="margin: 0 0 12px 0; color: #666; font-size: 14px;">
+                    By clicking confirm, your booking will be charged using your account payment method.
+                </p>
+                <button type="submit" class="btn btn-primary btn-full">Confirm Booking</button>
+            </div>
+        </form>
+        
+        <a href="{{ referrer }}" class="btn secondary-btn btn-full mt-2" style="margin-top: 12px;">Back to results</a>
+    </div>
+</div>
+
+{% endblock %}

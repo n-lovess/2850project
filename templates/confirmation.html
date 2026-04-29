@@ -49,6 +49,14 @@
         </ul>
     </div>
 
+    <div class="hotel-suggestion">
+        <h3>Need a hotel in {{ flight.to_city }}?</h3>
+        <p>Find available hotels matching your travel dates at your destination.</p>
+        <a href="{{ url_for('hotels', destination=flight.to_city, check_in=search_data.depart_date if search_data else '', flight_booking_id=booking_id if booking_id else '') }}" class="btn secondary-btn">
+            Find hotels for this trip
+        </a>
+    </div>
+
     <div class="button-group">
         <a href="{{ url_for('home') }}" class="btn">{{ t.book_another_flight }}</a>
         <a href="{{ url_for('bookings') }}" class="btn secondary-btn">{{ t.manage_my_bookings }}</a>
