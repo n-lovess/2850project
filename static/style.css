@@ -113,6 +113,17 @@ p {
     font-weight: 700;
 }
 
+.logo {
+    height: 42px;
+    width: auto;
+    display: block;
+    filter: brightness(0) invert(1);
+}
+
+.nav-logo img {
+    filter: brightness(0) invert(1);
+}
+
 .nav-links {
     display: flex;
     align-items: center;
