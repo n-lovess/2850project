@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Hotel Results - AirGo{% endblock %}
+
+{% block content %}
+<div class="hotel-results-header">
+    <h2>Available Hotels in {{ search_params.destination }}</h2>
+    <p>
+        {{ check_in }} to {{ check_out }} | {{ nights }} night{% if nights != 1 %}s{% endif %} | {{ search_params.guests }} guest{% if search_params.guests != 1 %}s{% endif %}
+    </p>
+</div>
+
+{% if hotels %}
+<div class="hotel-results-list">
+    {% for hotel in hotels %}
+    <div class="hotel-card">
+        <div class="hotel-card-header">
+            <div class="hotel-info">
+                <h3>{{ hotel.name }}</h3>
+                <p class="hotel-location">{{ hotel.city }}, {{ hotel.country }}</p>
+                <div class="hotel-stars">
+                    {% for i in range(hotel.stars) %}★{% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <p class="hotel-description">{{ hotel.description }}</p>
+        
+        <div class="hotel-card-footer">
+            <div class="hotel-price-box">
+                <div class="hotel-price-label">Price per night</div>
+                <div class="hotel-price-value">{{ convert_price(hotel.price_per_night, selected_currency) }} {{ selected_currency }}</div>
+                <div class="hotel-price-total">Total: {{ convert_price(hotel.price_per_night * nights, selected_currency) }} {{ selected_currency }}</div>
+            </div>
+            
+            <form action="{{ url_for('hotel_book', hotel_id=hotel.id) }}" method="GET">
+                <input type="hidden" name="check_in" value="{{ search_params.check_in }}">
+                <input type="hidden" name="check_out" value="{{ search_params.check_out }}">
+                <input type="hidden" name="guests" value="{{ search_params.guests }}">
+                {% if search_params.flight_booking_id %}
+                <input type="hidden" name="flight_booking_id" value="{{ search_params.flight_booking_id }}">
+                {% endif %}
+                <button type="submit" class="btn">Book Hotel</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: 40px;">
+    <p>No hotels found for this destination.</p>
+    <a href="{{ url_for('hotels') }}" class="btn btn-primary">Try another search</a>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Hotel Booking Confirmed - AirGo{% endblock %}
+
+{% block content %}
+<div class="card confirmation-card">
+    <div class="confirm-tick">&#10003;</div>
+    <h1>Hotel Booking Confirmed</h1>
+    <p class="success-message">Your hotel has been booked successfully</p>
+
+    <div class="booking-ref-box">
+        <div class="booking-ref-label">Booking Reference</div>
+        <div class="booking-ref-code">{{ booking.booking_reference }}</div>
+    </div>
+
+    <div style="text-align: left; margin-top: 20px;">
+        <p><strong>Hotel:</strong> {{ booking.hotel_name }}</p>
+        <p><strong>Location:</strong> {{ booking.hotel_city }}, {{ booking.hotel_country }}</p>
+        <p><strong>Check In:</strong> {{ booking.check_in }}</p>
+        <p><strong>Check Out:</strong> {{ booking.check_out }}</p>
+        <p><strong>Guests:</strong> {{ booking.guests }}</p>
+        <p><strong>Room Type:</strong> {{ booking.room_type }}</p>
+        <p><strong>Total Paid:</strong> {{ convert_price(booking.total_price, selected_currency) }} {{ selected_currency }}</p>
+        <p><strong>Status:</strong> {{ booking.status }}</p>
+    </div>
+
+    {% if booking.flight_booking_id %}
+    <div class="hotel-booking-card" style="margin-top: 24px;">
+        <p style="margin: 0;"><strong>This hotel booking is linked to your flight booking.</strong></p>
+        <a href="{{ url_for('bookings') }}" style="color: #0369a1; font-weight: 600; margin-top: 8px; display: inline-block;">View linked flight booking</a>
+    </div>
+    {% endif %}
+
+    <div class="button-group" style="margin-top: 24px;">
+        <a href="{{ url_for('bookings') }}" class="btn">View All My Bookings</a>
+        <a href="{{ url_for('home') }}" class="btn secondary-btn">Back to Home</a>
+    </div>
+</div>
+{% endblock %}

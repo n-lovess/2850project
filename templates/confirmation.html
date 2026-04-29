@@ -36,7 +36,17 @@
         {% endfor %}
     </div>
 
+<<<<<<< HEAD
     <div class="points-badge">+{{ points_earned }} {{ t.points_earned if t.points_earned is defined else 'points earned' }}</div>
+=======
+    <div class="hotel-suggestion">
+        <h3>Need a hotel in {{ flight.to_city }}?</h3>
+        <p>Find available hotels matching your travel dates at your destination.</p>
+        <a href="{{ url_for('hotels', destination=flight.to_city, check_in=search_data.depart_date if search_data else '', flight_booking_id=booking_id if booking_id else '') }}" class="btn secondary-btn">
+            Find hotels for this trip
+        </a>
+    </div>
+>>>>>>> 6654803b53a0ba8dadaf099079709515415ea0b2
 
     <div class="button-group">
         <a href="{{ url_for('home') }}" class="btn">{{ t.book_another_flight if t.book_another_flight is defined else 'Book Another Flight' }}</a>

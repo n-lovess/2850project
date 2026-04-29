@@ -9,9 +9,13 @@
 <body>
     <div class="navbar">
         <div class="nav-inner">
-            <a href="{{ url_for('home') }}" class="nav-logo">AirGo</a>
+            <a href="/" class="navbar-brand">
+  <img src="{{ url_for('static', filename='images/logo.png') }}" alt="AirGo logo" class="logo">
+  <span class="brand-name">irGo</span>
+</a>
 
-            <div class="nav-links">
+                <div class="nav-links">
+                    <a href="{{ url_for('hotels') }}">Hotels</a>
                 <div class="language-switch">
     <a href="{{ url_for('set_language', lang='en') }}"
        class="{% if session.get('lang', 'en') == 'en' %}active{% endif %}">

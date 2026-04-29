@@ -929,6 +929,59 @@ SAMPLE_FLIGHTS = [
     }
 ]
 
+SAMPLE_HOTELS = [
+    {
+        "id": 1,
+        "name": "AirGo Grand Hotel London",
+        "city": "London",
+        "country": "United Kingdom",
+        "stars": 4,
+        "price_per_night": 120,
+        "room_types": ["Standard", "Deluxe", "Suite"],
+        "description": "Modern city centre hotel with excellent transport links"
+    },
+    {
+        "id": 2,
+        "name": "Paris Riverside Hotel",
+        "city": "Paris",
+        "country": "France",
+        "stars": 4,
+        "price_per_night": 145,
+        "room_types": ["Standard", "Deluxe", "Suite"],
+        "description": "Overlooking the Seine, walking distance from major attractions"
+    },
+    {
+        "id": 3,
+        "name": "Dubai Marina Resort",
+        "city": "Dubai",
+        "country": "United Arab Emirates",
+        "stars": 5,
+        "price_per_night": 220,
+        "room_types": ["Deluxe", "Suite", "Penthouse"],
+        "description": "Luxury waterfront resort with private beach access"
+    },
+    {
+        "id": 4,
+        "name": "Midtown Business Hotel",
+        "city": "New York",
+        "country": "United States",
+        "stars": 4,
+        "price_per_night": 195,
+        "room_types": ["Standard", "Business Class", "Executive Suite"],
+        "description": "Perfect for business travellers in the heart of Manhattan"
+    },
+    {
+        "id": 5,
+        "name": "AirGo Budget Stay London",
+        "city": "London",
+        "country": "United Kingdom",
+        "stars": 3,
+        "price_per_night": 65,
+        "room_types": ["Single", "Double", "Twin"],
+        "description": "Comfortable affordable accommodation near all airports"
+    }
+]
+
 CLASS_BENEFITS = {
     "Economy": {
         "baggage": "1 cabin bag",
@@ -1081,6 +1134,41 @@ def init_db():
             refund_processed INTEGER NOT NULL DEFAULT 0,
             original_price REAL NOT NULL DEFAULT 0,
             FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS hotel_bookings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            flight_booking_id INTEGER NULL,
+            hotel_name TEXT NOT NULL,
+            hotel_city TEXT NOT NULL,
+            hotel_country TEXT,
+            check_in TEXT NOT NULL,
+            check_out TEXT NOT NULL,
+            guests INTEGER NOT NULL,
+            room_type TEXT,
+            total_price REAL NOT NULL,
+            booking_reference TEXT NOT NULL UNIQUE,
+            status TEXT NOT NULL DEFAULT 'CONFIRMED',
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (flight_booking_id) REFERENCES bookings (id)
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS booking_change_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            booking_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            booking_type TEXT NOT NULL DEFAULT 'flight',
+            request_type TEXT NOT NULL,
+            requested_value TEXT,
+            notes TEXT,
+            status TEXT NOT NULL DEFAULT 'PENDING',
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
@@ -1237,6 +1325,13 @@ def find_flight_by_id(flight_id):
     """, (flight_id,)).fetchone()
     conn.close()
     return db_flight_to_dict(flight)
+
+
+def find_hotel_by_id(hotel_id):
+    for hotel in SAMPLE_HOTELS:
+        if hotel["id"] == hotel_id:
+            return hotel
+    return None
 
 
 def calculate_points(price):
@@ -2304,6 +2399,12 @@ def confirmation():
         flash("No booking confirmation found.", "error")
         return redirect(url_for("home"))
 
+    # Get last inserted booking id
+    conn = get_db_connection()
+    booking = conn.execute("SELECT id FROM bookings WHERE booking_reference = ?", (booking_reference,)).fetchone()
+    conn.close()
+    booking_id = booking["id"] if booking else None
+
     return render_template(
         "confirmation.html",
         flight=selected_flight,
@@ -2314,7 +2415,9 @@ def confirmation():
         booking_reference=booking_reference,
         benefits=CLASS_BENEFITS.get(selected_flight["class"], {}),
         points_earned=points_earned,
-        extras=session.get("extras", {})
+        extras=session.get("extras", {}),
+        search_data=session.get("search_data", {}),
+        booking_id=booking_id
     )
 
 
@@ -2326,8 +2429,14 @@ def bookings():
         return redirect(url_for("login"))
 
     conn = get_db_connection()
-    rows = conn.execute("""
+    flight_bookings = conn.execute("""
         SELECT * FROM bookings
+        WHERE user_id = ?
+        ORDER BY id DESC
+    """, (session["user_id"],)).fetchall()
+
+    hotel_bookings = conn.execute("""
+        SELECT * FROM hotel_bookings
         WHERE user_id = ?
         ORDER BY id DESC
     """, (session["user_id"],)).fetchall()
@@ -2349,39 +2458,12 @@ def bookings():
     conn.close()
 
     enriched_bookings = [enrich_booking_for_display(row) for row in rows]
-    passengers_by_booking = {}
-    for passenger in passenger_rows:
-        passengers_by_booking.setdefault(passenger["booking_id"], []).append(passenger)
-    for booking in enriched_bookings:
-        booking_passengers = passengers_by_booking.get(booking["id"], [])
-
-        requested_ids = [
-            passenger_id.strip()
-            for passenger_id in (booking.get("requested_passenger_ids", "") or "").split(",")
-            if passenger_id.strip()
-        ]
-
-        requested_names = []
-
-        for passenger in booking_passengers:
-            if str(passenger["id"]) in requested_ids:
-                requested_names.append(f"{passenger['first_name']} {passenger['last_name']}")
-
-        passenger_dicts = []
-        for passenger in booking_passengers:
-            passenger_dict = dict(passenger)
-            current_class = passenger_dict.get("ticket_class") or booking["ticket_class"]
-            passenger_dict["available_upgrades"] = get_available_upgrades(current_class)
-            passenger_dicts.append(passenger_dict)
-
-        booking["passengers"] = passenger_dicts
-
-        booking["requested_passenger_names"] = requested_names
     tier_info = get_tier_info(total_points)
 
     return render_template(
         "bookings.html",
         bookings=enriched_bookings,
+        hotel_bookings=hotel_bookings,
         total_points=total_points,
         common_meal_options=COMMON_MEAL_OPTIONS,
         tier_info=tier_info,
@@ -2759,60 +2841,8 @@ def request_refund(booking_id):
     refund_passengers = len(refund_passenger_ids)
 
     conn = get_db_connection()
-
-    if refund_passengers < 1:
-        conn.close()
-        flash("Please select at least one passenger for refund.", "error")
-        return redirect(url_for("bookings"))
-
-    booking = conn.execute("""
-        SELECT * FROM bookings
-        WHERE id = ? AND user_id = ?
-    """, (booking_id, session["user_id"])).fetchone()
-
-    if not booking:
-        conn.close()
-        flash("Booking not found.", "error")
-        return redirect(url_for("bookings"))
-
-    if booking["refund_status"] == "Pending":
-        conn.close()
-        flash("A refund request is already pending for this booking.", "error")
-        return redirect(url_for("bookings"))
-
-    selected_passengers = conn.execute(f"""
-        SELECT * FROM passengers
-        WHERE booking_id = ?
-        AND id IN ({",".join(["?"] * len(refund_passenger_ids))})
-        AND status = 'Active'
-    """, [booking_id] + refund_passenger_ids).fetchall()
-
-    if len(selected_passengers) != refund_passengers:
-        conn.close()
-        flash("One or more selected passengers are invalid or already cancelled.", "error")
-        return redirect(url_for("bookings"))
-
-    if refund_passengers > booking["passenger_count"]:
-        conn.close()
-        flash("Invalid number of passengers selected for refund.", "error")
-        return redirect(url_for("bookings"))
-
-    if refund_reason == "Other" and not refund_custom_reason:
-        conn.close()
-        flash("Please explain your refund reason.", "error")
-        return redirect(url_for("bookings"))
-
-    estimated_refund = round((booking["price"] / booking["passenger_count"]) * refund_passengers, 2)
-
     conn.execute("""
-        UPDATE bookings
-        SET refund_reason = ?,
-            refund_custom_reason = ?,
-            refund_passengers = ?,
-            refund_passenger_ids = ?,
-            refund_status = 'Pending',
-            refund_amount = ?,
-            refund_processed = 0
+        DELETE FROM bookings
         WHERE id = ? AND user_id = ?
     """, (
         refund_reason,
@@ -2827,7 +2857,7 @@ def request_refund(booking_id):
     conn.commit()
     conn.close()
 
-    flash("Refund request submitted successfully.", "success")
+    flash("Booking cancelled successfully.", "success")
     return redirect(url_for("bookings"))
 
 
@@ -3226,205 +3256,6 @@ def set_currency():
 
     return redirect(url_for("home"))
 
-# ==============
-# JSON API
-# ==============
-
-
-@app.route("/api/flights", methods=["GET"])
-def api_get_flights():
-    conn = get_db_connection()
-    flights = conn.execute("""
-        SELECT id, airline, departure_airport, departure_city, departure_code,
-               destination_airport, destination_city, destination_code,
-               departure_time, arrival_time, base_price, ticket_class, seats_left
-        FROM flights
-        ORDER BY id ASC
-    """).fetchall()
-    conn.close()
-    
-    return jsonify({
-        "data": [db_flight_to_dict(flight) for flight in flights],
-        "error": None
-    })
-
-
-@app.route("/api/flights/<int:flight_id>", methods=["GET"])
-def api_get_flight(flight_id):
-    flight = find_flight_by_id(flight_id)
-    
-    if not flight:
-        return jsonify({
-            "data": None,
-            "error": "Flight not found"
-        }), 404
-    
-    return jsonify({
-        "data": flight,
-        "error": None
-    })
-
-
-@app.route("/api/bookings", methods=["GET"])
-def api_get_bookings():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({
-            "data": None,
-            "error": "Unauthorized: Please log in"
-        }), 401
-    
-    conn = get_db_connection()
-    bookings = conn.execute("""
-        SELECT * FROM bookings
-        WHERE user_id = ?
-        ORDER BY id DESC
-    """, (user_id,)).fetchall()
-    conn.close()
-    
-    enriched = [enrich_booking_for_display(b) for b in bookings]
-    
-    return jsonify({
-        "data": enriched,
-        "error": None
-    })
-
-
-@app.route("/api/bookings/<int:booking_id>", methods=["GET"])
-def api_get_booking(booking_id):
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({
-            "data": None,
-            "error": "Unauthorized: Please log in"
-        }), 401
-    
-    conn = get_db_connection()
-    booking = conn.execute("""
-        SELECT * FROM bookings
-        WHERE id = ? AND user_id = ?
-    """, (booking_id, user_id)).fetchone()
-    conn.close()
-    
-    if not booking:
-        return jsonify({
-            "data": None,
-            "error": "Booking not found or access denied"
-        }), 404
-    
-    return jsonify({
-        "data": enrich_booking_for_display(booking),
-        "error": None
-    })
-
-
-@app.route("/api/bookings/<int:booking_id>", methods=["DELETE"])
-def api_delete_booking(booking_id):
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({
-            "data": None,
-            "error": "Unauthorized: Please log in"
-        }), 401
-    
-    conn = get_db_connection()
-    cursor = conn.execute("""
-        DELETE FROM bookings
-        WHERE id = ? AND user_id = ?
-    """, (booking_id, user_id))
-    conn.commit()
-    conn.close()
-    
-    if cursor.rowcount == 0:
-        return jsonify({
-            "data": None,
-            "error": "Booking not found or access denied"
-        }), 404
-    
-    return jsonify({
-        "data": {"status": "cancelled", "booking_id": booking_id},
-        "error": None
-    }), 200
-
-
-# ==============
-# Admin Reports API
-# ==============
-
-@app.route("/api/admin/reports/bookings-per-flight", methods=["GET"])
-def api_admin_bookings_per_flight():
-    if not is_admin():
-        return jsonify({
-            "data": None,
-            "error": "Forbidden: Admin access only"
-        }), 403
-    
-    conn = get_db_connection()
-    rows = conn.execute("""
-        SELECT 
-            departure_code, destination_code,
-            departure_airport, destination_airport,
-            COUNT(*) as booking_count
-        FROM bookings
-        GROUP BY departure_code, destination_code, departure_airport, destination_airport
-        ORDER BY booking_count DESC
-    """).fetchall()
-    conn.close()
-    
-    return jsonify({
-        "data": [dict(row) for row in rows],
-        "error": None
-    })
-
-
-@app.route("/api/admin/reports/popular-routes", methods=["GET"])
-def api_admin_popular_routes():
-    if not is_admin():
-        return jsonify({
-            "data": None,
-            "error": "Forbidden: Admin access only"
-        }), 403
-    
-    conn = get_db_connection()
-    rows = conn.execute("""
-        SELECT 
-            departure_city, destination_city,
-            COUNT(*) as count
-        FROM bookings
-        GROUP BY departure_city, destination_city
-        ORDER BY count DESC
-        LIMIT 10
-    """).fetchall()
-    conn.close()
-    
-    return jsonify({
-        "data": [dict(row) for row in rows],
-        "error": None
-    })
-
-
-@app.route("/api/admin/reports/peak-booking-times", methods=["GET"])
-def api_admin_peak_times():
-    if not is_admin():
-        return jsonify({
-            "data": None,
-            "error": "Forbidden: Admin access only"
-        }), 403
-
-    conn = get_db_connection()
-    rows = conn.execute("""
-        SELECT flight_date, COUNT(*) as booking_count
-        FROM bookings
-        GROUP BY flight_date
-        ORDER BY booking_count DESC
-        LIMIT 10
-    """).fetchall()
-    conn.close()
-
-    return jsonify({
-        "data": [dict(row) for row in rows],
-        "error": None
-    })
 
 if __name__ == "__main__":
     init_db()
