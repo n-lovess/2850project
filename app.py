@@ -3096,6 +3096,40 @@ def admin_update_refund_status(booking_id):
     flash("Refund status updated.", "success")
     return redirect(url_for("admin_dashboard"))
 
+
+@app.route("/hotels")
+def hotels():
+    today = date.today().isoformat()
+    return render_template("hotels.html", today=today, prefill=None)
+
+
+@app.route("/hotel_search", methods=["GET"])
+def hotel_search():
+    destination = request.args.get("destination", "").strip()
+    check_in = request.args.get("check_in", "")
+    check_out = request.args.get("check_out", "")
+    guests = request.args.get("guests", 1, type=int)
+    flight_booking_id = request.args.get("flight_booking_id")
+    
+    t = get_translation()
+    
+    # Filter hotels based on destination
+    results = []
+    if destination.lower() in [h.get("city", "").lower() for h in SAMPLE_HOTELS]:
+        results = [h for h in SAMPLE_HOTELS if h.get("city", "").lower() == destination.lower()]
+    
+    return render_template(
+        "hotel_results.html",
+        results=results,
+        destination=destination,
+        check_in=check_in,
+        check_out=check_out,
+        guests=guests,
+        flight_booking_id=flight_booking_id,
+        t=t
+    )
+
+
 def get_exchange_rates():
     global EXCHANGE_RATES, LAST_FETCH
 
