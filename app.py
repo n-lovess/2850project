@@ -2457,7 +2457,23 @@ def bookings():
 
     conn.close()
 
-    enriched_bookings = [enrich_booking_for_display(row) for row in rows]
+    enriched_bookings = []
+
+    for row in flight_bookings:
+        booking_dict = enrich_booking_for_display(row)
+
+        booking_passengers = [
+            dict(passenger)
+            for passenger in passenger_rows
+            if passenger["booking_id"] == row["id"]
+        ]
+
+        for passenger in booking_passengers:
+            passenger_class = passenger.get("ticket_class") or booking_dict["ticket_class"]
+            passenger["available_upgrades"] = get_available_upgrades(passenger_class)
+
+        booking_dict["passengers"] = booking_passengers
+        enriched_bookings.append(booking_dict)
     tier_info = get_tier_info(total_points)
 
     return render_template(
@@ -2838,16 +2854,58 @@ def request_refund(booking_id):
     refund_reason = request.form.get("refund_reason", "").strip()
     refund_custom_reason = request.form.get("refund_custom_reason", "").strip()
     refund_passenger_ids = request.form.getlist("refund_passenger_ids")
-    refund_passengers = len(refund_passenger_ids)
+
+    if not refund_passenger_ids:
+        flash("Please select at least one passenger to refund.", "error")
+        return redirect(url_for("bookings"))
 
     conn = get_db_connection()
+
+    booking = conn.execute("""
+        SELECT * FROM bookings
+        WHERE id = ? AND user_id = ?
+    """, (booking_id, session["user_id"])).fetchone()
+
+    if not booking:
+        conn.close()
+        flash("Booking not found.", "error")
+        return redirect(url_for("bookings"))
+
+    passengers = conn.execute(f"""
+        SELECT * FROM passengers
+        WHERE booking_id = ?
+        AND id IN ({",".join(["?"] * len(refund_passenger_ids))})
+        AND status != 'Cancelled'
+    """, [booking_id] + refund_passenger_ids).fetchall()
+
+    if not passengers:
+        conn.close()
+        flash("No valid passengers selected for refund.", "error")
+        return redirect(url_for("bookings"))
+
+    active_passengers = conn.execute("""
+        SELECT COUNT(*) AS total
+        FROM passengers
+        WHERE booking_id = ? AND status != 'Cancelled'
+    """, (booking_id,)).fetchone()["total"]
+
+    price_per_passenger = booking["price"] / active_passengers if active_passengers else 0
+    estimated_refund = round(price_per_passenger * len(passengers), 2)
+
     conn.execute("""
-        DELETE FROM bookings
+        UPDATE bookings
+        SET refund_reason = ?,
+            refund_custom_reason = ?,
+            refund_passengers = ?,
+            refund_passenger_ids = ?,
+            refund_status = 'Pending',
+            refund_amount = ?,
+            refund_processed = 0
         WHERE id = ? AND user_id = ?
     """, (
         refund_reason,
         refund_custom_reason,
-        refund_passengers,
+        len(passengers),
         ",".join(refund_passenger_ids),
         estimated_refund,
         booking_id,
@@ -2857,7 +2915,7 @@ def request_refund(booking_id):
     conn.commit()
     conn.close()
 
-    flash("Booking cancelled successfully.", "success")
+    flash("Refund request submitted.", "success")
     return redirect(url_for("bookings"))
 
 
@@ -3082,7 +3140,6 @@ def admin_update_refund_status(booking_id):
     flash("Refund status updated.", "success")
     return redirect(url_for("admin_dashboard"))
 
-
     conn = get_db_connection()
     conn.execute("""
         UPDATE bookings
@@ -3096,39 +3153,53 @@ def admin_update_refund_status(booking_id):
     flash("Refund status updated.", "success")
     return redirect(url_for("admin_dashboard"))
 
-
 @app.route("/hotels")
 def hotels():
     today = date.today().isoformat()
     return render_template("hotels.html", today=today, prefill=None)
 
-
-@app.route("/hotel_search", methods=["GET"])
+@app.route("/hotel_search")
+@app.route("/hotels/search")
 def hotel_search():
     destination = request.args.get("destination", "").strip()
     check_in = request.args.get("check_in", "")
     check_out = request.args.get("check_out", "")
     guests = request.args.get("guests", 1, type=int)
-    flight_booking_id = request.args.get("flight_booking_id")
-    
-    t = get_translation()
-    
-    # Filter hotels based on destination
-    results = []
-    if destination.lower() in [h.get("city", "").lower() for h in SAMPLE_HOTELS]:
-        results = [h for h in SAMPLE_HOTELS if h.get("city", "").lower() == destination.lower()]
-    
+    flight_booking_id = request.args.get("flight_booking_id", "")
+
+    nights = 1
+    if check_in and check_out:
+        from datetime import datetime
+        check_in_date = datetime.strptime(check_in, "%Y-%m-%d")
+        check_out_date = datetime.strptime(check_out, "%Y-%m-%d")
+        nights = max(1, (check_out_date - check_in_date).days)
+
+    search_params = {
+        "destination": destination,
+        "check_in": check_in,
+        "check_out": check_out,
+        "guests": guests,
+        "flight_booking_id": flight_booking_id
+    }
+
+    results = [
+        hotel for hotel in SAMPLE_HOTELS
+        if destination.lower() in hotel.get("city", "").lower()
+    ]
+
     return render_template(
         "hotel_results.html",
+        hotels=results,
         results=results,
+        search_params=search_params,
         destination=destination,
         check_in=check_in,
         check_out=check_out,
         guests=guests,
         flight_booking_id=flight_booking_id,
-        t=t
+        nights=nights,
+        t=get_translation()
     )
-
 
 def get_exchange_rates():
     global EXCHANGE_RATES, LAST_FETCH
@@ -3290,6 +3361,111 @@ def set_currency():
 
     return redirect(url_for("home"))
 
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+@app.route("/hotels/book/<int:hotel_id>", methods=["GET", "POST"])
+def hotel_book(hotel_id):
+    hotel = find_hotel_by_id(hotel_id)
+
+    if not hotel:
+        flash("Hotel not found.", "error")
+        return redirect(url_for("hotels"))
+
+    booking_details = {
+        "check_in": request.args.get("check_in", ""),
+        "check_out": request.args.get("check_out", ""),
+        "guests": request.args.get("guests", "1"),
+        "flight_booking_id": request.args.get("flight_booking_id", "")
+    }
+
+    from datetime import datetime
+
+    try:
+        check_in_date = datetime.strptime(booking_details["check_in"], "%Y-%m-%d")
+        check_out_date = datetime.strptime(booking_details["check_out"], "%Y-%m-%d")
+        nights = max(1, (check_out_date - check_in_date).days)
+    except:
+        nights = 1
+
+    total_price = hotel["price_per_night"] * nights
+
+    # 🚨 THIS IS THE IMPORTANT PART
+    if request.method == "POST":
+        # here you would normally insert into DB
+
+        return redirect(url_for(
+            "hotel_confirmation",
+            hotel_name=hotel["name"],
+            city=hotel["city"],
+            check_in=booking_details["check_in"],
+            check_out=booking_details["check_out"],
+            guests=booking_details["guests"],
+            total_price=total_price
+        ))
+
+    return render_template(
+        "hotel_booking.html",
+        hotel=hotel,
+        booking_details=booking_details,
+        nights=nights,
+        total_price=total_price
+    )
+
+@app.route("/hotel-confirmation")
+def hotel_confirmation():
+    if not session.get("user_id"):
+        flash("Please log in to confirm your hotel booking.", "error")
+        return redirect(url_for("login"))
+
+    booking_reference = generate_booking_reference()
+
+    booking = {
+        "booking_reference": booking_reference,
+        "hotel_name": request.args.get("hotel_name", ""),
+        "hotel_city": request.args.get("city", ""),
+        "hotel_country": request.args.get("country", ""),
+        "check_in": request.args.get("check_in", ""),
+        "check_out": request.args.get("check_out", ""),
+        "guests": request.args.get("guests", "1"),
+        "room_type": request.args.get("room_type", "Standard"),
+        "total_price": float(request.args.get("total_price", 0) or 0),
+        "status": "CONFIRMED"
+    }
+
+    conn = get_db_connection()
+    conn.execute("""
+        INSERT INTO hotel_bookings (
+            user_id,
+            hotel_name,
+            hotel_city,
+            hotel_country,
+            check_in,
+            check_out,
+            guests,
+            room_type,
+            total_price,
+            booking_reference,
+            status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        session["user_id"],
+        booking["hotel_name"],
+        booking["hotel_city"],
+        booking["hotel_country"],
+        booking["check_in"],
+        booking["check_out"],
+        int(booking["guests"]),
+        booking["room_type"],
+        booking["total_price"],
+        booking["booking_reference"],
+        booking["status"]
+    ))
+    conn.commit()
+    conn.close()
+
+    return render_template("hotel_confirmation.html", booking=booking)
 
 if __name__ == "__main__":
     init_db()

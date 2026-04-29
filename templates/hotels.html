@@ -6,54 +6,183 @@
 <div class="hotel-search-container">
     <div class="hotel-search-card">
         <h2>Search Hotels</h2>
-        
-        <form action="{{ url_for('hotel_search') }}" method="GET" class="booking-form">
-            <div class="form-group">
+
+        <form action="{{ url_for('hotel_search') }}" method="GET" class="booking-form" id="hotelSearchForm">
+            <div class="form-group autocomplete-wrapper">
                 <label for="destination">Destination City</label>
-                <input type="text" id="destination" name="destination" placeholder="e.g. London, Paris" value="{{ prefill.destination if prefill }}" required>
+                <input
+                    type="text"
+                    id="destination"
+                    name="destination"
+                    placeholder="Where to?"
+                    value="{{ prefill.destination if prefill }}"
+                    autocomplete="off"
+                    required
+                >
+                <div id="suggestions" class="suggestions-box"></div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label for="check_in">Check In</label>
                     <input type="date" id="check_in" name="check_in" value="{{ prefill.check_in if prefill else today }}" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="check_out">Check Out</label>
                     <input type="date" id="check_out" name="check_out" value="{{ prefill.check_out if prefill }}" required>
                 </div>
             </div>
-            
+
             <div class="form-group">
                 <label for="guests">Number of Guests</label>
                 <select id="guests" name="guests" required>
                     {% for i in range(1, 7) %}
-                    <option value="{{ i }}" {% if prefill and prefill.guests == i|string %}selected{% endif %}>{{ i }} {% if i == 1 %}Guest{% else %}Guests{% endif %}</option>
+                        <option value="{{ i }}" {% if prefill and prefill.guests == i|string %}selected{% endif %}>
+                            {{ i }} {% if i == 1 %}Guest{% else %}Guests{% endif %}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
-            
+
             {% if prefill and prefill.flight_booking_id %}
-            <input type="hidden" name="flight_booking_id" value="{{ prefill.flight_booking_id }}">
+                <input type="hidden" name="flight_booking_id" value="{{ prefill.flight_booking_id }}">
             {% endif %}
-            
+
             <button type="submit" class="btn btn-primary btn-full">Search Hotels</button>
         </form>
     </div>
 </div>
 
+<style>
+.autocomplete-wrapper {
+    position: relative;
+}
+
+.suggestions-box {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #d7def0;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    margin-top: 6px;
+    overflow: hidden;
+    z-index: 9999;
+}
+
+.suggestion-item {
+    padding: 12px 14px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.suggestion-item:hover {
+    background: #eef4ff;
+}
+
+.suggestion-subtext {
+    display: block;
+    font-size: 13px;
+    font-weight: 400;
+    color: #6b7280;
+    margin-top: 3px;
+}
+</style>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const checkIn = document.getElementById('check_in');
-    const checkOut = document.getElementById('check_out');
-    
-    checkIn.min = new Date().toISOString().split('T')[0];
-    
-    checkIn.addEventListener('change', function() {
+document.addEventListener("DOMContentLoaded", function () {
+    const checkIn = document.getElementById("check_in");
+    const checkOut = document.getElementById("check_out");
+    const destination = document.getElementById("destination");
+    const suggestionsBox = document.getElementById("suggestions");
+    const form = document.getElementById("hotelSearchForm");
+
+    let selectedValidCity = false;
+    let timer;
+
+    checkIn.min = new Date().toISOString().split("T")[0];
+
+    checkIn.addEventListener("change", function () {
         checkOut.min = this.value;
-        if (checkOut.value && checkOut.value < this.value) {
-            checkOut.value = '';
+        if (checkOut.value && checkOut.value <= this.value) {
+            checkOut.value = "";
+        }
+    });
+
+    destination.addEventListener("input", function () {
+        selectedValidCity = false;
+        clearTimeout(timer);
+
+        const value = destination.value.trim();
+        suggestionsBox.innerHTML = "";
+
+        if (value.length < 2) {
+            return;
+        }
+
+        timer = setTimeout(async function () {
+            try {
+                const response = await fetch(
+                    `https://wft-geo-db.p.rapidapi.com/v1/geo/cities?namePrefix=${encodeURIComponent(value)}&minPopulation=100000&sort=-population&limit=8`,
+                    {
+                        method: "GET",
+                        headers: {
+                            "X-RapidAPI-Key": "635e61545emsh5e22e7e26ba6a77p1a3778jsn679f87fcf2f1",
+                            "X-RapidAPI-Host": "wft-geo-db.p.rapidapi.com"
+                        }
+                    }
+                );
+
+                const data = await response.json();
+                console.log(data);
+
+                suggestionsBox.innerHTML = "";
+
+                if (!data.data || data.data.length === 0) {
+                    suggestionsBox.innerHTML = `<div class="suggestion-item">No cities found</div>`;
+                    return;
+                }
+
+                data.data.forEach(city => {
+                    const item = document.createElement("div");
+                    item.className = "suggestion-item";
+
+                    item.innerHTML = `
+                        ${city.city}
+                        <span class="suggestion-subtext">City · ${city.region}, ${city.country}</span>
+                    `;
+
+                    item.addEventListener("click", function () {
+                        destination.value = city.city;
+                        selectedValidCity = true;
+                        suggestionsBox.innerHTML = "";
+                    });
+
+                    suggestionsBox.appendChild(item);
+                });
+
+            } catch (error) {
+                console.error("City API error:", error);
+                suggestionsBox.innerHTML = `<div class="suggestion-item">Could not load cities</div>`;
+            }
+        }, 400);
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest(".autocomplete-wrapper")) {
+            suggestionsBox.innerHTML = "";
+        }
+    });
+
+    form.addEventListener("submit", function (event) {
+        if (!selectedValidCity) {
+            event.preventDefault();
+            alert("Please select a city from the suggestions.");
+            destination.focus();
         }
     });
 });
