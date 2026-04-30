@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date
+from datetime import date, datetime
 import random
 import string
 import sqlite3
@@ -963,7 +963,7 @@ SAMPLE_HOTELS = [
     {
         "id": 4,
         "name": "Midtown Business Hotel",
-        "city": "New York",
+        "city": "New York City",
         "country": "United States",
         "stars": 4,
         "price_per_night": 195,
@@ -1157,6 +1157,24 @@ def init_db():
             FOREIGN KEY (flight_booking_id) REFERENCES bookings (id)
         )
     """)
+
+    hotel_columns = [row["name"] for row in conn.execute("PRAGMA table_info(hotel_bookings)").fetchall()]
+
+    hotel_missing_columns = {
+        "refund_reason": "TEXT DEFAULT ''",
+        "refund_custom_reason": "TEXT DEFAULT ''",
+        "refund_status": "TEXT NOT NULL DEFAULT 'None'",
+        "refund_amount": "REAL NOT NULL DEFAULT 0",
+        "refund_processed": "INTEGER NOT NULL DEFAULT 0",
+        "requested_check_in": "TEXT DEFAULT ''",
+        "requested_check_out": "TEXT DEFAULT ''",
+        "change_reason": "TEXT DEFAULT ''",
+        "change_status": "TEXT NOT NULL DEFAULT 'None'",
+    }
+
+    for column_name, column_definition in hotel_missing_columns.items():
+        if column_name not in hotel_columns:
+            conn.execute(f"ALTER TABLE hotel_bookings ADD COLUMN {column_name} {column_definition}")
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS booking_change_requests (
@@ -2974,12 +2992,21 @@ def admin_dashboard():
         return redirect(url_for("home"))
 
     conn = get_db_connection()
+
     rows = conn.execute("""
         SELECT bookings.*, users.full_name AS account_name
         FROM bookings
         JOIN users ON bookings.user_id = users.id
         ORDER BY bookings.id DESC
     """).fetchall()
+
+    hotel_rows = conn.execute("""
+        SELECT hotel_bookings.*, users.full_name AS account_name
+        FROM hotel_bookings
+        JOIN users ON hotel_bookings.user_id = users.id
+        ORDER BY hotel_bookings.id DESC
+    """).fetchall()
+
     conn.close()
 
     bookings = [enrich_booking_for_display(row) for row in rows]
@@ -2987,6 +3014,7 @@ def admin_dashboard():
     return render_template(
         "admin.html",
         bookings=bookings,
+        hotel_bookings=hotel_rows,
         flight_status_options=[
             "Scheduled",
             "Boarding",
@@ -3514,6 +3542,268 @@ def hotel_confirmation():
     conn.close()
 
     return render_template("hotel_confirmation.html", booking=booking)
+
+@app.route("/request-hotel-refund/<int:hotel_booking_id>", methods=["POST"])
+def request_hotel_refund(hotel_booking_id):
+    if not session.get("user_id"):
+        flash("Please log in first.", "error")
+        return redirect(url_for("login"))
+
+    refund_reason = request.form.get("refund_reason", "").strip()
+    refund_custom_reason = request.form.get("refund_custom_reason", "").strip()
+
+    if refund_reason == "Other" and not refund_custom_reason:
+        flash("Please explain your refund reason.", "error")
+        return redirect(url_for("bookings"))
+
+    conn = get_db_connection()
+
+    hotel_booking = conn.execute("""
+        SELECT *
+        FROM hotel_bookings
+        WHERE id = ? AND user_id = ?
+    """, (hotel_booking_id, session["user_id"])).fetchone()
+
+    if not hotel_booking:
+        conn.close()
+        flash("Hotel booking not found.", "error")
+        return redirect(url_for("bookings"))
+
+    if hotel_booking["refund_status"] == "Pending":
+        conn.close()
+        flash("A refund request is already pending for this hotel booking.", "error")
+        return redirect(url_for("bookings"))
+
+    conn.execute("""
+        UPDATE hotel_bookings
+        SET refund_reason = ?,
+            refund_custom_reason = ?,
+            refund_status = 'Pending',
+            refund_amount = ?
+        WHERE id = ? AND user_id = ?
+    """, (
+        refund_reason,
+        refund_custom_reason,
+        hotel_booking["total_price"],
+        hotel_booking_id,
+        session["user_id"]
+    ))
+
+    conn.commit()
+    conn.close()
+
+    flash("Hotel refund request submitted successfully.", "success")
+    return redirect(url_for("bookings"))
+
+@app.route("/request-hotel-change/<int:hotel_booking_id>", methods=["POST"])
+def request_hotel_change(hotel_booking_id):
+    if not session.get("user_id"):
+        flash("Please log in first.", "error")
+        return redirect(url_for("login"))
+
+    requested_check_in = request.form.get("requested_check_in", "").strip()
+    requested_check_out = request.form.get("requested_check_out", "").strip()
+    change_reason = request.form.get("change_reason", "").strip()
+
+    if not requested_check_in or not requested_check_out:
+        flash("Please enter both new hotel dates.", "error")
+        return redirect(url_for("bookings"))
+
+    if requested_check_out <= requested_check_in:
+        flash("Check out date must be after check in date.", "error")
+        return redirect(url_for("bookings"))
+
+    conn = get_db_connection()
+
+    hotel_booking = conn.execute("""
+        SELECT *
+        FROM hotel_bookings
+        WHERE id = ? AND user_id = ?
+    """, (hotel_booking_id, session["user_id"])).fetchone()
+
+    if not hotel_booking:
+        conn.close()
+        flash("Hotel booking not found.", "error")
+        return redirect(url_for("bookings"))
+
+    conn.execute("""
+        UPDATE hotel_bookings
+        SET requested_check_in = ?,
+            requested_check_out = ?,
+            change_reason = ?,
+            change_status = 'Pending'
+        WHERE id = ? AND user_id = ?
+    """, (
+        requested_check_in,
+        requested_check_out,
+        change_reason,
+        hotel_booking_id,
+        session["user_id"]
+    ))
+
+    conn.commit()
+    conn.close()
+
+    flash("Hotel date change request submitted.", "success")
+    return redirect(url_for("bookings"))
+
+
+@app.route("/admin/update-hotel-refund-status/<int:hotel_booking_id>", methods=["POST"])
+def admin_update_hotel_refund_status(hotel_booking_id):
+    if not is_admin():
+        flash("Admin access only.", "error")
+        return redirect(url_for("home"))
+
+    new_status = request.form.get("refund_status", "").strip()
+
+    if new_status not in ["Pending", "Approved", "Rejected"]:
+        flash("Invalid hotel refund status.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    conn = get_db_connection()
+
+    hotel_booking = conn.execute("""
+        SELECT *
+        FROM hotel_bookings
+        WHERE id = ?
+    """, (hotel_booking_id,)).fetchone()
+
+    if not hotel_booking:
+        conn.close()
+        flash("Hotel booking not found.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    if new_status == "Approved":
+        conn.execute("""
+            UPDATE hotel_bookings
+            SET refund_status = ?,
+                refund_processed = 1,
+                refund_amount = total_price,
+                total_price = 0,
+                status = 'CANCELLED'
+            WHERE id = ?
+        """, (new_status, hotel_booking_id))
+
+    elif new_status == "Rejected":
+        conn.execute("""
+            UPDATE hotel_bookings
+            SET refund_status = ?,
+                refund_processed = 0,
+                refund_amount = 0
+            WHERE id = ?
+        """, (new_status, hotel_booking_id))
+
+    else:
+        conn.execute("""
+            UPDATE hotel_bookings
+            SET refund_status = ?,
+                refund_processed = 1,
+                refund_amount = ?,
+                status = 'CANCELLED',
+                total_price = 0
+            WHERE id = ?
+        """, (
+            new_status,
+            hotel_booking["total_price"],
+            hotel_booking_id
+        ))
+
+    conn.commit()
+    conn.close()
+
+    flash("Hotel refund status updated.", "success")
+    return redirect(url_for("admin_dashboard"))
+
+@app.route("/admin/update-hotel-change-status/<int:hotel_booking_id>", methods=["POST"])
+def admin_update_hotel_change_status(hotel_booking_id):
+    if not is_admin():
+        flash("Admin access only.", "error")
+        return redirect(url_for("home"))
+
+    new_status = request.form.get("change_status", "").strip()
+
+    if new_status not in ["Pending", "Approved", "Rejected"]:
+        flash("Invalid hotel change status.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    conn = get_db_connection()
+
+    hotel_booking = conn.execute("""
+        SELECT *
+        FROM hotel_bookings
+        WHERE id = ?
+    """, (hotel_booking_id,)).fetchone()
+
+    if not hotel_booking:
+        conn.close()
+        flash("Hotel booking not found.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    if new_status == "Approved":
+        from datetime import datetime
+
+        requested_check_in = hotel_booking["requested_check_in"]
+        requested_check_out = hotel_booking["requested_check_out"]
+
+        try:
+            check_in_date = datetime.strptime(requested_check_in, "%Y-%m-%d")
+            check_out_date = datetime.strptime(requested_check_out, "%Y-%m-%d")
+            new_nights = max(1, (check_out_date - check_in_date).days)
+        except:
+            new_nights = 1
+
+        matching_hotel = next(
+            (hotel for hotel in SAMPLE_HOTELS if hotel["name"] == hotel_booking["hotel_name"]),
+            None
+        )
+
+        if matching_hotel:
+            price_per_night = matching_hotel["price_per_night"]
+        else:
+            price_per_night = 120
+
+        new_total_price = price_per_night * new_nights
+
+        conn.execute("""
+            UPDATE hotel_bookings
+            SET check_in = ?,
+                check_out = ?,
+                total_price = ?,
+                change_status = ?,
+                requested_check_in = '',
+                requested_check_out = '',
+                change_reason = ''
+            WHERE id = ?
+        """, (
+            requested_check_in,
+            requested_check_out,
+            new_total_price,
+            new_status,
+            hotel_booking_id
+        ))
+
+    elif new_status == "Rejected":
+        conn.execute("""
+            UPDATE hotel_bookings
+            SET change_status = ?,
+                requested_check_in = '',
+                requested_check_out = '',
+                change_reason = ''
+            WHERE id = ?
+        """, (new_status, hotel_booking_id))
+
+    else:
+        conn.execute("""
+            UPDATE hotel_bookings
+            SET change_status = ?
+            WHERE id = ?
+        """, (new_status, hotel_booking_id))
+
+    conn.commit()
+    conn.close()
+
+    flash("Hotel change status updated.", "success")
+    return redirect(url_for("admin_dashboard"))
 
 if __name__ == "__main__":
     init_db()

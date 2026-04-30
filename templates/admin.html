@@ -123,4 +123,80 @@
         <p>No bookings found.</p>
     </div>
 {% endif %}
+
+{% if hotel_bookings %}
+    <h2 style="margin-top: 40px;">Hotel Booking Requests</h2>
+
+    {% for hotel in hotel_bookings %}
+        <div class="card admin-card">
+            <p class="booking-meta">
+                Hotel • {{ hotel.room_type }} • {{ hotel.status }}
+            </p>
+
+            <h2>{{ hotel.hotel_name }} - {{ hotel.hotel_city }}</h2>
+
+            <p><strong>Account Holder:</strong> {{ hotel.account_name }}</p>
+            <p><strong>Booking Ref:</strong> {{ hotel.booking_reference }}</p>
+            <p><strong>Dates:</strong> {{ hotel.check_in }} → {{ hotel.check_out }}</p>
+            <p><strong>Total:</strong> {{ selected_currency }} {{ convert_price(hotel.total_price, selected_currency) }}</p>
+
+            <p><strong>Refund Status:</strong> {{ hotel.refund_status }}</p>
+            <p><strong>Change Status:</strong> {{ hotel.change_status }}</p>
+
+            {% if hotel.refund_reason %}
+                <div class="manage-note">
+                    <strong>Refund Request:</strong> {{ hotel.refund_reason }}<br>
+                    {% if hotel.refund_custom_reason %}
+                        <strong>Details:</strong> {{ hotel.refund_custom_reason }}
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if hotel.requested_check_in or hotel.requested_check_out %}
+                <div class="manage-note">
+                    <strong>Requested Dates:</strong>
+                    {{ hotel.requested_check_in }} → {{ hotel.requested_check_out }}<br>
+
+                    {% if hotel.change_reason %}
+                        <strong>Reason:</strong> {{ hotel.change_reason }}
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div class="admin-grid">
+
+                <!-- REFUND -->
+                <div class="manage-box">
+                    <h3>Update Refund</h3>
+
+                    <form action="{{ url_for('admin_update_hotel_refund_status', hotel_booking_id=hotel.id) }}" method="POST">
+                        <select name="refund_status" required>
+                            <option value="Pending" {% if hotel.refund_status == "Pending" %}selected{% endif %}>Pending</option>
+                            <option value="Approved" {% if hotel.refund_status == "Approved" %}selected{% endif %}>Approved</option>
+                            <option value="Rejected" {% if hotel.refund_status == "Rejected" %}selected{% endif %}>Rejected</option>
+                        </select>
+
+                        <button class="btn">Save Refund</button>
+                    </form>
+                </div>
+
+                <!-- CHANGE -->
+                <div class="manage-box">
+                    <h3>Update Date Change</h3>
+
+                    <form action="{{ url_for('admin_update_hotel_change_status', hotel_booking_id=hotel.id) }}" method="POST">
+                        <select name="change_status" required>
+                            <option value="Pending" {% if hotel.change_status == "Pending" %}selected{% endif %}>Pending</option>
+                            <option value="Approved" {% if hotel.change_status == "Approved" %}selected{% endif %}>Approved</option>
+                            <option value="Rejected" {% if hotel.change_status == "Rejected" %}selected{% endif %}>Rejected</option>
+                        </select>
+
+                        <button class="btn secondary-btn">Save Change</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
 {% endblock %}
