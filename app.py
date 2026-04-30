@@ -2919,6 +2919,54 @@ def request_refund(booking_id):
     return redirect(url_for("bookings"))
 
 
+
+
+@app.route("/cancel-passenger/<int:passenger_id>", methods=["POST"])
+def cancel_passenger(passenger_id):
+    if not session.get("user_id"):
+        flash("Please log in first.", "error")
+        return redirect(url_for("login"))
+
+    conn = get_db_connection()
+    passenger = conn.execute(
+        """SELECT passengers.*, bookings.user_id FROM passengers
+           JOIN bookings ON passengers.booking_id = bookings.id
+           WHERE passengers.id = ?""",
+        (passenger_id,)
+    ).fetchone()
+
+    if not passenger or passenger["user_id"] != session["user_id"]:
+        flash("Passenger not found.", "error")
+        conn.close()
+        return redirect(url_for("bookings"))
+
+    if passenger["status"] == "Cancelled":
+        flash("This passenger is already cancelled.", "info")
+        conn.close()
+        return redirect(url_for("bookings"))
+
+    # check cancel up to half policy
+    booking_id = passenger["booking_id"]
+    all_passengers = conn.execute(
+        "SELECT status FROM passengers WHERE booking_id = ?", (booking_id,)
+    ).fetchall()
+
+    total = len(all_passengers)
+    already_cancelled = sum(1 for p in all_passengers if p["status"] == "Cancelled")
+    max_allowed = total // 2
+
+    if already_cancelled >= max_allowed:
+        flash(f"You can only cancel up to half of your passengers ({max_allowed} out of {total}). Policy does not allow cancelling more.", "error")
+        conn.close()
+        return redirect(url_for("bookings"))
+
+    conn.execute("UPDATE passengers SET status = 'Cancelled' WHERE id = ?", (passenger_id,))
+    conn.commit()
+    conn.close()
+
+    flash(f"Passenger cancelled successfully.", "success")
+    return redirect(url_for("bookings"))
+
 @app.route("/admin")
 def admin_dashboard():
     if not is_admin():

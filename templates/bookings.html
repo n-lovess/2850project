@@ -247,6 +247,12 @@
                                         {% endif %}
                                     </div>
                                 </div>
+
+                                <form action="{{ url_for('cancel_passenger', passenger_id=passenger.id) }}" method="POST" style="margin-top: 12px;">
+                                    <button type="submit" class="btn danger-btn" onclick="return confirm('Are you sure you want to cancel this passenger?')">
+                                        Cancel This Passenger
+                                    </button>
+                                </form>
                             {% endif %}
                         </div>
                     {% endfor %}
