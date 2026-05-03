@@ -1929,8 +1929,13 @@ form .btn {
     inset: 0;
     background: rgba(0,0,0,0.5);
     display: flex;
-    align-items: center;
+
+    align-items: flex-start;  
     justify-content: center;
+
+    overflow-y: auto;          
+    padding-top: 40px;         
+
     z-index: 9999;
 }
 
@@ -2016,4 +2021,15 @@ form .btn {
     backdrop-filter: blur(4px);
     max-width: 900px;
     margin: 24px auto 0;
+}
+.modal-overlay {
+    align-items: flex-start !important;
+    overflow-y: auto !important;
+    padding: 40px 20px !important;
+}
+
+.modal-box {
+    max-height: calc(100vh - 80px) !important;
+    overflow-y: auto !important;
+    margin-bottom: 40px !important;
 }
