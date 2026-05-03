@@ -140,7 +140,28 @@
 <div id="terms-modal" class="modal-overlay" style="display: none;">
     <div class="modal-box">
         <button type="button" id="close-terms-modal" class="modal-close">×</button>
-        <iframe src="{{ url_for('terms') }}" class="terms-frame"></iframe>
+
+        <h2>{{ t.terms_conditions if t.terms_conditions is defined else 'Terms & Conditions' }}</h2>
+
+        <div class="terms-modal-body">
+            <h3>{{ t.booking_terms if t.booking_terms is defined else 'Booking Terms' }}</h3>
+            <p>{{ t.booking_terms_text if t.booking_terms_text is defined else 'By completing a booking with AirGo, you confirm that all passenger details provided are accurate and complete.' }}</p>
+
+            <h3>{{ t.payments if t.payments is defined else 'Payments' }}</h3>
+            <p>{{ t.payments_text if t.payments_text is defined else 'All payments must be completed in full before a booking is confirmed. Prices shown at checkout include the selected flight and chosen extras.' }}</p>
+
+            <h3>{{ t.changes_cancellations if t.changes_cancellations is defined else 'Changes and Cancellations' }}</h3>
+            <p>{{ t.changes_cancellations_text if t.changes_cancellations_text is defined else 'Changes and cancellations are subject to the fare type and airline policy. Additional fees may apply depending on the request.' }}</p>
+
+            <h3>{{ t.passenger_responsibility if t.passenger_responsibility is defined else 'Passenger Responsibility' }}</h3>
+            <p>{{ t.passenger_responsibility_text if t.passenger_responsibility_text is defined else 'Passengers are responsible for ensuring they have valid travel documents, including passports, visas, and any required identification.' }}</p>
+
+            <h3>{{ t.special_requests if t.special_requests is defined else 'Special Requests' }}</h3>
+            <p>{{ t.special_requests_text if t.special_requests_text is defined else 'Requests such as meal preferences, assistance, and baggage selections will be recorded, but some services remain subject to availability.' }}</p>
+
+            <h3>{{ t.notifications_offers if t.notifications_offers is defined else 'Notifications and Offers' }}</h3>
+            <p>{{ t.notifications_offers_text if t.notifications_offers_text is defined else 'If you choose to receive updates and promotions, AirGo may contact you by email with booking updates, offers, and service information.' }}</p>
+        </div>
     </div>
 </div>
 
