@@ -242,6 +242,13 @@ translations = {
 
 "price_label": "Price",
 "airline_label": "Airline",
+"add_another_flight": "Add Another Flight",
+"top_choice": "Top Choice",
+"popular_in_uk": "Popular in UK",
+"long_haul_favourite": "Long-haul favourite",
+"flight": "Flight",
+"remove_flight": "Remove Flight",
+"selected_seats": "Selected seats",
     },
 
     "fr": {
@@ -264,6 +271,7 @@ translations = {
     "passengers": "Passagers",
     "class_label": "Classe",
     "example_departure": "ex: Londres ou LHR",
+    "example_arrival": "Aéroport d’arrivée",
 
     "return_trip": "Aller-retour",
     "one_way": "Aller simple",
@@ -507,6 +515,13 @@ translations = {
 
 "price_label": "Prix",
 "airline_label": "Compagnie",
+"add_another_flight": "Ajouter un autre vol",
+"top_choice": "Meilleur choix",
+"popular_in_uk": "Populaire au Royaume-Uni",
+"long_haul_favourite": "Favori long-courrier",
+"flight": "Vol",
+"remove_flight": "Supprimer le vol",
+"selected_seats": "Sièges sélectionnés",
 },
 
     "ar": {
@@ -529,6 +544,7 @@ translations = {
     "passengers": "المسافرون",
     "class_label": "الدرجة",
     "example_departure": "مثال: لندن أو LHR",
+    "example_arrival": "مطار الوصول",
 
     "return_trip": "ذهاب وعودة",
     "one_way": "ذهاب فقط",
@@ -772,6 +788,13 @@ translations = {
 
 "price_label": "السعر",
 "airline_label": "شركة الطيران",
+"add_another_flight": "إضافة رحلة أخرى",
+"top_choice": "الخيار الأفضل",
+"popular_in_uk": "شائع في المملكة المتحدة",
+"long_haul_favourite": "مفضل للرحلات الطويلة",
+"flight": "رحلة",
+"remove_flight": "إزالة الرحلة",
+"selected_seats": "المقاعد المحددة",
 }
 }
 def get_translation():

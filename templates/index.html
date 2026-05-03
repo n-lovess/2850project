@@ -36,13 +36,13 @@
             <div class="form-grid">
                 <div class="airport-suggestions">
                     <label for="departure">{{ t.from_label }}</label>
-                    <input type="text" id="departure" name="departure" placeholder="Departure Airport">
+                    <input type="text" id="departure" name="departure" placeholder="{{ t.example_departure }}">
                     <div id="departure-suggestions" class="suggestions-list"></div>
                 </div>
 
                 <div class="airport-suggestions">
                     <label for="destination">{{ t.to_label }}</label>
-                    <input type="text" id="destination" name="destination" placeholder="Arrival Airport">
+                    <input type="text" id="destination" name="destination" placeholder="{{ t.example_arrival }}">
                     <div id="destination-suggestions" class="suggestions-list"></div>
                 </div>
 
@@ -62,7 +62,7 @@
             <div id="multi-city-flights"></div>
 
             <button type="button" id="add-flight-btn" class="btn secondary-btn">
-                Add Another Flight
+                {{ t.add_another_flight }}
             </button>
         </div>
 
@@ -102,7 +102,7 @@
         <button type="button" class="destination-card" onclick="setPopularDestination('Istanbul (IST)')">
             <div class="destination-card-image-wrap">
                 <img src="{{ url_for('static', filename='images/istanbul.jpg') }}" alt="Istanbul" class="destination-card-image">
-                <span class="destination-card-badge">Top Choice</span>
+                <span class="destination-card-badge">{{ t.top_choice }}</span>
             </div>
             <div class="destination-card-content">
                 <div>
@@ -116,7 +116,7 @@
         <button type="button" class="destination-card" onclick="setPopularDestination('Leeds (LBA)')">
             <div class="destination-card-image-wrap">
                 <img src="{{ url_for('static', filename='images/leeds.jpg') }}" alt="Leeds" class="destination-card-image">
-                <span class="destination-card-badge">Popular in UK</span>
+                <span class="destination-card-badge">{{ t.popular_in_uk }}</span>
             </div>
             <div class="destination-card-content">
                 <div>
@@ -130,7 +130,7 @@
         <button type="button" class="destination-card" onclick="setPopularDestination('New York (JFK)')">
             <div class="destination-card-image-wrap">
                 <img src="{{ url_for('static', filename='images/newyork.jpg') }}" alt="New York" class="destination-card-image">
-                <span class="destination-card-badge">Long-haul favourite</span>
+                <span class="destination-card-badge">{{ t.long_haul_favourite }}</span>
             </div>
             <div class="destination-card-content">
                 <div>
@@ -204,30 +204,30 @@ function addMultiCityFlight() {
     section.style.marginBottom = "20px";
 
     section.innerHTML = `
-        <h3>Flight ${multiCityCount}</h3>
+        <h3>{{ t.flight }} ${multiCityCount}</h3>
 
         <div class="form-grid">
             <div class="airport-suggestions">
-                <label for="multi_departure_${multiCityCount}">From</label>
-                <input type="text" id="multi_departure_${multiCityCount}" name="multi_departure[]" placeholder="Departure Airport" required>
+                <label for="multi_departure_${multiCityCount}">{{ t.from_label }}</label>
+                <input type="text" id="multi_departure_${multiCityCount}" name="multi_departure[]" placeholder="{{ t.example_departure }}"  required>
                 <div id="multi-departure-${multiCityCount}-suggestions" class="suggestions-list"></div>
             </div>
 
             <div class="airport-suggestions">
-                <label for="multi_destination_${multiCityCount}">To</label>
-                <input type="text" id="multi_destination_${multiCityCount}" name="multi_destination[]" placeholder="Arrival Airport" required>
+               <label for="multi_destination_${multiCityCount}">{{ t.to_label }}</label>
+                <input type="text" id="multi_destination_${multiCityCount}" name="multi_destination[]" placeholder="{{ t.example_arrival }}" required>
                 <div id="multi-destination-${multiCityCount}-suggestions" class="suggestions-list"></div>
             </div>
 
             <div>
-                <label for="multi_depart_date_${multiCityCount}">Departure Date</label>
+                <label for="multi_depart_date_${multiCityCount}">{{ t.departure_date }}</label>
                 <input type="date" id="multi_depart_date_${multiCityCount}" name="multi_depart_date[]" min="{{ today }}" required>
             </div>
 
             ${multiCityCount > 2 ? `
                 <div class="full-width">
                     <button type="button" class="btn danger-btn" onclick="this.closest('.flight-section').remove()">
-                        Remove Flight
+                       {{ t.remove_flight }}
                     </button>
                 </div>
             ` : ""}

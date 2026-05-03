@@ -1,10 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t.seat_selection_title or 'Seat Selection' }}{% endblock %}
+{% block title %}{{ t.seat_selection_title if t.seat_selection_title is defined else 'Seat Selection' }}{% endblock %}
 
 {% block content %}
-<h1>{{ t.choose_seat or 'Choose your seat' }}</h1>
-<p class="subtitle">Choose {{ passenger_count }} seat{% if passenger_count > 1 %}s{% endif %}, one for each passenger.</p>
+<h1>{{ t.choose_seat if t.choose_seat is defined else 'Choose your seat' }}</h1>
+<p class="subtitle">
+    {{ t.choose_seat_subtitle if t.choose_seat_subtitle is defined else 'Choose your zone and seat.' }}
+</p>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -16,11 +18,11 @@
 
 <div class="card summary-card">
     <h2>{{ flight.airline }}</h2>
-    <p><strong>{{ t.route or 'Route' }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
-    <p><strong>{{ t.time or 'Time' }}:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
+    <p><strong>{{ t.route if t.route is defined else 'Route' }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
+    <p><strong>{{ t.time if t.time is defined else 'Time' }}:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
     <p><strong>{{ t.passengers if t.passengers is defined else 'Passengers' }}:</strong> {{ passenger_count }}</p>
-    <p><strong>{{ t.class_label or 'Class' }}:</strong> {{ flight.class }}</p>
-    <p><strong>{{ t.fare or 'Fare' }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }} per passenger</p>
+    <p><strong>{{ t.class_label if t.class_label is defined else 'Class' }}:</strong> {{ flight.class }}</p>
+    <p><strong>{{ t.fare if t.fare is defined else 'Fare' }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }} per passenger</p>
 </div>
 
 <div class="card seat-page-card">
@@ -28,28 +30,36 @@
 
         <div class="seat-left-panel">
             <div class="seat-legend-box">
-                <h3>{{ t.seat_prices or 'Seat prices' }}</h3>
+                <h3>{{ t.seat_prices if t.seat_prices is defined else 'Seat prices' }}</h3>
                 <ul class="seat-price-list">
-                    <li><strong>{{ t.window_seat or 'Window Seat' }}</strong> – {{ selected_currency }} {{ convert_price(10, selected_currency) }}</li>
-                    <li><strong>{{ t.aisle_seat or 'Aisle Seat' }}</strong> – {{ selected_currency }} {{ convert_price(8, selected_currency) }}</li>
-                    <li><strong>{{ t.middle_seat or 'Middle Seat' }}</strong> – {{ selected_currency }} {{ convert_price(5, selected_currency) }}</li>
-                    <li><strong>{{ t.exit_seat or 'Emergency Exit Seat' }}</strong> – {{ selected_currency }} {{ convert_price(25, selected_currency) }} <span class="small-text">({{ t.extra_legroom or 'extra legroom' }})</span></li>
-                    <li><strong>{{ t.no_selection or 'No Seat Selection' }}</strong> – {{ selected_currency }} {{ convert_price(0, selected_currency) }} <span class="small-text">({{ t.random_seat or 'seat randomly allocated' }})</span></li>
-                </ul>
+    <li><strong>{{ t.window_seat if t.window_seat is defined else 'Window Seat' }}</strong> – From {{ selected_currency }} {{ convert_price(28, selected_currency) }}</li>
+
+    <li><strong>{{ t.aisle_seat if t.aisle_seat is defined else 'Aisle Seat' }}</strong> – From {{ selected_currency }} {{ convert_price(24, selected_currency) }}</li>
+
+    <li><strong>{{ t.middle_seat if t.middle_seat is defined else 'Middle Seat' }}</strong> – From {{ selected_currency }} {{ convert_price(18, selected_currency) }}</li>
+
+    <li><strong>{{ t.exit_seat if t.exit_seat is defined else 'Emergency Exit Seat' }}</strong> – From {{ selected_currency }} {{ convert_price(45, selected_currency) }}
+        <span class="small-text">({{ t.extra_legroom if t.extra_legroom is defined else 'extra legroom' }})</span>
+    </li>
+
+    <li><strong>{{ t.no_selection if t.no_selection is defined else 'No Seat Selection' }}</strong> – {{ selected_currency }} {{ convert_price(0, selected_currency) }}
+        <span class="small-text">({{ t.random_seat if t.random_seat is defined else 'seat randomly allocated' }})</span>
+    </li>
+</ul>
             </div>
 
             <div class="seat-legend-status">
-                <div class="legend-item"><span class="legend-box available-box"></span> {{ t.available or 'Available' }}</div>
-                <div class="legend-item"><span class="legend-box unavailable-box"></span> {{ t.unavailable or 'Unavailable' }}</div>
-                <div class="legend-item"><span class="legend-box selected-box"></span> {{ t.selected or 'Selected' }}</div>
+                <div class="legend-item"><span class="legend-box available-box"></span> {{ t.available if t.available is defined else 'Available' }}</div>
+                <div class="legend-item"><span class="legend-box unavailable-box"></span> {{ t.unavailable if t.unavailable is defined else 'Unavailable' }}</div>
+                <div class="legend-item"><span class="legend-box selected-box"></span> {{ t.selected if t.selected is defined else 'Selected' }}</div>
             </div>
 
             <div class="selected-seat-card">
-                <h3>Selected seats</h3>
+                <h3>{{ t.selected_seats if t.selected_seats is defined else 'Selected seats' }}</h3>
                 {% for passenger in passengers %}
                     <p>
                         <strong>{{ passenger.first_name }} {{ passenger.last_name }}:</strong>
-                        <span id="selectedSeatText{{ loop.index }}">None</span>
+                        <span id="selectedSeatText{{ loop.index }}">{{ t.none if t.none is defined else 'None' }}</span>
                         <span class="small-text" id="selectedSeatMeta{{ loop.index }}"></span>
                     </p>
                 {% endfor %}
@@ -99,7 +109,9 @@
                 {% endfor %}
 
                 <div class="button-group">
-                    <button type="submit" class="btn">{{ t.continue_review or 'Continue to Review Booking' }}</button>
+                    <button type="submit" class="btn">
+                        {{ t.continue_review if t.continue_review is defined else 'Continue to Review Booking' }}
+                    </button>
                 </div>
             </form>
         </div>
@@ -122,7 +134,7 @@
 
             if (!seatCode) {
                 input.value = "";
-                text.textContent = "None";
+                text.textContent = "{{ t.none if t.none is defined else 'None' }}";
                 meta.textContent = "";
                 continue;
             }
@@ -173,7 +185,7 @@
     document.getElementById("seatForm").addEventListener("submit", function (event) {
         if (selectedSeats.length !== passengerCount) {
             event.preventDefault();
-            alert(`Please choose ${passengerCount} seats before continuing.`);
+            alert("Please choose " + passengerCount + " seats before continuing.");
         }
     });
 </script>
