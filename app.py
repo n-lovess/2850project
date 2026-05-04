@@ -3269,6 +3269,25 @@ def cancel_passenger(passenger_id):
     flash(f"Passenger cancelled successfully.", "success")
     return redirect(url_for("bookings"))
 
+@app.route("/track", methods=["GET", "POST"])
+def track_flight():
+    booking = None
+    not_found = False
+
+    if request.method == "POST":
+        ref = request.form.get("booking_reference", "").strip().upper()
+        conn = get_db_connection()
+        booking = conn.execute(
+            "SELECT * FROM bookings WHERE UPPER(booking_reference) = ?", (ref,)
+        ).fetchone()
+        conn.close()
+
+        if not booking:
+            not_found = True
+
+    return render_template("flight_tracker.html", booking=booking, not_found=not_found, t=get_translation())
+
+
 @app.route("/admin")
 def admin_dashboard():
     if not is_admin():
