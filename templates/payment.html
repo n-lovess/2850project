@@ -13,6 +13,8 @@
     {% endif %}
 {% endwith %}
 
+{% set flights_to_show = selected_flights if selected_flights is defined and selected_flights else [flight] %}
+
 <div class="card">
     <h2>{{ t.fare_details if t.fare_details is defined else 'Fare Details' }}</h2>
 
@@ -36,7 +38,7 @@
 <div class="card">
     <h2>Use Points</h2>
     <p><strong>Your points:</strong> {{ available_points }}</p>
-    <p class="small-text">100 points = £1 discount</p>
+    <p class="small-text">100 points = {{ selected_currency }} {{ convert_price(1, selected_currency) }} discount</p>
 
     <div class="points-options">
         {% for option in point_options %}
@@ -70,20 +72,67 @@
 
 <div class="card summary-card">
     <h2>{{ t.booking_summary if t.booking_summary is defined else 'Booking Summary' }}</h2>
-    <p><strong>{{ t.flight_label if t.flight_label is defined else 'Flight' }}:</strong> {{ flight.airline }}</p>
-    <p><strong>{{ t.route if t.route is defined else 'Route' }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
-    <p><strong>{{ t.class_label if t.class_label is defined else 'Class' }}:</strong> {{ flight.class }}</p>
-    <p><strong>Seats:</strong> {{ selected_seat }}</p>
+
+    <p><strong>Flight{% if flights_to_show|length > 1 %}s{% endif %}:</strong></p>
+
+    {% for selected in flights_to_show %}
+        {% set flight_index = loop.index0 %}
+        <div class="manage-note">
+            <strong>{{ selected.airline }}</strong><br>
+            <strong>{{ t.route if t.route is defined else 'Route' }}:</strong>
+            {{ selected.from }} ({{ selected.from_code }}) → {{ selected.to }} ({{ selected.to_code }})<br>
+            <strong>Time:</strong> {{ selected.departure_time }} - {{ selected.arrival_time }}<br>
+            <strong>{{ t.class_label if t.class_label is defined else 'Class' }}:</strong> {{ selected.class }}<br>
+
+            <strong>Seat:</strong>
+            {% if selected_seats_by_flight is defined and selected_seats_by_flight %}
+                {% set seats_for_this_flight = selected_seats_by_flight[flight_index] %}
+                {% if seats_for_this_flight is string %}
+                    {{ seats_for_this_flight }}
+                {% else %}
+                    {{ seats_for_this_flight | join(', ') }}
+                {% endif %}
+            {% elif selected_seats is defined and selected_seats %}
+                {{ selected_seats[flight_index] }}
+            {% else %}
+                {{ selected_seat }}
+            {% endif %}
+        </div>
+    {% endfor %}
 
     {% for passenger in passengers %}
+        {% set passenger_index = loop.index0 %}
         <div class="manage-note">
             <strong>Passenger {{ loop.index }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}<br>
             <strong>Email:</strong> {{ passenger.email }}<br>
-            <strong>Seat:</strong> {{ selected_seats[loop.index0] }}<br>
 
-            {% set extra = extras.get('passenger_extras', [])[loop.index0] if extras.get('passenger_extras') and extras.get('passenger_extras')|length > loop.index0 else None %}
+            <strong>Seats:</strong>
+            {% if selected_seats_by_flight is defined and selected_seats_by_flight %}
+                {% for flight_seats in selected_seats_by_flight %}
+                    {% if flight_seats is string %}
+                        {{ flight_seats }}{% if not loop.last %}, {% endif %}
+                    {% else %}
+                        {{ flight_seats[passenger_index] }}{% if not loop.last %}, {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% elif selected_seats is defined and selected_seats %}
+                {{ selected_seats | join(', ') }}
+            {% else %}
+                {{ selected_seat }}
+            {% endif %}
+            <br>
+
+            {% set extra = extras.get('passenger_extras', [])[passenger_index] if extras.get('passenger_extras') and extras.get('passenger_extras')|length > passenger_index else None %}
             {% if extra %}
-                <strong>Baggage:</strong> {{ extra.baggage }}<br>
+                <strong>Baggage:</strong>
+                {% if "1 checked bag" in extra.baggage %}
+                    1 checked bag (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})
+                {% elif "2 checked bags" in extra.baggage %}
+                    2 checked bags (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})
+                {% else %}
+                    {{ extra.baggage }}
+                {% endif %}
+                <br>
                 <strong>Meal:</strong> {{ extra.meal_choice }}
             {% endif %}
         </div>
@@ -191,12 +240,6 @@
     overflow: hidden;
     position: relative;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-}
-
-.terms-frame {
-    width: 100%;
-    height: 100%;
-    border: none;
 }
 
 .modal-close {

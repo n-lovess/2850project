@@ -15,13 +15,19 @@
 {% endwith %}
 
 <div class="card summary-card">
-    <h2>{{ t.selected_flight }}</h2>
-    <p><strong>{{ t.airline_label }}:</strong> {{ flight.airline }}</p>
-    <p><strong>{{ t.route }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
-    <p><strong>{{ t.time if t.time is defined else 'Time' }}:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
+    <h2>Selected Flights</h2>
+
+    {% for selected in selected_flights %}
+        <div class="manage-note" style="margin-bottom: 14px;">
+            <p><strong>{{ t.airline_label }}:</strong> {{ selected.airline }}</p>
+            <p><strong>{{ t.route }}:</strong> {{ selected.from }} ({{ selected.from_code }}) → {{ selected.to }} ({{ selected.to_code }})</p>
+            <p><strong>{{ t.time if t.time is defined else 'Time' }}:</strong> {{ selected.departure_time }} - {{ selected.arrival_time }}</p>
+            <p><strong>{{ t.class_label }}:</strong> {{ selected.class }}</p>
+            <p><strong>{{ t.price_label }}:</strong> {{ selected_currency }} {{ convert_price(selected.price, selected_currency) }} per passenger</p>
+        </div>
+    {% endfor %}
+
     <p><strong>{{ t.passengers if t.passengers is defined else 'Passengers' }}:</strong> {{ passenger_count }}</p>
-    <p><strong>{{ t.class_label }}:</strong> {{ flight.class }}</p>
-    <p><strong>{{ t.price_label }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }} per passenger</p>
 </div>
 
 <div class="card benefits-box">

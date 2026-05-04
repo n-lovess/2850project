@@ -3,6 +3,8 @@
 {% block title %}{{ t.confirmation_page_title if t.confirmation_page_title is defined else 'Booking Confirmation' }}{% endblock %}
 
 {% block content %}
+{% set flights_to_show = selected_flights if selected_flights is defined and selected_flights else [flight] %}
+
 <div class="card confirmation-card">
     <div class="confirm-tick">&#10003;</div>
 
@@ -14,26 +16,70 @@
         <div class="booking-ref-code">{{ booking_reference }}</div>
     </div>
 
-    <p><strong>{{ t.flight_label if t.flight_label is defined else 'Flight' }}:</strong> {{ flight.airline }}</p>
-    <p><strong>{{ t.route if t.route is defined else 'Route' }}:</strong> {{ flight.from }} ({{ flight.from_code }}) → {{ flight.to }} ({{ flight.to_code }})</p>
-    <p><strong>{{ t.departure_time_label if t.departure_time_label is defined else 'Departure Time' }}:</strong> {{ flight.departure_time }}</p>
-    <p><strong>{{ t.arrival_time_label if t.arrival_time_label is defined else 'Arrival Time' }}:</strong> {{ flight.arrival_time }}</p>
-    <p><strong>{{ t.ticket_class_label if t.ticket_class_label is defined else 'Ticket Class' }}:</strong> {{ flight.class }}</p>
-    <p><strong>Seats:</strong> {{ selected_seat }}</p>
+    <h2>Flight{% if flights_to_show|length > 1 %}s{% endif %}</h2>
+
+    {% for selected in flights_to_show %}
+        {% set flight_index = loop.index0 %}
+        <div class="manage-note">
+            <strong>{{ selected.airline }}</strong><br>
+            <strong>{{ t.route if t.route is defined else 'Route' }}:</strong>
+            {{ selected.from }} ({{ selected.from_code }}) → {{ selected.to }} ({{ selected.to_code }})<br>
+            <strong>{{ t.departure_time_label if t.departure_time_label is defined else 'Departure Time' }}:</strong> {{ selected.departure_time }}<br>
+            <strong>{{ t.arrival_time_label if t.arrival_time_label is defined else 'Arrival Time' }}:</strong> {{ selected.arrival_time }}<br>
+            <strong>{{ t.ticket_class_label if t.ticket_class_label is defined else 'Ticket Class' }}:</strong> {{ selected.class }}<br>
+            <strong>Seat:</strong>
+            {% if selected_seats_by_flight is defined and selected_seats_by_flight %}
+                {% set seats_for_this_flight = selected_seats_by_flight[flight_index] %}
+                {% if seats_for_this_flight is string %}
+                    {{ seats_for_this_flight }}
+                {% else %}
+                    {{ seats_for_this_flight | join(', ') }}
+                {% endif %}
+            {% elif selected_seats is defined and selected_seats %}
+                {{ selected_seats[flight_index] }}
+            {% else %}
+                {{ selected_seat }}
+            {% endif %}
+        </div>
+    {% endfor %}
 
     <div class="card">
         <h2>Passengers</h2>
 
         {% for passenger in passengers %}
+            {% set passenger_index = loop.index0 %}
             <div class="manage-note">
                 <strong>Passenger {{ loop.index }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}<br>
                 <strong>Email:</strong> {{ passenger.email }}<br>
-                <strong>Seat:</strong> {{ selected_seats[loop.index0] }}<br>
 
-                {% set extra = extras.get('passenger_extras', [])[loop.index0] if extras.get('passenger_extras') and extras.get('passenger_extras')|length > loop.index0 else None %}
+                <strong>Seats:</strong>
+                {% if selected_seats_by_flight is defined and selected_seats_by_flight %}
+                    {% for flight_seats in selected_seats_by_flight %}
+                        {% if flight_seats is string %}
+                            {{ flight_seats }}{% if not loop.last %}, {% endif %}
+                        {% else %}
+                            {{ flight_seats[passenger_index] }}{% if not loop.last %}, {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                {% elif selected_seats is defined and selected_seats %}
+                    {{ selected_seats | join(', ') }}
+                {% else %}
+                    {{ selected_seat }}
+                {% endif %}
+                <br>
+
+                {% set extra = extras.get('passenger_extras', [])[passenger_index] if extras.get('passenger_extras') and extras.get('passenger_extras')|length > passenger_index else None %}
 
                 {% if extra %}
-                    <strong>Baggage:</strong> {{ extra.baggage }}<br>
+                    <strong>Baggage:</strong>
+                    {% if "1 checked bag" in extra.baggage %}
+                        1 checked bag (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})
+                    {% elif "2 checked bags" in extra.baggage %}
+                        2 checked bags (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})
+                    {% else %}
+                        {{ extra.baggage }}
+                    {% endif %}
+                    <br>
                     <strong>Meal:</strong> {{ extra.meal_choice }}
                 {% endif %}
             </div>
@@ -44,11 +90,13 @@
         +{{ points_earned }} {{ t.points_earned if t.points_earned is defined else 'points earned' }}
     </div>
 
+    {% set hotel_destination = flights_to_show[0].to_city if flights_to_show else flight.to_city %}
+
     <div class="hotel-suggestion">
-        <h3>Need a hotel in {{ flight.to_city }}?</h3>
+        <h3>Need a hotel in {{ hotel_destination }}?</h3>
         <p>Find available hotels matching your travel dates at your destination.</p>
 
-        <a href="{{ url_for('hotels', destination=flight.to_city, check_in=search_data.depart_date if search_data else '', flight_booking_id=booking_id if booking_id else '') }}" class="btn secondary-btn">
+        <a href="{{ url_for('hotels', destination=hotel_destination, check_in=search_data.depart_date if search_data else '', flight_booking_id=booking_id if booking_id else '') }}" class="btn secondary-btn">
             Find hotels for this trip
         </a>
     </div>
