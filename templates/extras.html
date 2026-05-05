@@ -7,11 +7,20 @@
 <p class="subtitle">Choose baggage and meal preferences for each passenger.</p>
 
 <div class="card summary-card">
-    <h2>{{ t.your_flight or 'Your Flight' }}</h2>
-    <p><strong>{{ t.airline_label or 'Airline' }}:</strong> {{ flight.airline }}</p>
-    <p><strong>{{ t.route or 'Route' }}:</strong> {{ flight.from }} → {{ flight.to }}</p>
-    <p><strong>{{ t.class_label or 'Class' }}:</strong> {{ flight.class }}</p>
-    <p><strong>{{ t.base_price or 'Base Price' }}:</strong> {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }} per passenger</p>
+    <h2>
+        Your Flight{% if selected_flights|length > 1 %}s{% endif %}
+    </h2>
+
+    {% for selected in selected_flights %}
+        <div class="manage-note" style="margin-bottom: 14px;">
+            <p><strong>{{ t.airline_label or 'Airline' }}:</strong> {{ selected.airline }}</p>
+            <p><strong>{{ t.route or 'Route' }}:</strong> {{ selected.from }} → {{ selected.to }}</p>
+            <p><strong>{{ t.time or 'Time' }}:</strong> {{ selected.departure_time }} - {{ selected.arrival_time }}</p>
+            <p><strong>{{ t.class_label or 'Class' }}:</strong> {{ selected.class }}</p>
+            <p><strong>{{ t.base_price or 'Base Price' }}:</strong> {{ selected_currency }} {{ convert_price(selected.price, selected_currency) }} per passenger</p>
+        </div>
+    {% endfor %}
+
     <p><strong>{{ t.passengers or 'Passengers' }}:</strong> {{ passenger_count }}</p>
 </div>
 
