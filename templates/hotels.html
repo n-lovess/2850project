@@ -5,16 +5,16 @@
 {% block content %}
 <div class="hotel-search-container">
     <div class="hotel-search-card">
-        <h2>Search Hotels</h2>
+       <h2>{{ t.search_hotels }}</h2>
 
         <form action="{{ url_for('hotel_search') }}" method="GET" class="booking-form" id="hotelSearchForm">
             <div class="form-group autocomplete-wrapper">
-                <label for="destination">Destination City</label>
+                <label for="destination">{{ t.destination_city }}</label>
                 <input
                     type="text"
                     id="destination"
                     name="destination"
-                    placeholder="Where to?"
+                    placeholder="{{ t.where_to }}"
                     value="{{ prefill.destination if prefill }}"
                     autocomplete="off"
                     required
@@ -24,22 +24,22 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="check_in">Check In</label>
+                   <label for="check_in">{{ t.check_in }}</label> 
                     <input type="date" id="check_in" name="check_in" value="{{ prefill.check_in if prefill else today }}" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="check_out">Check Out</label>
+                    <label for="check_out">{{ t.check_out }}</label>
                     <input type="date" id="check_out" name="check_out" value="{{ prefill.check_out if prefill }}" required>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="guests">Number of Guests</label>
+                <label for="guests">{{ t.number_of_guests }}</label>
                 <select id="guests" name="guests" required>
                     {% for i in range(1, 7) %}
                         <option value="{{ i }}" {% if prefill and prefill.guests == i|string %}selected{% endif %}>
-                            {{ i }} {% if i == 1 %}Guest{% else %}Guests{% endif %}
+                            {{ i }} {% if i == 1 %}{{ t.guest }}{% else %}{{ t.guests }}{% endif %}
                         </option>
                     {% endfor %}
                 </select>
@@ -49,7 +49,7 @@
                 <input type="hidden" name="flight_booking_id" value="{{ prefill.flight_booking_id }}">
             {% endif %}
 
-            <button type="submit" class="btn btn-primary btn-full">Search Hotels</button>
+            <button type="submit" class="btn btn-primary btn-full">{{ t.search_hotels }}</button>
         </form>
     </div>
 </div>
@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 suggestionsBox.innerHTML = "";
 
                 if (!data.data || data.data.length === 0) {
-                    suggestionsBox.innerHTML = `<div class="suggestion-item">No cities found</div>`;
+                    suggestionsBox.innerHTML = `<div class="suggestion-item">{{ t.no_cities_found }}</div>`;
                     return;
                 }
 
@@ -167,7 +167,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             } catch (error) {
                 console.error("City API error:", error);
-                suggestionsBox.innerHTML = `<div class="suggestion-item">Could not load cities</div>`;
+                suggestionsBox.innerHTML = `<div class="suggestion-item">{{ t.city_error }}</div>`;
             }
         }, 400);
     });
@@ -181,7 +181,7 @@ document.addEventListener("DOMContentLoaded", function () {
     form.addEventListener("submit", function (event) {
         if (!selectedValidCity) {
             event.preventDefault();
-            alert("Please select a city from the suggestions.");
+            alert("{{ t.select_city_alert }}");
             destination.focus();
         }
     });
