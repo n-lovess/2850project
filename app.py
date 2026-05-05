@@ -821,58 +821,7 @@ AIRPORTS = load_airports()
 
 SAMPLE_FLIGHTS = []
 
-SAMPLE_HOTELS = [
-    {
-        "id": 1,
-        "name": "AirGo Grand Hotel London",
-        "city": "London",
-        "country": "United Kingdom",
-        "stars": 4,
-        "price_per_night": 120,
-        "room_types": ["Standard", "Deluxe", "Suite"],
-        "description": "Modern city centre hotel with excellent transport links"
-    },
-    {
-        "id": 2,
-        "name": "Paris Riverside Hotel",
-        "city": "Paris",
-        "country": "France",
-        "stars": 4,
-        "price_per_night": 145,
-        "room_types": ["Standard", "Deluxe", "Suite"],
-        "description": "Overlooking the Seine, walking distance from major attractions"
-    },
-    {
-        "id": 3,
-        "name": "Dubai Marina Resort",
-        "city": "Dubai",
-        "country": "United Arab Emirates",
-        "stars": 5,
-        "price_per_night": 220,
-        "room_types": ["Deluxe", "Suite", "Penthouse"],
-        "description": "Luxury waterfront resort with private beach access"
-    },
-    {
-        "id": 4,
-        "name": "Midtown Business Hotel",
-        "city": "New York City",
-        "country": "United States",
-        "stars": 4,
-        "price_per_night": 195,
-        "room_types": ["Standard", "Business Class", "Executive Suite"],
-        "description": "Perfect for business travellers in the heart of Manhattan"
-    },
-    {
-        "id": 5,
-        "name": "AirGo Budget Stay London",
-        "city": "London",
-        "country": "United Kingdom",
-        "stars": 3,
-        "price_per_night": 65,
-        "room_types": ["Single", "Double", "Twin"],
-        "description": "Comfortable affordable accommodation near all airports"
-    }
-]
+SAMPLE_HOTELS = []
 
 AVIATIONSTACK_API_KEY = "ed2ca14cdb81ef3641f0dcd35b40829d"
 
@@ -891,7 +840,7 @@ def get_real_flights(dep_iata, arr_iata, flight_date):
     url = "http://api.aviationstack.com/v1/flights"
 
     params = {
-        "access_key": AVIATIONSTACK_API_KEY,
+        "access_key": "ed2ca14cdb81ef3641f0dcd35b40829d",
         "dep_iata": dep_iata,
         "arr_iata": arr_iata
     }
@@ -962,6 +911,110 @@ def get_real_flights(dep_iata, arr_iata, flight_date):
             break
 
     return flights
+
+RAPIDAPI_KEY = "635e61545emsh5e22e7e26ba6a77p1a3778jsn679f87fcf2f1"
+RAPIDAPI_HOST = "booking-com15.p.rapidapi.com"
+
+def get_real_hotels(destination, check_in, check_out, guests=1):
+    headers = {
+        "x-rapidapi-key": RAPIDAPI_KEY,
+        "x-rapidapi-host": RAPIDAPI_HOST
+    }
+
+    destination_url = "https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination"
+
+    destination_response = requests.get(
+        destination_url,
+        headers=headers,
+        params={"query": destination},
+        timeout=10
+    )
+    destination_data = destination_response.json()
+
+    print("DESTINATION STATUS:", destination_response.status_code)
+    print("DESTINATION RAW:", destination_response.text[:2000])
+    print("DESTINATION DATA:", destination_data)
+
+    destination_results = (
+        destination_data.get("data", [])
+        or destination_data.get("data", {}).get("destinations", [])
+        or destination_data.get("result", [])
+    )
+
+    if not destination_results:
+        return []
+
+    first_destination = destination_results[0]
+
+    dest_id = first_destination.get("dest_id") or first_destination.get("id")
+    search_type = first_destination.get("search_type") or first_destination.get("type") or "CITY"
+
+    hotel_url = "https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels"
+
+    hotel_response = requests.get(
+        hotel_url,
+        headers=headers,
+        params={
+            "dest_id": dest_id,
+            "search_type": search_type,
+            "arrival_date": check_in,
+            "departure_date": check_out,
+            "adults": guests,
+            "room_qty": 1,
+            "page_number": 1,
+            "currency_code": session.get("currency", "GBP")
+        },
+        timeout=10
+    )
+
+    hotel_data = hotel_response.json()
+
+    print("HOTEL STATUS:", hotel_response.status_code)
+    print("HOTEL RAW:", hotel_response.text[:3000])
+    print("HOTEL DATA:", hotel_data)
+
+    raw_hotels = (
+        hotel_data.get("data", {}).get("hotels")
+        or hotel_data.get("data", {}).get("result")
+        or hotel_data.get("data")
+        or []
+    )
+
+    hotels = []
+
+    for index, item in enumerate(raw_hotels[:20], start=1):
+        property_data = item.get("property", item)
+
+        price_data = (
+            property_data.get("priceBreakdown", {})
+            .get("grossPrice", {})
+        )
+
+        hotel_name = (
+            property_data.get("name")
+            or property_data.get("hotel_name")
+            or "Hotel"
+        )
+
+        price = (
+            price_data.get("value")
+            or property_data.get("price")
+            or property_data.get("min_total_price")
+            or 0
+        )
+
+        hotels.append({
+            "id": index,
+            "name": hotel_name,
+            "city": destination,
+            "country": "",
+            "stars": property_data.get("propertyClass", 4),
+            "price_per_night": round(float(price or 0), 2),
+            "room_types": ["Standard", "Deluxe", "Suite"],
+            "description": property_data.get("wishlistName") or property_data.get("reviewScoreWord") or "Hotel available for your trip"
+        })
+
+    return hotels
 
 CLASS_BENEFITS = {
     "Economy": {
@@ -1272,6 +1325,7 @@ def init_db():
             booking_id INTEGER NOT NULL,
             flight_order INTEGER NOT NULL,
             airline TEXT NOT NULL,
+            flight_number TEXT DEFAULT '',
             departure_airport TEXT NOT NULL,
             departure_city TEXT NOT NULL,
             departure_code TEXT NOT NULL,
@@ -1286,6 +1340,11 @@ def init_db():
             FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
         )
     """)
+
+    booking_flight_columns = [row["name"] for row in conn.execute("PRAGMA table_info(booking_flights)").fetchall()]
+
+    if "flight_number" not in booking_flight_columns:
+        conn.execute("ALTER TABLE booking_flights ADD COLUMN flight_number TEXT DEFAULT ''")
 
     flight_count = conn.execute("SELECT COUNT(*) as cnt FROM flights").fetchone()["cnt"]
     if flight_count == 0:
@@ -1355,9 +1414,12 @@ def find_flight_by_id(flight_id):
 
 
 def find_hotel_by_id(hotel_id):
-    for hotel in SAMPLE_HOTELS:
-        if hotel["id"] == hotel_id:
+    hotels = session.get("last_hotels", [])
+
+    for hotel in hotels:
+        if int(hotel["id"]) == int(hotel_id):
             return hotel
+
     return None
 
 
@@ -1887,50 +1949,87 @@ def airport_suggestions():
 def results():
     if request.method == "POST":
         trip_type = request.form.get("trip_type", "return")
+        passengers = request.form.get("passengers", "1")
+        ticket_class = request.form.get("ticket_class", "Any")
+
         departure = request.form.get("departure", "").strip()
         destination = request.form.get("destination", "").strip()
         depart_date = request.form.get("depart_date", "")
         return_date = request.form.get("return_date", "")
+
         multi_departures = request.form.getlist("multi_departure[]")
         multi_destinations = request.form.getlist("multi_destination[]")
         multi_depart_dates = request.form.getlist("multi_depart_date[]")
-        passengers = request.form.get("passengers", "1")
-        ticket_class = request.form.get("ticket_class", "Any")
 
-        departure_airport = parse_airport_selection(departure)
-        destination_airport = parse_airport_selection(destination)
+        if trip_type == "multi_city":
+            multi_flights = []
 
-        if departure_airport and destination_airport:
+            for i in range(len(multi_departures)):
+                if multi_departures[i].strip() and multi_destinations[i].strip() and multi_depart_dates[i].strip():
+                    multi_flights.append({
+                        "departure": multi_departures[i].strip(),
+                        "destination": multi_destinations[i].strip(),
+                        "depart_date": multi_depart_dates[i].strip()
+                    })
+
+            if not multi_flights:
+                flash("Please enter at least one multi-city flight.", "error")
+                return redirect(url_for("home"))
+
+            first_leg = multi_flights[0]
+
+            departure_airport = parse_airport_selection(first_leg["departure"])
+            destination_airport = parse_airport_selection(first_leg["destination"])
+
+            if not departure_airport or not destination_airport:
+                flash("Please select airports from the suggestions.", "error")
+                return redirect(url_for("home"))
+
+            matching_flights = get_real_flights(
+                departure_airport["code"],
+                destination_airport["code"],
+                first_leg["depart_date"]
+            )
+
+            search_data = {
+                "trip_type": trip_type,
+                "departure": first_leg["departure"],
+                "destination": first_leg["destination"],
+                "depart_date": first_leg["depart_date"],
+                "return_date": "",
+                "passengers": passengers,
+                "ticket_class": ticket_class,
+                "multi_flights": multi_flights
+            }
+
+        else:
+            departure_airport = parse_airport_selection(departure)
+            destination_airport = parse_airport_selection(destination)
+
+            if not departure_airport or not destination_airport:
+                flash("Please select airports from the suggestions.", "error")
+                return redirect(url_for("home"))
+
             matching_flights = get_real_flights(
                 departure_airport["code"],
                 destination_airport["code"],
                 depart_date
             )
-        else:
-            flash("Please select airports from the suggestions.", "error")
-            return redirect(url_for("home"))
+
+            search_data = {
+                "trip_type": trip_type,
+                "departure": departure,
+                "destination": destination,
+                "depart_date": depart_date,
+                "return_date": return_date,
+                "passengers": passengers,
+                "ticket_class": ticket_class,
+                "multi_flights": []
+            }
 
         if ticket_class != "Any":
             for flight in matching_flights:
                 flight["class"] = ticket_class
-
-        search_data = {
-            "trip_type": trip_type,
-            "departure": departure,
-            "destination": destination,
-            "depart_date": depart_date,
-            "return_date": return_date,
-            "passengers": passengers,
-            "ticket_class": ticket_class,
-            "multi_flights": [
-                {
-                    "departure": multi_departures[i],
-                    "destination": multi_destinations[i],
-                    "depart_date": multi_depart_dates[i]
-                }
-                for i in range(len(multi_departures))
-            ],
-        }
 
         session["search_data"] = search_data
         session["last_flights"] = matching_flights
@@ -1944,21 +2043,6 @@ def results():
             class_benefits=CLASS_BENEFITS,
             t=get_translation()
         )
-
-    search_data = session.get("search_data")
-    matching_flights = session.get("last_flights")
-
-    if not search_data or not matching_flights:
-        flash("Please search for flights first.", "error")
-        return redirect(url_for("home"))
-
-    return render_template(
-        "results.html",
-        flights=matching_flights,
-        search_data=search_data,
-        class_benefits=CLASS_BENEFITS,
-        t=get_translation()
-    )
 
 @app.route("/select-flight/<int:flight_id>")
 def select_flight(flight_id):
@@ -2588,16 +2672,17 @@ def payment():
 
             conn.execute("""
                 INSERT INTO booking_flights (
-                    booking_id, flight_order, airline,
+                    booking_id, flight_order, airline, flight_number,
                     departure_airport, departure_city, departure_code,
                     destination_airport, destination_city, destination_code,
                     flight_date, departure_time, arrival_time,
                     ticket_class, seat
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 booking_id,
                 flight_index + 1,
                 flight["airline"],
+                flight.get("flight_number", ""),
                 flight["from"],
                 flight["from_city"],
                 flight["from_code"],
@@ -2823,7 +2908,6 @@ def update_passenger_meal(passenger_id):
     flash("Meal updated for selected passenger.", "success")
     return redirect(url_for("bookings"))
 
-
 @app.route("/update-passenger-extras/<int:passenger_id>", methods=["POST"])
 def update_passenger_extras(passenger_id):
     if not session.get("user_id"):
@@ -2851,7 +2935,7 @@ def update_passenger_extras(passenger_id):
     conn = get_db_connection()
 
     passenger = conn.execute("""
-        SELECT passengers.*, bookings.price, bookings.points_earned
+        SELECT passengers.*, bookings.price
         FROM passengers
         JOIN bookings ON passengers.booking_id = bookings.id
         WHERE passengers.id = ? AND bookings.user_id = ?
@@ -2869,13 +2953,8 @@ def update_passenger_extras(passenger_id):
         + int(passenger["lounge_access"] or 0) * EXTRA_PRICES["lounge_access"]
     )
 
-    booking = conn.execute("""
-        SELECT * FROM bookings
-        WHERE id = ?
-    """, (passenger["booking_id"],)).fetchone()
-
-    new_booking_price = booking["price"] - old_extras_price + extras_price
-    new_points = booking["points_earned"]
+    new_booking_price = float(passenger["price"]) - old_extras_price + extras_price
+    new_points = calculate_points(new_booking_price)
 
     conn.execute("""
         UPDATE passengers
@@ -2911,7 +2990,6 @@ def update_passenger_extras(passenger_id):
     flash("Extras updated for selected passenger.", "success")
     return redirect(url_for("bookings"))
 
-
 @app.route("/upgrade-passenger/<int:passenger_id>", methods=["POST"])
 def upgrade_passenger(passenger_id):
     if not session.get("user_id"):
@@ -2923,7 +3001,7 @@ def upgrade_passenger(passenger_id):
     conn = get_db_connection()
 
     passenger = conn.execute("""
-        SELECT passengers.*, bookings.ticket_class, bookings.price
+        SELECT passengers.*, bookings.ticket_class AS booking_ticket_class, bookings.price
         FROM passengers
         JOIN bookings ON passengers.booking_id = bookings.id
         WHERE passengers.id = ? AND bookings.user_id = ?
@@ -2934,12 +3012,7 @@ def upgrade_passenger(passenger_id):
         flash("Passenger not found.", "error")
         return redirect(url_for("bookings"))
 
-    current_class = passenger["ticket_class"] or passenger["ticket_class"]
-    booking_current_class = passenger["ticket_class"]
-
-    if not current_class:
-        current_class = booking_current_class
-
+    current_class = passenger["ticket_class"] or passenger["booking_ticket_class"]
     valid_upgrades = get_available_upgrades(current_class)
 
     if new_class not in valid_upgrades:
@@ -2948,14 +3021,14 @@ def upgrade_passenger(passenger_id):
         return redirect(url_for("bookings"))
 
     upgrade_cost = valid_upgrades[new_class]
+    old_upgrade_cost = float(passenger["upgrade_cost"] or 0)
 
     booking = conn.execute("""
         SELECT * FROM bookings
         WHERE id = ?
     """, (passenger["booking_id"],)).fetchone()
 
-    old_upgrade_cost = float(passenger["upgrade_cost"] or 0)
-    new_booking_price = booking["price"] - old_upgrade_cost + upgrade_cost
+    new_booking_price = float(booking["price"] or 0) - old_upgrade_cost + upgrade_cost
     new_points = calculate_points(new_booking_price)
 
     conn.execute("""
@@ -2972,7 +3045,9 @@ def upgrade_passenger(passenger_id):
     conn.execute("""
         UPDATE bookings
         SET price = ?,
-            points_earned = ?
+            points_earned = ?,
+            change_request = '',
+            change_status = 'None'
         WHERE id = ?
     """, (
         new_booking_price,
@@ -3086,7 +3161,6 @@ def request_change(booking_id):
     flash("Flight change request submitted.", "success")
     return redirect(url_for("bookings"))
 
-
 @app.route("/boarding-pass/<int:booking_id>")
 def boarding_pass(booking_id):
     if not session.get("user_id"):
@@ -3117,32 +3191,44 @@ def boarding_pass(booking_id):
         ORDER BY id
     """, (booking_id,)).fetchall()
 
+    flight_segments = conn.execute("""
+        SELECT *
+        FROM booking_flights
+        WHERE booking_id = ?
+        ORDER BY flight_order
+    """, (booking_id,)).fetchall()
+
+    flight_segments = [dict(seg) for seg in flight_segments]
+
     conn.close()
 
     if not passengers:
         flash("There are no active passengers for this booking.", "error")
         return redirect(url_for("bookings"))
 
-    matched_flight = None
-
-    for flight in SAMPLE_FLIGHTS:
-        if (
-            flight["airline"] == booking["airline"]
-            and flight["from"] == booking["departure_airport"]
-            and flight["to"] == booking["destination_airport"]
-            and flight["departure_time"] == booking["departure_time"]
-            and flight["arrival_time"] == booking["arrival_time"]
-        ):
-            matched_flight = flight
-            break
-
-    flight_number = booking["booking_reference"]
+    if not flight_segments:
+        flight_segments = [{
+            "airline": booking["airline"],
+            "departure_airport": booking["departure_airport"],
+            "departure_city": booking["departure_city"],
+            "departure_code": booking["departure_code"],
+            "destination_airport": booking["destination_airport"],
+            "destination_city": booking["destination_city"],
+            "destination_code": booking["destination_code"],
+            "flight_date": booking["flight_date"],
+            "departure_time": booking["departure_time"],
+            "arrival_time": booking["arrival_time"],
+            "ticket_class": booking["ticket_class"],
+            "seat": booking["seat"],
+            "flight_order": 1
+        }]
 
     return render_template(
         "boarding_pass.html",
         booking=booking,
         passengers=passengers,
-        flight_number=flight_number,
+        flight_segments=flight_segments,
+        flight_number=booking["booking_reference"],
         display_status=booking["flight_status"],
         t=get_translation()
     )
@@ -3548,10 +3634,12 @@ def hotel_search():
 
     nights = 1
     if check_in and check_out:
-        from datetime import datetime
-        check_in_date = datetime.strptime(check_in, "%Y-%m-%d")
-        check_out_date = datetime.strptime(check_out, "%Y-%m-%d")
-        nights = max(1, (check_out_date - check_in_date).days)
+        try:
+            check_in_date = datetime.strptime(check_in, "%Y-%m-%d")
+            check_out_date = datetime.strptime(check_out, "%Y-%m-%d")
+            nights = max(1, (check_out_date - check_in_date).days)
+        except:
+            nights = 1
 
     search_params = {
         "destination": destination,
@@ -3561,10 +3649,13 @@ def hotel_search():
         "flight_booking_id": flight_booking_id
     }
 
-    results = [
-        hotel for hotel in SAMPLE_HOTELS
-        if destination.lower() in hotel.get("city", "").lower()
-    ]
+    try:
+        results = get_real_hotels(destination, check_in, check_out, guests)
+    except Exception as e:
+        print("Hotel API error:", e)
+        results = []
+
+    session["last_hotels"] = results
 
     return render_template(
         "hotel_results.html",
@@ -3746,6 +3837,10 @@ def terms():
 
 @app.route("/hotels/book/<int:hotel_id>", methods=["GET", "POST"])
 def hotel_book(hotel_id):
+    if not session.get("user_id"):
+        flash("Please log in first.", "error")
+        return redirect(url_for("login"))
+
     hotel = find_hotel_by_id(hotel_id)
 
     if not hotel:
@@ -3768,11 +3863,13 @@ def hotel_book(hotel_id):
     except:
         nights = 1
 
-    total_price = hotel["price_per_night"] * nights
+    base_price = hotel["price_per_night"] * nights
 
-    # 🚨 THIS IS THE IMPORTANT PART
     if request.method == "POST":
-        # here you would normally insert into DB
+        room_type = request.form.get("room_type", "Standard")
+
+        # get price from hidden input (JS updated value)
+        total_price = float(request.form.get("total_price", base_price))
 
         return redirect(url_for(
             "hotel_confirmation",
@@ -3781,6 +3878,7 @@ def hotel_book(hotel_id):
             check_in=booking_details["check_in"],
             check_out=booking_details["check_out"],
             guests=booking_details["guests"],
+            room_type=room_type,
             total_price=total_price
         ))
 
@@ -3789,7 +3887,8 @@ def hotel_book(hotel_id):
         hotel=hotel,
         booking_details=booking_details,
         nights=nights,
-        total_price=total_price
+        total_price=base_price,
+        selected_currency=session.get("currency", "GBP")
     )
 
 @app.route("/hotel-confirmation")
@@ -4107,6 +4206,7 @@ def admin_update_hotel_change_status(hotel_booking_id):
 
     flash("Hotel change status updated.", "success")
     return redirect(url_for("admin_dashboard"))
+
 
 if __name__ == "__main__":
     init_db()

@@ -43,7 +43,7 @@
             </p>
 
             {% if flights_to_show %}
-                <h2>{{ flights_to_show[0].from_city }} → {{ flights_to_show[0].to_city }}</h2>
+                <h2>{{ flights_to_show[0].departure_city }} → {{ flights_to_show[0].destination_city }}</h2>
             {% else %}
                 <h2>{{ booking.departure_city }} → {{ booking.destination_city }}</h2>
             {% endif %}
@@ -54,16 +54,28 @@
                 <h3>Flight{% if flights_to_show|length > 1 %}s{% endif %}</h3>
 
                 {% if flights_to_show %}
-                    {% for segment in flights_to_show %}
-                        <div class="manage-note">
-                            <h3>{{ segment.airline }}</h3>
-                            <p><strong>{{ t.route }}:</strong> {{ segment.from }} ({{ segment.from_code }}) → {{ segment.to }} ({{ segment.to_code }})</p>
-                            <p><strong>{{ t.date }}:</strong> {{ segment.flight_date }}</p>
-                            <p><strong>{{ t.time }}:</strong> {{ segment.departure_time }} - {{ segment.arrival_time }}</p>
-                            <p><strong>{{ t.flight_status }}:</strong> {{ booking.flight_status }}</p>
-                            <p><strong>{{ t.change_status }}:</strong> {{ booking.change_status }}</p>
-                        </div>
-                    {% endfor %}
+                {% for segment in flights_to_show %}
+                    <div class="manage-note">
+                        <h3>{{ segment.airline }}</h3>
+
+                        <p>
+                            <strong>{{ t.route }}:</strong>
+                            {{ segment.departure_airport }} ({{ segment.departure_code }})
+                            →
+                            {{ segment.destination_airport }} ({{ segment.destination_code }})
+                        </p>
+
+                        <p><strong>{{ t.date }}:</strong> {{ segment.flight_date }}</p>
+                        <p><strong>{{ t.time }}:</strong> {{ segment.departure_time }} - {{ segment.arrival_time }}</p>
+
+                        {% if segment.seat %}
+                            <p><strong>Seat:</strong> {{ segment.seat }}</p>
+                        {% endif %}
+
+                        <p><strong>{{ t.flight_status }}:</strong> {{ booking.flight_status }}</p>
+                        <p><strong>{{ t.change_status }}:</strong> {{ booking.change_status }}</p>
+                    </div>
+                {% endfor %}
                 {% else %}
                     <div class="manage-note">
                         <p><strong>{{ t.route }}:</strong> {{ booking.departure_airport }} → {{ booking.destination_airport }}</p>
@@ -224,27 +236,28 @@
                                         </form>
                                     </div>
 
-                                    <div class="manage-box">
-                                        <h3>Upgrade Cabin</h3>
+                    <div class="manage-box">
+                        <h3>Upgrade Cabin</h3>
 
-                                        {% set upgrades = passenger.available_upgrades if passenger.available_upgrades is defined else booking.available_upgrades %}
+                        {% set current_cabin = passenger.ticket_class if passenger.ticket_class else booking.ticket_class %}
+                        {% set upgrades = passenger.available_upgrades if passenger.available_upgrades is defined else booking.available_upgrades %}
 
-                                        {% if upgrades %}
-                                            <form action="{{ url_for('upgrade_passenger', passenger_id=passenger.id) }}" method="POST">
-                                                <label>Available Upgrades</label>
-                                                <select name="new_class">
-                                                    {% for upgrade_class, extra_cost in upgrades.items() %}
-                                                        <option value="{{ upgrade_class }}">
-                                                            {{ upgrade_class }} (+{{ selected_currency }} {{ convert_price(extra_cost, selected_currency) }})
-                                                        </option>
-                                                    {% endfor %}
-                                                </select>
-                                                <button class="btn secondary-btn">Upgrade This Passenger</button>
-                                            </form>
-                                        {% else %}
-                                            <p>No upgrades available for this passenger.</p>
-                                        {% endif %}
-                                    </div>
+                        {% if upgrades %}
+                            <form action="{{ url_for('upgrade_passenger', passenger_id=passenger.id) }}" method="POST">
+                                <label>Available Upgrades</label>
+                                <select name="new_class">
+                                    {% for upgrade_class, extra_cost in upgrades.items() %}
+                                        <option value="{{ upgrade_class }}">
+                                            {{ upgrade_class }} (+{{ selected_currency }} {{ convert_price(extra_cost, selected_currency) }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn secondary-btn">Upgrade This Passenger</button>
+                            </form>
+                        {% else %}
+                            <p>No upgrades available for this passenger.</p>
+                        {% endif %}
+                    </div>
                                 </div>
                             {% endif %}
                         </div>
@@ -307,7 +320,7 @@
                 <div class="hotel-booking-card">
                     <p><strong>Need a hotel for this trip?</strong></p>
                     <a href="{{ url_for('hotels', destination=hotel_destination, check_in=hotel_check_in, flight_booking_id=booking.id) }}" class="btn secondary-btn">
-                        Find hotels in {{ hotel_destination }}
+                        Find hotels in {{ hotel_destination if hotel_destination else booking.destination_city}}
                     </a>
                 </div>
             {% endif %}
