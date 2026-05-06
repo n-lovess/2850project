@@ -11,74 +11,87 @@
             {% set flight_index = loop.index0 %}
             {% set seat_for_this_flight = passenger_seats[flight_index].strip() if passenger_seats|length > flight_index else segment.seat %}
 
-            <div class="boarding-pass" style="margin-bottom: 40px;">
-                <div class="boarding-pass-header">
-                    <div>
-                        <h1>AirGo Boarding Pass</h1>
-                        <p class="subtitle">Electronic travel document</p>
-                    </div>
+            <div class="bp-ticket">
 
-                    <div class="boarding-badge">
-                        {% if passenger.status == "Cancelled" %}
-                            Cancelled
-                        {% elif passenger.status == "Changed" %}
-                            Changed
-                        {% else %}
-                            {{ booking.flight_status }}
-                        {% endif %}
+                <!-- left coloured header -->
+                <div class="bp-header">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="AirGo" style="height: 50px; filter: brightness(0) invert(1);">
+                    <div class="bp-airline">AirGo</div>
+                    <div class="bp-route-big">
+                        {{ segment.departure_code }}
+                        <span class="bp-plane-icon">✈</span>
+                        {{ segment.destination_code }}
+                    </div>
+                    <div class="bp-status-pill {% if passenger.status == 'Cancelled' %}bp-cancelled{% elif passenger.status == 'Changed' %}bp-changed{% else %}bp-scheduled{% endif %}">
+                        {% if passenger.status == "Cancelled" %}Cancelled
+                        {% elif passenger.status == "Changed" %}Changed
+                        {% else %}{{ booking.flight_status }}{% endif %}
                     </div>
                 </div>
 
-                <div class="boarding-grid">
-                    <div class="boarding-box">
-                        <span class="boarding-label">{{ t.passenger_label if t.passenger_label is defined else 'Passenger' }}</span>
-                        <span class="boarding-value">{{ passenger.first_name }} {{ passenger.last_name }}</span>
+                <!-- right details section -->
+                <div class="bp-details">
+                    <div class="bp-row">
+                        <div class="bp-field">
+                            <span class="bp-label">Passenger</span>
+                            <span class="bp-val">{{ passenger.first_name }} {{ passenger.last_name }}</span>
+                        </div>
+                        <div class="bp-field">
+                            <span class="bp-label">Class</span>
+                            <span class="bp-val">{{ passenger.ticket_class if passenger.ticket_class else segment.ticket_class }}</span>
+                        </div>
                     </div>
 
-                    <div class="boarding-box">
-                        <span class="boarding-label">From</span>
-                        <span class="boarding-value">{{ segment.departure_city }} ({{ segment.departure_code }})</span>
-                        <span class="small-text">{{ segment.departure_airport }}</span>
+                    <div class="bp-row">
+                        <div class="bp-field">
+                            <span class="bp-label">From</span>
+                            <span class="bp-val">{{ segment.departure_city }}</span>
+                            <span class="bp-small">{{ segment.departure_airport }}</span>
+                        </div>
+                        <div class="bp-field">
+                            <span class="bp-label">To</span>
+                            <span class="bp-val">{{ segment.destination_city }}</span>
+                            <span class="bp-small">{{ segment.destination_airport }}</span>
+                        </div>
                     </div>
 
-                    <div class="boarding-box">
-                        <span class="boarding-label">To</span>
-                        <span class="boarding-value">{{ segment.destination_city }} ({{ segment.destination_code }})</span>
-                        <span class="small-text">{{ segment.destination_airport }}</span>
+                    <div class="bp-row">
+                        <div class="bp-field">
+                            <span class="bp-label">Date</span>
+                            <span class="bp-val">{{ segment.flight_date }}</span>
+                        </div>
+                        <div class="bp-field">
+                            <span class="bp-label">Flight</span>
+                            <span class="bp-val">{{ segment.flight_number if segment.flight_number else "N/A" }}</span>
+                        </div>
+                        <div class="bp-field">
+                            <span class="bp-label">Seat</span>
+                            <span class="bp-val">{{ seat_for_this_flight }}</span>
+                        </div>
                     </div>
 
-                    <div class="boarding-box">
-                        <span class="boarding-label">{{ t.date if t.date is defined else 'Flight Date' }}</span>
-                        <span class="boarding-value">{{ segment.flight_date }}</span>
+                    <div class="bp-row">
+                        <div class="bp-field">
+                            <span class="bp-label">Departure</span>
+                            <span class="bp-val">{{ segment.departure_time }}</span>
+                        </div>
+                        <div class="bp-field">
+                            <span class="bp-label">Arrival</span>
+                            <span class="bp-val">{{ segment.arrival_time }}</span>
+                        </div>
                     </div>
 
-                    <div class="boarding-box">
-                        <span class="boarding-label">{{ t.departure if t.departure is defined else 'Departure' }}</span>
-                        <span class="boarding-value">{{ segment.departure_time }}</span>
-                    </div>
-
-                    <div class="boarding-box">
-                        <span class="boarding-label">{{ t.arrival if t.arrival is defined else 'Arrival' }}</span>
-                        <span class="boarding-value">{{ segment.arrival_time }}</span>
-                    </div>
-
-                    <div class="boarding-box">
-                        <span class="boarding-label">{{ t.class_label if t.class_label is defined else 'Class' }}</span>
-                        <span class="boarding-value">{{ passenger.ticket_class if passenger.ticket_class else segment.ticket_class }}</span>
-                    </div>
-
-                    <div class="boarding-box">
-                        <span class="boarding-label">{{ t.seat if t.seat is defined else 'Seat' }}</span>
-                        <span class="boarding-value">{{ seat_for_this_flight }}</span>
-                    </div>
-
-                    <div class="boarding-box">
-                        <span class="boarding-label">Flight</span>
-                        <span class="boarding-value">
-                            {{ segment.flight_number if segment.flight_number else "N/A" }}
-                        </span>
+                    <!-- fake barcode -->
+                    <div class="bp-barcode">
+                        <div class="bp-bars">
+                            {% for i in range(40) %}
+                                <div class="bp-bar" style="height: {{ [20, 30, 40, 25, 35, 45, 20, 38, 28, 42][i % 10] }}px;"></div>
+                            {% endfor %}
+                        </div>
+                        <div class="bp-barcode-text">{{ booking.booking_reference }}</div>
                     </div>
                 </div>
+
             </div>
         {% endfor %}
     {% endfor %}
