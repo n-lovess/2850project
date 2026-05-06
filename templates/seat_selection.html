@@ -147,8 +147,8 @@
 
 {% block scripts %}
 <script>
-    const passengerCount = {{ passenger_count }};
-    const flightCount = {{ selected_flights|length }};
+    const passengerCount = Number("{{ passenger_count }}");
+    const flightCount = Number("{{ selected_flights|length }}");
     const selectedSeatsByFlight = Array.from({ length: flightCount }, () => []);
     const seatButtons = document.querySelectorAll(".seat-tile:not(.unavailable)");
 
@@ -174,7 +174,7 @@
 
                 input.value = seatCode;
                 text.textContent = seatCode;
-                meta.textContent = ` — ${seatType} — {{ selected_currency }} ${seatPrice}`;
+                meta.textContent = " — " + seatType + " — " + "{{ selected_currency }}" + " " + seatPrice;
             }
         }
 
