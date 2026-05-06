@@ -1,33 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}Flight Tracker - AirGo{% endblock %}
+{% block title %}{{ t.flight_tracker_title }} - AirGo{% endblock %}
 
 {% block content %}
-<h1>Flight Tracker</h1>
-<p class="subtitle">Enter your booking reference to track your flight status.</p>
+<h1>{{ t.flight_tracker }}</h1>
+<p class="subtitle">{{ t.enter_reference }}</p>
 
 <div class="card" style="max-width: 500px; margin: 0 auto 30px;">
     <form method="POST">
-        <label for="booking_reference">Booking Reference</label>
-        <input type="text" id="booking_reference" name="booking_reference" placeholder="e.g. ABC12345" required>
-        <button type="submit" class="btn" style="margin-top: 10px;">Track Flight</button>
+        <label for="booking_reference">{{ t.booking_reference }}</label>
+        <input type="text" id="booking_reference" name="booking_reference" placeholder="{{ t.example_reference }}" required>
+        <button type="submit" class="btn" style="margin-top: 10px;">{{ t.track_flight }}</button>
     </form>
 </div>
 
 {% if not_found %}
     <div class="card" style="text-align: center;">
-        <p style="color: #c0392b; font-weight: bold;">No booking found with that reference. Please check and try again.</p>
+        <p style="color: #c0392b; font-weight: bold;">{{ t.no_booking_found }}</p>
     </div>
 {% endif %}
 
 {% if booking %}
     <div class="card">
         <h2>{{ booking.departure_city }} ({{ booking.departure_code }}) → {{ booking.destination_city }} ({{ booking.destination_code }})</h2>
-        <p><strong>Booking Reference:</strong> {{ booking.booking_reference }}</p>
-        <p><strong>Flight Date:</strong> {{ booking.flight_date }}</p>
-        <p><strong>Departure:</strong> {{ booking.departure_time }} &nbsp;|&nbsp; <strong>Arrival:</strong> {{ booking.arrival_time }}</p>
-        <p><strong>Airline:</strong> {{ booking.airline }}</p>
-        <p><strong>Class:</strong> {{ booking.ticket_class }}</p>
+        <p><strong>{{ t.booking_reference }}:</strong> {{ booking.booking_reference }}</p>
+        <p><strong>{{ t.flight_date }}:</strong> {{ booking.flight_date }}</p>
+        <p><strong>{{ t.departure }}:</strong> {{ booking.departure_time }} &nbsp;|&nbsp; <strong>{{ t.arrival }}:</strong> {{ booking.arrival_time }}</p>
+        <p><strong>{{ t.airline }}:</strong> {{ booking.airline }}</p>
+        <p><strong>{{ t.class_label }}:</strong> {{ booking.ticket_class }}</p>
 
         <!-- status timeline -->
         <div class="tracker-timeline">
@@ -51,11 +51,11 @@
 
             {% if status == "Cancelled" %}
                 <div class="tracker-cancelled">
-                    <span>✖ Flight Cancelled</span>
+                    <span>✖ {{ t.flight_cancelled }}</span>
                 </div>
             {% elif status == "Delayed" %}
                 <div class="tracker-delayed">
-                    <span>⚠ Flight Delayed — check back for updates</span>
+                    <span>⚠ {{ t.flight_delayed }}</span>
                 </div>
                 <div class="tracker-steps">
                     {% for stage in stages %}
@@ -88,7 +88,7 @@
             {% endif %}
 
             <div class="tracker-status-badge status-{{ booking.flight_status | lower }}">
-                Current Status: {{ booking.flight_status }}
+               {{ t.current_status }}:  {{ booking.flight_status }}
             </div>
         </div>
     </div>

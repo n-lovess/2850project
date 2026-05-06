@@ -290,6 +290,20 @@ translations = {
 "view_linked_flight": "View linked flight booking",
 "view_all_bookings": "View All My Bookings",
 "back_home": "Back to Home",
+
+"flight_tracker_title": "Flight Tracker",
+"flight_tracker": "Flight Tracker",
+"enter_reference": "Enter your booking reference to track your flight status.",
+"example_reference": "e.g. ABC12345",
+"track_flight": "Track Flight",
+"no_booking_found": "No booking found with that reference. Please check and try again.",
+"flight_date": "Flight Date",
+"departure": "Departure",
+"arrival": "Arrival",
+"airline": "Airline",
+"flight_cancelled": "Flight Cancelled",
+"flight_delayed": "Flight Delayed — check back for updates",
+"current_status": "Current Status",
     },
 
     "fr": {
@@ -603,6 +617,20 @@ translations = {
 "view_linked_flight": "Voir la réservation du vol",
 "view_all_bookings": "Voir toutes mes réservations",
 "back_home": "Retour à l'accueil",
+
+"flight_tracker_title": "Suivi de vol",
+"flight_tracker": "Suivi de vol",
+"enter_reference": "Entrez votre référence de réservation pour suivre votre vol.",
+"example_reference": "ex: ABC12345",
+"track_flight": "Suivre le vol",
+"no_booking_found": "Aucune réservation trouvée avec cette référence.",
+"flight_date": "Date du vol",
+"departure": "Départ",
+"arrival": "Arrivée",
+"airline": "Compagnie aérienne",
+"flight_cancelled": "Vol annulé",
+"flight_delayed": "Vol retardé — veuillez vérifier plus tard",
+"current_status": "Statut actuel",
 },
 
     "ar": {
@@ -916,6 +944,20 @@ translations = {
 "view_linked_flight": "عرض حجز الرحلة",
 "view_all_bookings": "عرض جميع حجوزاتي",
 "back_home": "العودة إلى الصفحة الرئيسية",
+
+"flight_tracker_title": "تتبع الرحلة",
+"flight_tracker": "تتبع الرحلة",
+"enter_reference": "أدخل رقم الحجز لتتبع حالة الرحلة.",
+"example_reference": "مثال: ABC12345",
+"track_flight": "تتبع الرحلة",
+"no_booking_found": "لم يتم العثور على حجز بهذا الرقم.",
+"flight_date": "تاريخ الرحلة",
+"departure": "المغادرة",
+"arrival": "الوصول",
+"airline": "شركة الطيران",
+"flight_cancelled": "تم إلغاء الرحلة",
+"flight_delayed": "الرحلة متأخرة — تحقق لاحقًا",
+"current_status": "الحالة الحالية",
 }
 }
 def get_translation():
