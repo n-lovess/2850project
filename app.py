@@ -1,4 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from dotenv import load_dotenv
+import os
+load_dotenv()
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date, datetime
 import random
@@ -1558,6 +1561,29 @@ def init_db():
         ])
 
     conn.execute("CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id)")
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS taxi_bookings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            booking_reference TEXT NOT NULL UNIQUE,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            alt_phone TEXT DEFAULT \'\',
+            email TEXT NOT NULL,
+            transfer_type TEXT NOT NULL,
+            pickup TEXT NOT NULL,
+            dropoff TEXT NOT NULL,
+            distance_km REAL NOT NULL,
+            duration TEXT NOT NULL,
+            price REAL NOT NULL,
+            booking_date TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT \'Confirmed\',
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -3073,10 +3099,17 @@ def bookings():
 
     tier_info = get_tier_info(total_points)
 
+    conn2 = get_db_connection()
+    taxi_bookings = conn2.execute("""
+        SELECT * FROM taxi_bookings WHERE user_id = ? ORDER BY id DESC
+    """, (session["user_id"],)).fetchall()
+    conn2.close()
+
     return render_template(
         "bookings.html",
         bookings=enriched_bookings,
         hotel_bookings=hotel_bookings,
+        taxi_bookings=taxi_bookings,
         total_points=total_points,
         common_meal_options=COMMON_MEAL_OPTIONS,
         tier_info=tier_info,
@@ -3581,6 +3614,273 @@ def track_flight():
             not_found = True
 
     return render_template("flight_tracker.html", booking=booking, not_found=not_found, t=get_translation())
+
+
+@app.route("/taxis", methods=["GET", "POST"])
+def taxis():
+    t = get_translation()
+    results = None
+    error = None
+    booking = None
+    ticket_class = None
+
+    booking_id = request.args.get("booking_id")
+    if booking_id:
+        conn = get_db_connection()
+        booking = conn.execute("SELECT * FROM bookings WHERE id = ?", (booking_id,)).fetchone()
+        conn.close()
+        if booking:
+            ticket_class = booking["ticket_class"]
+
+    if request.method == "POST":
+        pickup = request.form.get("pickup", "").strip()
+        dropoff = request.form.get("dropoff", "").strip()
+        transfer_type = request.form.get("transfer_type", "Standard Taxi")
+
+        if not pickup or not dropoff:
+            error = "Please enter both pickup and drop-off locations."
+        else:
+            import urllib.request as urllib_request
+            import json
+            import urllib.parse as urllib_parse
+
+            api_key = "AIzaSyAw4YXog-zTq9rtPkXdQcyf2fw3r9fe3fU"
+            url = f"https://maps.googleapis.com/maps/api/distancematrix/json?origins={urllib_parse.quote(pickup)}&destinations={urllib_parse.quote(dropoff)}&key={api_key}"
+
+            distance_km = None
+            duration_text = ""
+            try:
+                req = urllib_request.urlopen(url)
+                data = json.loads(req.read().decode())
+                if data["status"] == "OK" and data["rows"][0]["elements"][0]["status"] == "OK":
+                    distance_m = data["rows"][0]["elements"][0]["distance"]["value"]
+                    duration_text = data["rows"][0]["elements"][0]["duration"]["text"]
+                    distance_km = round(distance_m / 1000, 1)
+                else:
+                    error = f"Could not calculate distance. API status: {data['status']} - Element status: {data['rows'][0]['elements'][0]['status']}"
+            except Exception as e:
+                distance_km = 30.0
+                duration_text = "Estimated ~45 mins"
+
+            if distance_km:
+                base_per_km = 1.5
+                all_options = [
+                    {"name": "Standard Taxi", "desc": "Comfortable sedan, fits up to 4 passengers", "price": round(distance_km * base_per_km + 5, 2), "icon": "🚕"},
+                    {"name": "Minivan", "desc": "Spacious van, fits up to 7 passengers with luggage", "price": round(distance_km * base_per_km * 1.4 + 8, 2), "icon": "🚐"},
+                    {"name": "Luxury Car", "desc": "Premium Mercedes S-Class, private transfer for up to 4", "price": round(distance_km * base_per_km * 2.5 + 20, 2), "icon": "🚘"},
+                    {"name": "Meet & Greet + Luxury Transfer", "desc": "Met at the gate, fast track security, porter, Mercedes V-Class for up to 7", "price": round(distance_km * base_per_km * 3 + 60, 2), "icon": "⭐"}
+                ]
+                results = {"distance": distance_km, "duration": duration_text, "options": [o for o in all_options if o["name"] == transfer_type]}
+
+            if results:
+                session["taxi_results"] = results
+                session["taxi_pickup"] = pickup
+                session["taxi_dropoff"] = dropoff
+                session["taxi_class"] = transfer_type
+                return redirect(url_for("taxi_results"))
+
+    return render_template("taxis.html",
+        error=error,
+        booking=booking,
+        ticket_class=ticket_class,
+        t=t
+    )
+
+
+@app.route("/taxis/results")
+def taxi_results():
+    t = get_translation()
+    results = session.get("taxi_results")
+    pickup = session.get("taxi_pickup")
+    dropoff = session.get("taxi_dropoff")
+    ticket_class = session.get("taxi_class", "Economy")
+
+    if not results:
+        return redirect(url_for("taxis"))
+
+    return render_template("taxi_results.html",
+        results=results,
+        pickup=pickup,
+        dropoff=dropoff,
+        ticket_class=ticket_class,
+        logged_in=bool(session.get("user_id")),
+        t=t
+    )
+
+
+@app.route("/taxi/details", methods=["GET", "POST"])
+def taxi_details():
+    t = get_translation()
+    if not session.get("user_id"):
+        session["post_login_redirect"] = url_for("taxi_details")
+        flash("Please log in to book a transfer.", "error")
+        return redirect(url_for("login"))
+
+    results = session.get("taxi_results")
+    if not results or not results.get("options"):
+        return redirect(url_for("taxis"))
+
+    option = results["options"][0]
+
+    conn = get_db_connection()
+    existing_booking = conn.execute("""
+        SELECT * FROM bookings WHERE user_id = ? ORDER BY id DESC LIMIT 1
+    """, (session["user_id"],)).fetchone()
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],)).fetchone()
+    conn.close()
+
+    prefill = {}
+    if existing_booking:
+        prefill["first_name"] = existing_booking["first_name"]
+        prefill["last_name"] = existing_booking["last_name"]
+        prefill["phone"] = existing_booking["phone"]
+        prefill["email"] = existing_booking["email"]
+    elif user:
+        name_parts = user["full_name"].split(" ", 1)
+        prefill["first_name"] = name_parts[0]
+        prefill["last_name"] = name_parts[1] if len(name_parts) > 1 else ""
+        prefill["email"] = user["email"]
+        prefill["phone"] = ""
+
+    if request.method == "POST":
+        first_name = request.form.get("first_name", "").strip()
+        last_name = request.form.get("last_name", "").strip()
+        phone = request.form.get("phone", "").strip()
+        alt_phone = request.form.get("alt_phone", "").strip()
+        email = request.form.get("email", "").strip()
+
+        if not first_name or not last_name or not phone or not email:
+            flash("Please fill in all required fields.", "error")
+            return render_template("taxi_details.html", prefill=request.form, option=option, results=results, t=t)
+
+        session["taxi_passenger"] = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "phone": phone,
+            "alt_phone": alt_phone,
+            "email": email
+        }
+        return redirect(url_for("taxi_payment"))
+
+    return render_template("taxi_details.html", prefill=prefill, option=option, results=results, t=t)
+
+
+@app.route("/taxi/payment", methods=["GET", "POST"])
+def taxi_payment():
+    t = get_translation()
+    if not session.get("user_id"):
+        session["post_login_redirect"] = url_for("taxi_payment")
+        flash("Please log in to complete your booking.", "error")
+        return redirect(url_for("login"))
+
+    results = session.get("taxi_results")
+    passenger = session.get("taxi_passenger")
+    pickup = session.get("taxi_pickup")
+    dropoff = session.get("taxi_dropoff")
+
+    if not results or not passenger or not pickup or not dropoff:
+        return redirect(url_for("taxis"))
+
+    option = results["options"][0]
+    total_price = option["price"]
+
+    conn = get_db_connection()
+    available_points = conn.execute("""
+        SELECT COALESCE(SUM(points_earned), 0) AS total_points FROM bookings WHERE user_id = ?
+    """, (session["user_id"],)).fetchone()["total_points"]
+    conn.close()
+
+    max_discount = min(available_points // 100, int(total_price))
+    point_options = [{"points": d * 100, "discount": d} for d in range(5, max_discount + 1, 5)]
+
+    if request.method == "POST":
+        card_name = request.form.get("card_name", "").strip()
+        card_number = request.form.get("card_number", "").strip()
+        expiry_date = request.form.get("expiry_date", "").strip()
+        cvv = request.form.get("cvv", "").strip()
+        points_used = int(request.form.get("points_to_use", 0) or 0)
+
+        if not request.form.get("accept_terms"):
+            flash("You must accept the Terms & Conditions before completing your booking.", "error")
+            return redirect(url_for("taxi_payment"))
+
+        if not all([card_name, card_number, expiry_date, cvv]):
+            flash("Please fill in all payment fields.", "error")
+            return redirect(url_for("taxi_payment"))
+
+        if points_used > available_points:
+            flash("You do not have enough points for that discount.", "error")
+            return redirect(url_for("taxi_payment"))
+
+        points_discount = points_used / 100
+        final_price = max(0, total_price - points_discount)
+        booking_reference = generate_booking_reference()
+
+        conn = get_db_connection()
+        conn.execute("""
+            INSERT INTO taxi_bookings (
+                user_id, booking_reference, first_name, last_name, phone, alt_phone,
+                email, transfer_type, pickup, dropoff, distance_km, duration, price, booking_date, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            session["user_id"],
+            booking_reference,
+            passenger["first_name"],
+            passenger["last_name"],
+            passenger["phone"],
+            passenger.get("alt_phone", ""),
+            passenger["email"],
+            session.get("taxi_class", "Standard Taxi"),
+            pickup,
+            dropoff,
+            results["distance"],
+            results["duration"],
+            final_price,
+            date.today().isoformat(),
+            "Confirmed"
+        ))
+        conn.commit()
+        conn.close()
+
+        session["taxi_booking_reference"] = booking_reference
+        session["taxi_booking_price"] = final_price
+        return redirect(url_for("taxi_confirmation"))
+
+    return render_template("taxi_payment.html",
+        option=option,
+        pickup=pickup,
+        dropoff=dropoff,
+        passenger=passenger,
+        total_price=total_price,
+        available_points=available_points,
+        point_options=point_options,
+        results=results,
+        t=t
+    )
+
+
+@app.route("/taxi/confirmation")
+def taxi_confirmation():
+    t = get_translation()
+    booking_reference = session.get("taxi_booking_reference")
+    price = session.get("taxi_booking_price")
+    pickup = session.get("taxi_pickup")
+    dropoff = session.get("taxi_dropoff")
+    transfer_type = session.get("taxi_class")
+    passenger = session.get("taxi_passenger")
+
+    if not booking_reference:
+        return redirect(url_for("bookings"))
+
+    return render_template("taxi_confirmation.html",
+        booking_reference=booking_reference,
+        price=price,
+        pickup=pickup,
+        dropoff=dropoff,
+        transfer_type=transfer_type,
+        passenger=passenger,
+        t=t
+    )
 
 
 @app.route("/admin")

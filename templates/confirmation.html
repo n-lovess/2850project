@@ -101,6 +101,14 @@
 
     {% set hotel_destination = flights_to_show[0].to_city if flights_to_show else flight.to_city %}
 
+    <div class="hotel-suggestion" style="margin-bottom: 16px;">
+        <h3>🚕 Need a transfer from the airport?</h3>
+        <p>Book a taxi or luxury transfer to your destination.</p>
+        <a href="{{ url_for('taxis', booking_id=booking_id if booking_id else '') }}" class="btn secondary-btn">
+            Book Airport Transfer
+        </a>
+    </div>
+
     <div class="hotel-suggestion">
         <h3>Need a hotel in {{ hotel_destination }}?</h3>
         <p>Find available hotels matching your travel dates at your destination.</p>

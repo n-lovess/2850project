@@ -17,6 +17,7 @@
                 <div class="nav-links">
                     <a href="{{ url_for('hotels') }}">Hotels</a>
                     <a href="{{ url_for('track_flight') }}">Track Flight</a>
+                    <a href="{{ url_for('taxis') }}">Taxis</a>
                 <div class="language-switch">
     <a href="{{ url_for('set_language', lang='en') }}"
        class="{% if session.get('lang', 'en') == 'en' %}active{% endif %}">

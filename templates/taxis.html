@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Airport Transfers - AirGo{% endblock %}
+
+{% block content %}
+<h1>Airport Transfers</h1>
+<p class="subtitle">Book a transfer between an airport and your destination address.</p>
+
+
+
+<div class="card" style="max-width: 620px; margin: 0 auto 30px;">
+    <form method="POST" id="taxiForm">
+        
+        <input type="hidden" name="pickup" id="pickup-hidden">
+        <input type="hidden" name="dropoff" id="dropoff-hidden">
+
+        <!-- direction toggle -->
+        <div class="direction-toggle" style="margin-bottom: 20px;">
+            <button type="button" id="btn-airport-to-address" class="direction-btn active" onclick="setDirection('airport-to-address')">
+                ✈ Airport → Address
+            </button>
+            <button type="button" id="btn-address-to-airport" class="direction-btn" onclick="setDirection('address-to-airport')">
+                🏠 Address → Airport
+            </button>
+        </div>
+
+        <!-- airport section -->
+        <div id="airport-section">
+            <label id="airport-label">From — Airport</label>
+            <div class="autocomplete-wrapper" style="margin-bottom: 8px;">
+                <input type="text" id="airport-input"
+                    placeholder="e.g. Heathrow, LHR, London"
+                    value="{{ booking.departure_airport if booking else '' }}"
+                    autocomplete="off">
+                <div id="airport-suggestions" class="suggestions-box"></div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 12px 0;">
+            <span style="font-size: 22px; color: #4a69b8;">⇅</span>
+        </div>
+
+        <!-- address section -->
+        <div id="address-section">
+            <label id="address-label">To — Destination Address</label>
+            <div class="address-form">
+                <input type="text" id="addr1" placeholder="Address Line 1" style="margin-bottom: 8px;">
+                <input type="text" id="addr2" placeholder="Address Line 2 (optional)" style="margin-bottom: 8px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <input type="text" id="addr-city" placeholder="Town / City">
+                    <input type="text" id="addr-postcode" placeholder="Postcode">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <input type="text" id="addr-county" placeholder="County">
+                    <input type="text" id="addr-country" placeholder="Country" value="United Kingdom">
+                </div>
+            </div>
+        </div>
+
+        <label style="margin-top: 16px; display: block; font-weight: 600;">Transfer Type</label>
+        <select name="transfer_type" style="margin-bottom: 14px; font-size: 15px; padding: 10px 14px; width: 100%; border-radius: 10px; border: 1px solid #c7d7f5;">
+            <option value="Standard Taxi">🚕 Standard Taxi — up to 4 passengers</option>
+            <option value="Minivan">🚐 Minivan — up to 7 passengers</option>
+            <option value="Luxury Car">🚘 Luxury Car — Mercedes S-Class, up to 4</option>
+            <option value="Meet & Greet + Luxury Transfer">⭐ Meet &amp; Greet + Luxury Transfer</option>
+        </select>
+
+        <button type="submit" class="btn" style="margin-top: 14px;" onclick="prepareSubmit()">Search Transfers</button>
+    </form>
+</div>
+
+{% if error %}
+    <div class="flash-message flash-error">{{ error }}</div>
+{% endif %}
+
+{% if results %}
+    <div class="card" style="margin-bottom: 20px; background: #eef4ff;">
+        <p style="margin: 0;">
+            <strong>Distance:</strong> {{ results.distance }} km &nbsp;|&nbsp;
+            <strong>Estimated Travel Time:</strong> {{ results.duration }}
+        </p>
+    </div>
+
+    {% if results.options %}
+        {% for option in results.options %}
+            <div class="card" style="border: 1px solid #e5edf8; margin-bottom: 20px;">
+                <div style="display: flex; align-items: flex-start; gap: 16px;">
+                    <div style="font-size: 36px; min-width: 50px; text-align: center;">{{ option.icon }}</div>
+                    <div style="flex: 1;">
+                        <h3 style="margin-bottom: 6px;">{{ option.name }}</h3>
+                        <p style="margin: 0; color: #555; font-size: 14px;">{{ option.desc }}</p>
+                    </div>
+                    <div style="text-align: right; min-width: 100px;">
+                        <div style="font-size: 13px; color: #666;">Estimated</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #1f3c88;">£{{ option.price }}</div>
+                    </div>
+                </div>
+
+                {% if option.name == "Airside Meet & Greet + Luxury Transfer" %}
+                    <div class="manage-note" style="margin-top: 12px;">
+                        <strong>⭐ Premium Service includes:</strong><br>
+                        • Representative meets you at the gate as you step off the plane<br>
+                        • Fast track through security and immigration<br>
+                        • Porter handles your luggage<br>
+                        • Luxury Mercedes/BMW waiting at the terminal exit
+                    </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('taxis') }}" style="margin-top: 14px;">
+                    <input type="hidden" name="pickup" value="{{ request.form.get('pickup') }}">
+                    <input type="hidden" name="dropoff" value="{{ request.form.get('dropoff') }}">
+                    
+                    <button type="submit" class="btn">Book {{ option.name }}</button>
+                </form>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <p>No transfer options available for your ticket class.</p>
+        </div>
+    {% endif %}
+{% endif %}
+
+<style>
+.direction-toggle {
+    display: flex;
+    gap: 10px;
+}
+
+.direction-btn {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #ccd5e0;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    font-weight: 600;
+    color: #555;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.direction-btn.active {
+    border-color: #1f3c88;
+    background: #eef4ff;
+    color: #1f3c88;
+}
+
+.suggestions-box {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #d7def0;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    margin-top: 4px;
+    z-index: 9999;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.autocomplete-wrapper {
+    position: relative;
+}
+
+.suggestion-item {
+    padding: 12px 14px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #1f2937;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background: #eef4ff; }
+
+.suggestion-subtext {
+    display: block;
+    font-size: 13px;
+    font-weight: 400;
+    color: #6b7280;
+    margin-top: 3px;
+}
+
+.address-form input {
+    width: 100%;
+    box-sizing: border-box;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentDirection = "airport-to-address";
+
+function setDirection(dir) {
+    currentDirection = dir;
+    const airportLabel = document.getElementById("airport-label");
+    const addressLabel = document.getElementById("address-label");
+    const btn1 = document.getElementById("btn-airport-to-address");
+    const btn2 = document.getElementById("btn-address-to-airport");
+
+    if (dir === "airport-to-address") {
+        airportLabel.textContent = "From — Airport";
+        addressLabel.textContent = "To — Destination Address";
+        btn1.classList.add("active");
+        btn2.classList.remove("active");
+    } else {
+        airportLabel.textContent = "To — Airport";
+        addressLabel.textContent = "From — Your Address";
+        btn1.classList.remove("active");
+        btn2.classList.add("active");
+    }
+}
+
+function prepareSubmit() {
+    const airport = document.getElementById("airport-input").value.trim();
+    const addr1 = document.getElementById("addr1").value.trim();
+    const addr2 = document.getElementById("addr2").value.trim();
+    const city = document.getElementById("addr-city").value.trim();
+    const postcode = document.getElementById("addr-postcode").value.trim();
+    const county = document.getElementById("addr-county").value.trim();
+    const country = document.getElementById("addr-country").value.trim();
+
+    const addressParts = [addr1, addr2, city, postcode, county, country].filter(Boolean);
+    const fullAddress = addressParts.join(", ");
+
+    if (currentDirection === "airport-to-address") {
+        document.getElementById("pickup-hidden").value = airport;
+        document.getElementById("dropoff-hidden").value = fullAddress;
+    } else {
+        document.getElementById("pickup-hidden").value = fullAddress;
+        document.getElementById("dropoff-hidden").value = airport;
+    }
+}
+
+// airport autocomplete using existing airgo endpoint
+const airportInput = document.getElementById("airport-input");
+const airportBox = document.getElementById("airport-suggestions");
+let timer;
+
+airportInput.addEventListener("input", async function () {
+    clearTimeout(timer);
+    airportBox.innerHTML = "";
+    const val = airportInput.value.trim();
+    if (val.length < 1) return;
+
+    timer = setTimeout(async function () {
+        try {
+            const res = await fetch("/airport-suggestions?q=" + encodeURIComponent(val));
+            const data = await res.json();
+
+            if (data && data.length > 0) {
+                data.forEach(function(airport) {
+                    const item = document.createElement("div");
+                    item.className = "suggestion-item";
+                    item.innerHTML = "<strong>" + airport.city + "</strong> - " + airport.name + "<span class='suggestion-subtext'>" + airport.code + "</span>";
+                    item.addEventListener("click", function () {
+                        airportInput.value = airport.city + " (" + airport.code + ")";
+                        airportBox.innerHTML = "";
+                    });
+                    airportBox.appendChild(item);
+                });
+            }
+        } catch (e) {}
+    }, 300);
+});
+
+document.addEventListener("click", function (e) {
+    if (!e.target.closest(".autocomplete-wrapper")) {
+        airportBox.innerHTML = "";
+    }
+});
+</script>
+{% endblock %}

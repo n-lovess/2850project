@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Payment - AirGo{% endblock %}
+{% block content %}
+
+<h1>Payment</h1>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="card">
+    <h2>Fare Details</h2>
+    <p><strong>Transfer type:</strong> {{ option.icon }} {{ option.name }}</p>
+    <p><strong>From:</strong> {{ pickup }}</p>
+    <p><strong>To:</strong> {{ dropoff }}</p>
+    <p><strong>Distance:</strong> {{ results.distance }} km &nbsp;|&nbsp; <strong>Travel time:</strong> {{ results.duration }}</p>
+    <hr>
+    <p id="points-discount-row" style="display:none;"><strong>Points discount:</strong> -£<span id="points-discount-amount">0.00</span></p>
+    <p style="font-size: 18px; font-weight: bold;">Total: £<span id="display-total">{{ "%.2f"|format(total_price) }}</span></p>
+</div>
+
+{% if point_options %}
+<div class="card">
+    <h2>Use Points</h2>
+    <p><strong>Your points:</strong> {{ available_points }}</p>
+    <p class="small-text">100 points = £1 discount</p>
+    <div class="points-options">
+        {% for option_p in point_options %}
+            <label class="points-option">
+                <input type="radio" name="points_to_use_display" value="{{ option_p.points }}"
+                    data-discount="{{ "%.2f"|format(option_p.discount) }}"
+                    data-total="{{ "%.2f"|format(total_price) }}">
+                <strong>£{{ "%.2f"|format(option_p.discount) }} off</strong>
+                <span>{{ option_p.points }} points</span>
+            </label>
+        {% endfor %}
+        <label class="points-option">
+            <input type="radio" name="points_to_use_display" value="0"
+                data-discount="0" data-total="{{ "%.2f"|format(total_price) }}" checked>
+            <strong>No points</strong>
+            <span>Pay full price</span>
+        </label>
+    </div>
+</div>
+{% endif %}
+
+<div class="card summary-card">
+    <h2>Booking Summary</h2>
+    <div class="manage-note">
+        <strong>{{ option.icon }} {{ option.name }}</strong><br>
+        <strong>Passenger:</strong> {{ passenger.first_name }} {{ passenger.last_name }}<br>
+        <strong>Email:</strong> {{ passenger.email }}<br>
+        <strong>Phone:</strong> {{ passenger.phone }}<br>
+        {% if passenger.alt_phone %}
+            <strong>Alt Phone:</strong> {{ passenger.alt_phone }}<br>
+        {% endif %}
+        <strong>Pickup:</strong> {{ pickup }}<br>
+        <strong>Dropoff:</strong> {{ dropoff }}
+    </div>
+</div>
+
+<div class="card">
+    <form method="POST" class="form-grid">
+        <input type="hidden" id="hidden-points-to-use" name="points_to_use" value="0">
+
+        <div class="full-width">
+            <label for="card_name">Name on Card</label>
+            <input type="text" id="card_name" name="card_name" required>
+        </div>
+        <div class="full-width">
+            <label for="card_number">Card Number</label>
+            <input type="text" id="card_number" name="card_number" maxlength="16" required>
+        </div>
+        <div>
+            <label for="expiry_date">Expiry Date</label>
+            <input type="month" id="expiry_date" name="expiry_date" required>
+        </div>
+        <div>
+            <label for="cvv">CVV</label>
+            <input type="password" id="cvv" name="cvv" maxlength="4" required>
+        </div>
+
+        <div class="full-width terms-box">
+            <label class="checkbox-row">
+                <input type="checkbox" id="accept_terms" name="accept_terms" required>
+                <span>I agree to the <a href="{{ url_for('terms') }}" class="terms-link">Terms & Conditions</a></span>
+            </label>
+            <label class="checkbox-row">
+                <input type="checkbox" name="subscribe_offers">
+                <span>I would like to receive offers and updates</span>
+            </label>
+        </div>
+
+        <div class="full-width">
+            <button type="submit" class="btn">Complete Booking</button>
+        </div>
+    </form>
+</div>
+
+<style>
+.terms-link { text-decoration: underline; font-weight: 600; cursor: pointer; }
+</style>
+
+<script>
+document.querySelectorAll('input[name="points_to_use_display"]').forEach(function(radio) {
+    radio.addEventListener("change", function() {
+        var total = parseFloat(this.dataset.total);
+        var discount = parseFloat(this.dataset.discount);
+        var newTotal = Math.max(0, total - discount);
+        document.getElementById("display-total").textContent = newTotal.toFixed(2);
+        document.getElementById("points-discount-amount").textContent = discount.toFixed(2);
+        document.getElementById("hidden-points-to-use").value = this.value;
+        document.getElementById("points-discount-row").style.display = discount > 0 ? "block" : "none";
+    });
+});
+</script>
+
+{% endblock %}
