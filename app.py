@@ -823,7 +823,7 @@ SAMPLE_FLIGHTS = []
 
 SAMPLE_HOTELS = []
 
-AVIATIONSTACK_API_KEY = "ed2ca14cdb81ef3641f0dcd35b40829d"
+AVIATIONSTACK_API_KEY = "270c5da71fd3c113cdafb2e0556f5864"
 
 def get_airport_from_code(code):
     code = (code or "").upper()
@@ -840,7 +840,7 @@ def get_real_flights(dep_iata, arr_iata, flight_date):
     url = "http://api.aviationstack.com/v1/flights"
 
     params = {
-        "access_key": "ed2ca14cdb81ef3641f0dcd35b40829d",
+        "access_key": "270c5da71fd3c113cdafb2e0556f5864",
         "dep_iata": dep_iata,
         "arr_iata": arr_iata
     }
