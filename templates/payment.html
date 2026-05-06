@@ -145,22 +145,50 @@
 
         <div class="full-width">
             <label for="card_name">{{ t.name_on_card if t.name_on_card is defined else 'Name on Card' }}</label>
-            <input type="text" id="card_name" name="card_name" required>
+           <input 
+             type="text" 
+             id="card_name" 
+             name="card_name"
+             pattern="[A-Za-zÀ-ÿ\s]+"
+             title="Name must contain letters only"
+             required
+>
         </div>
 
         <div class="full-width">
             <label for="card_number">{{ t.card_number if t.card_number is defined else 'Card Number' }}</label>
-            <input type="text" id="card_number" name="card_number" maxlength="16" required>
+            <input 
+              type="text"
+              id="card_number"
+              name="card_number"
+              inputmode="numeric"
+              pattern="[0-9]{16}"
+              maxlength="16"
+              minlength="16"
+              placeholder="1234123412341234"
+              title="Card number must contain 16 digits"
+              required
+            >
         </div>
 
         <div>
             <label for="expiry_date">{{ t.expiry_date if t.expiry_date is defined else 'Expiry Date' }}</label>
-            <input type="month" id="expiry_date" name="expiry_date" required>
+            <input type="month" id="expiry_date" name="expiry_date" required min="{{ current_month }}">
         </div>
 
         <div>
             <label for="cvv">{{ t.cvv if t.cvv is defined else 'CVV' }}</label>
-            <input type="password" id="cvv" name="cvv" maxlength="4" required>
+            <input 
+               type="password"
+               id="cvv"
+               name="cvv"
+               inputmode="numeric"
+               pattern="[0-9]{3,4}"
+               maxlength="4"
+               minlength="3"
+               title="CVV must contain 3 or 4 digits"
+                required
+            >
         </div>
 
         <div class="full-width terms-box">

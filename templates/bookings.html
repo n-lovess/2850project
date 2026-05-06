@@ -39,7 +39,7 @@
 
         <div class="card manage-card">
             <p class="booking-meta">
-                {{ booking.airline }} • {{ booking.ticket_class }} • {{ booking.trip_type|replace("_", " ")|title }}
+                {{ booking.airline }} • {{ booking.ticket_class|tv }}• {{ booking.trip_type|replace("_", " ")|title }}
             </p>
 
             {% if flights_to_show %}
@@ -51,7 +51,7 @@
             <p><strong>{{ t.booking_reference }}:</strong> {{ booking.booking_reference }}</p>
 
             <div class="manage-box">
-                <h3>Flight{% if flights_to_show|length > 1 %}s{% endif %}</h3>
+                <h3>{{ t.flights if flights_to_show|length > 1 else t.flight }}</h3>
 
                 {% if flights_to_show %}
                 {% for segment in flights_to_show %}
@@ -69,11 +69,11 @@
                         <p><strong>{{ t.time }}:</strong> {{ segment.departure_time }} - {{ segment.arrival_time }}</p>
 
                         {% if segment.seat %}
-                            <p><strong>Seat:</strong> {{ segment.seat }}</p>
+                            <p><strong>{{ t.seat or 'Seat' }}:</strong> {{ segment.seat }}</p>
                         {% endif %}
 
-                        <p><strong>{{ t.flight_status }}:</strong> {{ booking.flight_status }}</p>
-                        <p><strong>{{ t.change_status }}:</strong> {{ booking.change_status }}</p>
+                        <p><strong>{{ t.flight_status }}:</strong> {{ booking.flight_status|tv }}</p>
+                        <p><strong>{{ t.change_status }}:</strong> {{ booking.change_status|tv }}</p>
                     </div>
                 {% endfor %}
                 {% else %}
@@ -91,7 +91,7 @@
             <p><strong>{{ t.total_paid }}:</strong> {{ selected_currency }} {{ convert_price(booking.price, selected_currency) }}</p>
 
             {% if booking.refund_status != "None" %}
-                <p><strong>Refund Status:</strong> {{ booking.refund_status }}</p>
+                <p><strong>{{ t.refund_status or 'Refund Status' }}:</strong> {{ booking.refund_status|tv }}</p>
             {% endif %}
 
             {% if booking.change_request %}
@@ -129,7 +129,7 @@
                         <label>{{ t.reason }}</label>
                         <input type="text" name="request_reason">
 
-                        <label>Select passengers</label>
+                       <label>{{ t.select_passengers or 'Select passengers' }}</label>
                         <div class="passenger-change-list">
                             {% for passenger in booking.passengers %}
                                 {% if passenger.status != "Cancelled" %}
@@ -156,7 +156,7 @@
             {% endif %}
 
             <div class="manage-box">
-                <h3>Passengers</h3>
+                <h3>{{ t.passengers or 'Passengers' }}</h3>
 
                 {% if booking.passengers %}
                     {% for passenger in booking.passengers %}
@@ -171,31 +171,31 @@
                                 {% endif %}
 
                                 {% if passenger.status == "Cancelled" %}
-                                    <span class="danger-text">Cancelled</span>
+                                    <span class="danger-text">{{ "Cancelled"|tv }}</span>
                                 {% elif passenger.status == "Changed" %}
-                                    <span class="success-text">Changed</span>
+                                    <span class="success-text">{{ "Changed"|tv }}</span>
                                 {% else %}
-                                    <span class="success-text">Active</span>
+                                    <span class="success-text">{{ "Active"|tv }}</span>
                                 {% endif %}
                             </p>
 
-                            <p><strong>Meal:</strong> {{ passenger.meal_choice }}</p>
+                            <p><strong>{{ t.meal }}:</strong> {{ passenger.meal_choice|tv }}</p>
                             <p>
-                                <strong>Baggage:</strong>
+                                <strong>{{ t.baggage }}:</strong>
                                 {% if "1 checked bag" in passenger.baggage %}
                                     1 checked bag (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})
                                 {% elif "2 checked bags" in passenger.baggage %}
                                     2 checked bags (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})
                                 {% else %}
-                                    No checked bag
+                                    {{ "No checked bag"|tv }}
                                 {% endif %}
                             </p>
-                            <p><strong>Cabin:</strong> {{ passenger.ticket_class if passenger.ticket_class else booking.ticket_class }}</p>
+                            <p><strong>{{ t.cabin }}:</strong> {{ (passenger.ticket_class if passenger.ticket_class else booking.ticket_class)|tv }}</p>
 
                             {% if passenger.status != "Cancelled" and booking.refund_status != "Pending" %}
                                 <div class="manage-grid">
                                     <div class="manage-box">
-                                        <h3>Update Meal</h3>
+                                        <h3>{{ t.update_meal or 'Update Meal' }}</h3>
                                         <form action="{{ url_for('update_passenger_meal', passenger_id=passenger.id) }}" method="POST">
                                             <label>Meal</label>
                                             <select name="meal_choice">
@@ -203,19 +203,19 @@
                                                     <option value="{{ meal }}" {% if passenger.meal_choice == meal %}selected{% endif %}>{{ meal }}</option>
                                                 {% endfor %}
                                             </select>
-                                            <button class="btn">Save Meal</button>
+                                            <button class="btn">{{ t.save_meal or 'Save Meal' }}</button>
                                         </form>
                                     </div>
 
                                     <div class="manage-box">
-                                        <h3>Travel Extras</h3>
+                                        <h3>{{ t.travel_extras or 'Travel Extras' }}</h3>
                                         <form action="{{ url_for('update_passenger_extras', passenger_id=passenger.id) }}" method="POST">
                                             <label>Baggage</label>
                                             <select name="baggage">
                                                 <option value="No checked bag" {% if passenger.baggage == "No checked bag" %}selected{% endif %}>No checked bag</option>
-                                                <option value="1 checked bag" {% if passenger.baggage == "1 checked bag" %}selected{% endif %}>1 checked bag (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})</option>
-                                                <option value="2 checked bags" {% if passenger.baggage == "2 checked bags" %}selected{% endif %}>2 checked bags (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})</option>
-                                            </select>
+                                                <option value="1 checked bag" {% if passenger.baggage == "1 checked bag" %}selected{% endif %}>{{ "1 checked bag"|tv }} (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})</option>
+                                                <option value="2 checked bags" {% if passenger.baggage == "2 checked bags" %}selected{% endif %}></option>
+                                            </select>{{ "2 checked bags"|tv }} (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})
 
                                             <label>
                                                 <input type="checkbox" name="priority_boarding" {% if passenger.priority_boarding %}checked{% endif %}>
@@ -232,19 +232,19 @@
                                                 Lounge Access (+{{ selected_currency }} {{ convert_price(extra_prices.lounge_access, selected_currency) }})
                                             </label>
 
-                                            <button class="btn">Save Extras</button>
+                                            <button class="btn">{{ t.save_extras or 'Save Extras' }}</button>
                                         </form>
                                     </div>
 
                     <div class="manage-box">
-                        <h3>Upgrade Cabin</h3>
+                        <h3>{{ t.upgrade_cabin or 'Upgrade Cabin' }}</h3>
 
                         {% set current_cabin = passenger.ticket_class if passenger.ticket_class else booking.ticket_class %}
                         {% set upgrades = passenger.available_upgrades if passenger.available_upgrades is defined else booking.available_upgrades %}
 
                         {% if upgrades %}
                             <form action="{{ url_for('upgrade_passenger', passenger_id=passenger.id) }}" method="POST">
-                                <label>Available Upgrades</label>
+                                <label>{{ t.available_upgrades or 'Available Upgrades' }}</label>
                                 <select name="new_class">
                                     {% for upgrade_class, extra_cost in upgrades.items() %}
                                         <option value="{{ upgrade_class }}">
@@ -252,7 +252,9 @@
                                         </option>
                                     {% endfor %}
                                 </select>
-                                <button class="btn secondary-btn">Upgrade This Passenger</button>
+                               <button class="btn secondary-btn">
+                                {{ t.upgrade_passenger or 'Upgrade This Passenger' }}
+                               </button>
                             </form>
                         {% else %}
                             <p>No upgrades available for this passenger.</p>
@@ -268,24 +270,24 @@
             </div>
 
             <div class="manage-box">
-                <h3>Request Refund</h3>
+                <h3>{{ t.request_refund or 'Request Refund' }}</h3>
 
                 {% if booking.refund_status == "Pending" %}
-                    <p><strong>Refund Status:</strong> Pending</p>
-                    <p><strong>Requested Refund:</strong> Pending</p>
-                    <p><strong>Passengers Requested:</strong> {{ booking.refund_passengers }}</p>
-                {% elif booking.refund_status == "Approved" %}
-                    <p><strong>Refund Status:</strong> Approved</p>
-                    <p><strong>Refund Amount:</strong> {{ selected_currency }} {{ convert_price(booking.refund_amount, selected_currency) }}</p>
-                    <p><strong>Remaining Passengers:</strong> {{ booking.passenger_count }}</p>
-                {% elif booking.refund_status == "Rejected" %}
-                    <p><strong>Refund Status:</strong> Rejected</p>
-                    <p><strong>Refund Amount:</strong> {{ selected_currency }} 0</p>
-                {% endif %}
+    <p><strong>{{ t.refund_status }}:</strong> {{ booking.refund_status|tv }}</p>
+    <p><strong>{{ t.requested_refund }}:</strong> {{ "Pending"|tv }}</p>
+    <p><strong>{{ t.passengers_requested }}:</strong> {{ booking.refund_passengers }}</p>
+{% elif booking.refund_status == "Approved" %}
+    <p><strong>{{ t.refund_status }}:</strong> {{ booking.refund_status|tv }}</p>
+    <p><strong>{{ t.refund_amount }}:</strong> {{ selected_currency }} {{ convert_price(booking.refund_amount, selected_currency) }}</p>
+    <p><strong>{{ t.remaining_passengers }}:</strong> {{ booking.passenger_count }}</p>
+{% elif booking.refund_status == "Rejected" %}
+    <p><strong>{{ t.refund_status }}:</strong> {{ booking.refund_status|tv }}</p>
+    <p><strong>{{ t.refund_amount }}:</strong> {{ selected_currency }} 0</p>
+{% endif %}
 
                 {% if booking.refund_status != "Pending" and booking.flight_status != "Cancelled" and booking.passenger_count > 0 %}
                     <form action="{{ url_for('request_refund', booking_id=booking.id) }}" method="POST" class="manage-form">
-                        <label>Reason for refund</label>
+                        <label>{{ t.reason_refund or 'Reason for refund' }}</label>
                         <select name="refund_reason" required>
                             <option value="Change of plans">Change of plans</option>
                             <option value="Found cheaper flight">Found cheaper flight</option>
@@ -333,16 +335,16 @@
 
     {% for hotel_booking in hotel_bookings %}
         <div class="card manage-card">
-            <p class="booking-meta">Hotel Booking • {{ hotel_booking.room_type }}</p>
+            <p class="booking-meta">{{ t.hotel_booking }} • {{ hotel_booking.room_type }}</p>
 
             <h2>{{ hotel_booking.hotel_name }}, {{ hotel_booking.hotel_city }}</h2>
 
-            <p><strong>Booking Reference:</strong> {{ hotel_booking.booking_reference }}</p>
-            <p><strong>Check In:</strong> {{ hotel_booking.check_in }}</p>
-            <p><strong>Check Out:</strong> {{ hotel_booking.check_out }}</p>
-            <p><strong>Guests:</strong> {{ hotel_booking.guests }}</p>
-            <p><strong>Total Paid:</strong> {{ selected_currency }} {{ convert_price(hotel_booking.total_price, selected_currency) }}</p>
-            <p><strong>Status:</strong> {{ hotel_booking.status }}</p>
+            <p><strong>{{ t.booking_reference }}:</strong> {{ hotel_booking.booking_reference }}</p>
+            <p><strong>{{ t.check_in }}:</strong> {{ hotel_booking.check_in }}</p>
+            <p><strong>{{ t.check_out }}:</strong> {{ hotel_booking.check_out }}</p>
+            <p><strong>{{ t.guests }}:</strong>{{ hotel_booking.guests }}</p>
+            <p><strong>{{ t.total_paid }}:</strong> {{ selected_currency }} {{ convert_price(hotel_booking.total_price, selected_currency) }}</p>
+            <p><strong>{{ t.status }}:</strong> {{ hotel_booking.status }}</p>
 
             {% if hotel_booking.refund_status and hotel_booking.refund_status != "None" %}
                 <p><strong>Refund Status:</strong> {{ hotel_booking.refund_status }}</p>
@@ -359,7 +361,7 @@
             <div class="points-badge">Hotel</div>
 
             <div class="manage-box">
-                <h3>Request Hotel Refund</h3>
+               <h3>{{ t.request_hotel_refund }}</h3>
 
                 {% if hotel_booking.refund_status == "Pending" %}
                     <p><strong>Refund request pending.</strong></p>
@@ -371,26 +373,26 @@
 
                 {% if hotel_booking.refund_status != "Pending" and hotel_booking.status != "CANCELLED" %}
                     <form action="{{ url_for('request_hotel_refund', hotel_booking_id=hotel_booking.id) }}" method="POST" class="manage-form">
-                        <label>Reason for refund</label>
+                       <label>{{ t.reason_refund }}</label>
                         <select name="refund_reason" required>
-                            <option value="Change of plans">Change of plans</option>
-                            <option value="Found cheaper hotel">Found cheaper hotel</option>
-                            <option value="Medical reason">Medical reason</option>
-                            <option value="Travel disruption">Travel disruption</option>
-                            <option value="Flight cancelled or changed">Flight cancelled or changed</option>
-                            <option value="Other">Other</option>
+                            <option value="Change of plans">{{ t.change_plans }}</option>
+                            <option value="Found cheaper hotel">{{ t.found_cheaper_hotel }}</option>
+                            <option value="Medical reason">{{ t.medical_reason }}</option>
+                            <option value="Travel disruption">{{ t.travel_disruption }}</option>
+                            <option value="Flight cancelled or changed">{{ t.flight_cancelled_changed }}</option>
+                            <option value="Other">{{ t.other }}</option>
                         </select>
 
-                        <label>Other reason</label>
-                        <input type="text" name="refund_custom_reason" placeholder="Only fill this in if you selected Other">
+                        <label>{{ t.other_reason }}</label>
+                        <input type="text" name="refund_custom_reason" placeholder="{{ t.only_fill_other }}">
 
-                        <button type="submit" class="btn danger-btn">Submit Hotel Refund Request</button>
+                        <button type="submit" class="btn danger-btn">{{ t.submit_hotel_refund_request }}</button>
                     </form>
                 {% endif %}
             </div>
 
             <div class="manage-box">
-                <h3>Request Date Change</h3>
+                <h3>{{ t.request_date_change }}</h3>
 
                 {% if hotel_booking.status == "CANCELLED" %}
                     <div class="manage-note">
@@ -411,16 +413,16 @@
                     {% endif %}
 
                     <form action="{{ url_for('request_hotel_change', hotel_booking_id=hotel_booking.id) }}" method="POST" class="manage-form">
-                        <label>New Check In</label>
+                        <label>{{ t.new_check_in }}</label>
                         <input type="date" name="requested_check_in" min="{{ today }}" required>
 
-                        <label>New Check Out</label>
+                       <label>{{ t.new_check_out }}</label>
                         <input type="date" name="requested_check_out" min="{{ today }}" required>
 
-                        <label>Reason</label>
+                       <label>{{ t.reason }}</label>
                         <input type="text" name="change_reason">
 
-                        <button type="submit" class="btn secondary-btn">Submit Change Request</button>
+                        <button type="submit" class="btn secondary-btn">{{ t.submit_change_request }}</button>
                     </form>
                 {% endif %}
             </div>
