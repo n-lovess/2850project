@@ -53,7 +53,13 @@
 
                 <div class="flight-center-info compact-center-info">
                     <div class="flight-line">✈</div>
-                    <div class="flight-stops">{{ flight.stops or t.direct_flight }}</div>
+                    <div class="flight-stops">
+                         {% if flight.stops == "Direct flight" or not flight.stops %}
+                         {{ t.direct_flight }}
+                         {% else %}
+                         {{ flight.stops }}
+                        {% endif %}
+                    </div>
                 </div>
 
                 <div class="time-block">
@@ -80,8 +86,8 @@
         <div class="card">
             <div class="empty-state">
                 <div class="empty-state-icon">✈</div>
-                <div class="empty-state-title">No flights found</div>
-                <div class="empty-state-text">We couldn't find any flights matching your search. Try adjusting your search criteria or check back later.</div>
+                <div class="empty-state-title">{{ t.no_flights_found }}</div>
+                <div class="empty-state-text">{{ t.no_flights_text }}</div>
             </div>
         </div>
     {% endif %}

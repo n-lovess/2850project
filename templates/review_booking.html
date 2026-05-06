@@ -10,7 +10,7 @@
 
 <div class="card summary-card">
     <h2>
-        Flight{% if selected_flights|length > 1 %}s{% endif %}
+    {{ t.flight if t.flight is defined else 'Flight' }}{% if selected_flights|length > 1 %}s{% endif %}
     </h2>
 
     {% for flight in selected_flights %}
@@ -18,7 +18,7 @@
         <div class="manage-note" style="margin-bottom: 16px;">
             <h3>{{ flight.from }} → {{ flight.to }}</h3>
 
-            <p><strong>Date:</strong>
+            <p><strong>{{ t.date if t.date is defined else 'Date' }}:</strong>
                 {% if flight_index == 0 %}
                     {{ search_data.depart_date }}
                 {% else %}
@@ -26,80 +26,75 @@
                 {% endif %}
             </p>
 
-            <p><strong>Time:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
-            <p><strong>Class:</strong> {{ flight.class }}</p>
+            <p><strong>{{ t.time if t.time is defined else 'Time' }}:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
+            <p><strong>{{ t.class_label if t.class_label is defined else 'Class' }}:</strong> {{ flight.class }}</p>
 
-            <p><strong>Seats:</strong>
+            <p><strong>{{ t.seats if t.seats is defined else 'Seats' }}:</strong>
                 {% if selected_seats_by_flight %}
                     {{ selected_seats_by_flight[flight_index] | join(', ') }}
                 {% else %}
-                    None
+                    {{ t.none if t.none is defined else 'None' }}
                 {% endif %}
             </p>
 
-            <p><strong>Fare:</strong>
-                {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }} per passenger
+            <p><strong>{{ t.fare if t.fare is defined else 'Fare' }}:</strong>
+                {{ selected_currency }} {{ convert_price(flight.price, selected_currency) }} {{ t.per_passenger if t.per_passenger is defined else 'per passenger' }}
             </p>
         </div>
     {% endfor %}
 </div>
 
 <div class="card">
-    <h2>{{ t.selected_extras or 'Selected Extras' }}</h2>
+    <h2>{{ t.selected_extras if t.selected_extras is defined else 'Selected Extras' }}</h2>
 
     <p>
-        <strong>{{ t.travel_insurance or 'Travel Insurance' }}:</strong>
-        {{ extras.get('insurance', 'No Travel Insurance') }}
+        <strong>{{ t.travel_insurance if t.travel_insurance is defined else 'Travel Insurance' }}:</strong>
+        {{ extras.get('insurance', t.no_insurance if t.no_insurance is defined else 'No Travel Insurance') }}
     </p>
 
     {% for item in extras.get('passenger_extras', []) %}
         <div class="manage-note">
-            <strong>Passenger {{ item.passenger_number }}:</strong>
+            <strong>{{ t.passenger_label if t.passenger_label is defined else 'Passenger' }} {{ item.passenger_number }}:</strong>
             {{ item.first_name }} {{ item.last_name }}<br>
 
-            <strong>Baggage:</strong>
-            {% if "1 checked bag" in item.baggage %}
-                1 checked bag (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})
-            {% elif "2 checked bags" in item.baggage %}
-                2 checked bags (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})
-            {% else %}
-                {{ item.baggage }}
-            {% endif %}
+            <strong>{{ t.baggage if t.baggage is defined else 'Baggage' }}:</strong>
+            {{ item.baggage }}
             <br>
-            <strong>Meal:</strong> {{ item.meal_choice }}
+
+            <strong>{{ t.meal if t.meal is defined else 'Meal' }}:</strong>
+            {{ item.meal_choice }}
         </div>
     {% endfor %}
 </div>
 
 <div class="card">
-    <h2>Passenger Details</h2>
+    <h2>{{ t.passenger_details_title if t.passenger_details_title is defined else 'Passenger Details' }}</h2>
 
     {% for passenger in passengers %}
         <div class="manage-note">
-            <strong>Passenger {{ loop.index }}:</strong>
-            {{ passenger.first_name }} {{ passenger.last_name }}<br>
+          <strong>{{ t.passenger_label if t.passenger_label is defined else 'Passenger' }} {{ loop.index }}:</strong>
+{{ passenger.first_name }} {{ passenger.last_name }}<br>
 
-            <strong>Email:</strong> {{ passenger.email }}<br>
-            <strong>Passport:</strong> {{ passenger.passport_number }}<br>
+<strong>{{ t.email_label if t.email_label is defined else 'Email' }}:</strong> {{ passenger.email }}<br>
+<strong>{{ t.passport_number if t.passport_number is defined else 'Passport Number' }}:</strong> {{ passenger.passport_number }}<br>
 
-            <strong>Seats:</strong>
-            {% set passenger_index = loop.index0 %}
+<strong>{{ t.selected_seats if t.selected_seats is defined else 'Seats' }}:</strong>
+{% set passenger_index = loop.index0 %}
 
-            <strong>Seats:</strong>
-            {% if selected_seats_by_flight %}
+{% if selected_seats_by_flight %}
                 {% for flight_seats in selected_seats_by_flight %}
                     {{ flight_seats[passenger_index] }}{% if not loop.last %}, {% endif %}
                 {% endfor %}
             {% else %}
-                None
+                {{ t.none if t.none is defined else 'None' }}
             {% endif %}
         </div>
     {% endfor %}
 </div>
 
 <div class="button-row">
-    <a href="{{ url_for('seat_selection') }}" class="btn secondary-btn">← Back</a>
-    <a href="{{ url_for('payment') }}" class="btn">Continue to Payment →</a>
+    <a href="{{ url_for('seat_selection') }}" class="btn secondary-btn">← {{ t.back if t.back is defined else 'Back' }}</a>
+    <a href="{{ url_for('payment') }}" class="btn">{{ t.continue_payment if t.continue_payment is defined else 'Continue to Payment' }} →</a>
 </div>
 
 {% endblock %}

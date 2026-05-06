@@ -304,6 +304,9 @@ translations = {
 "flight_cancelled": "Flight Cancelled",
 "flight_delayed": "Flight Delayed — check back for updates",
 "current_status": "Current Status",
+
+"no_flights_found": "No flights found",
+"no_flights_text": "We couldn't find any flights matching your search. Try adjusting your search criteria or check back later.",
     },
 
     "fr": {
@@ -631,6 +634,9 @@ translations = {
 "flight_cancelled": "Vol annulé",
 "flight_delayed": "Vol retardé — veuillez vérifier plus tard",
 "current_status": "Statut actuel",
+
+"no_flights_found": "Aucun vol trouvé",
+"no_flights_text": "Nous n'avons trouvé aucun vol correspondant à votre recherche. Essayez de modifier vos critères.",
 },
 
     "ar": {
@@ -958,6 +964,9 @@ translations = {
 "flight_cancelled": "تم إلغاء الرحلة",
 "flight_delayed": "الرحلة متأخرة — تحقق لاحقًا",
 "current_status": "الحالة الحالية",
+
+"no_flights_found": "لم يتم العثور على رحلات",
+"no_flights_text": "لم نجد أي رحلات تطابق بحثك. حاول تعديل معايير البحث.",
 }
 }
 def get_translation():
@@ -2228,6 +2237,21 @@ def results():
             class_benefits=CLASS_BENEFITS,
             t=get_translation()
         )
+
+    search_data = session.get("search_data")
+    matching_flights = session.get("last_flights")
+
+    if not search_data or matching_flights is None:
+        flash("Please search for flights first.", "error")
+        return redirect(url_for("home"))
+
+    return render_template(
+        "results.html",
+        flights=matching_flights,
+        search_data=search_data,
+        class_benefits=CLASS_BENEFITS,
+        t=get_translation()
+    )
 
 @app.route("/select-flight/<int:flight_id>")
 def select_flight(flight_id):
