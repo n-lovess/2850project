@@ -845,6 +845,21 @@ translations = {
 "Flight cancelled or changed": "Vol annulé ou modifié",
 "Other": "Autre",
 "CONFIRMED": "CONFIRMÉ",
+
+"Scheduled": "Programmé",
+"None": "Aucun",
+"one_way": "Aller simple",
+"return": "Aller-retour",
+"multi_city": "Multi-destinations",
+"Passenger": "Passager",
+"Passenger 1": "Passager 1",
+"Blue": "Bleu",
+"Silver": "Argent",
+"Gold": "Or",
+"Platinum": "Platine",
+"Standard": "Standard",
+"Deluxe": "Deluxe",
+"Suite": "Suite",
 },
 
     "ar": {
@@ -1279,6 +1294,21 @@ translations = {
 "Flight cancelled or changed": "تم إلغاء الرحلة أو تغييرها",
 "Other": "أخرى",
 "CONFIRMED": "مؤكد",
+
+"Scheduled": "مجدولة",
+"None": "لا يوجد",
+"one_way": "ذهاب فقط",
+"return": "ذهاب وعودة",
+"multi_city": "مدن متعددة",
+"Passenger": "المسافر",
+"Passenger 1": "المسافر 1",
+"Blue": "الأزرق",
+"Silver": "الفضي",
+"Gold": "الذهبي",
+"Platinum": "البلاتيني",
+"Standard": "عادية",
+"Deluxe": "فاخرة",
+"Suite": "جناح",
 }
 }
 def get_translation():
@@ -1288,10 +1318,33 @@ def get_translation():
     base.update(selected)
     return base
 def translate_value(value):
-    t = get_translation()
+    lang = session.get("lang", "en")
+    t = translations.get(lang, translations["en"])
+
     if value is None:
         return ""
-    return t.get(str(value), str(value))
+
+    value = str(value).strip()
+    lower_value = value.lower()
+
+    # BAGGAGE - catches English/French/Arabic saved values
+    if "no checked bag" in lower_value or "aucun bagage" in lower_value or "بدون أمتعة" in value:
+        return t.get("No checked bag", value)
+
+    if "2 checked bags" in lower_value or "2 bagages" in lower_value or "حقيبتان" in value:
+        return t.get("2 checked bags", value)
+
+    if "1 checked bag" in lower_value or "1 bagage" in lower_value or "حقيبة مسجلة واحدة" in value:
+        return t.get("1 checked bag", value)
+
+    # REFUND REASON - catches English/French/Arabic saved values
+    if "change of plans" in lower_value or "changement de plans" in lower_value or "تغيير الخطط" in value:
+        return t.get("Change of plans", value)
+
+    if value in t:
+        return t[value]
+
+    return value
 
 app.jinja_env.filters["tv"] = translate_value
 
