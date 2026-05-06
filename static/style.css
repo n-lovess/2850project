@@ -2033,3 +2033,47 @@ form .btn {
     overflow-y: auto !important;
     margin-bottom: 40px !important;
 }
+
+[dir="rtl"] .hotel-booking-container,
+[dir="rtl"] .hotel-results-list,
+[dir="rtl"] .hotel-search-container,
+[dir="rtl"] .confirmation-card {
+    direction: rtl;
+    text-align: right;
+}
+
+[dir="rtl"] .confirmation-card {
+    text-align: center;
+}
+
+[dir="rtl"] .confirmation-card div[style*="text-align: left"] {
+    text-align: right !important;
+}
+
+[dir="rtl"] .hotel-info-label,
+[dir="rtl"] strong {
+    display: inline-block;
+    margin-left: 4px;
+    margin-right: 0;
+}
+
+
+html[dir="rtl"],
+body[dir="rtl"] {
+    overflow-x: hidden;
+}
+
+[dir="rtl"] .hero-section {
+    margin-left: 0 !important;
+    margin-right: calc(-50vw + 50%) !important;
+}
+
+[dir="rtl"] .form-grid {
+    direction: rtl;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] select,
+[dir="rtl"] textarea {
+    text-align: right;
+}
