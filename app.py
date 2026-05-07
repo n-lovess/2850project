@@ -589,6 +589,7 @@ translations = {
 "transfer_booked": "Transfer Booked!",
 "transfer_confirmed": "Your airport transfer has been confirmed.",
 "view_bookings": "View My Bookings",
+"taxis": "Taxis",
     },
 
     "fr": {
@@ -1216,6 +1217,7 @@ translations = {
 "transfer_booked": "Transfert réservé !",
 "transfer_confirmed": "Votre transfert aéroport a été confirmé.",
 "view_bookings": "Voir mes réservations",
+"taxis": "Taxis",
 },
 
     "ar": {
@@ -1843,6 +1845,7 @@ translations = {
 "transfer_booked": "تم حجز النقل!",
 "transfer_confirmed": "تم تأكيد خدمة النقل من المطار.",
 "view_bookings": "عرض حجوزاتي",
+"taxis": "سيارات الأجرة",
 }
 }
 
