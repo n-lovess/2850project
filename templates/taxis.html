@@ -8,6 +8,8 @@
 
 
 
+<div id="js-error" class="flash-message flash-error" style="display: none; max-width: 620px; margin: 0 auto 12px;"></div>
+
 <div class="card" style="max-width: 620px; margin: 0 auto 30px;">
     <form method="POST" id="taxiForm">
         
@@ -65,7 +67,7 @@
             <option value="Meet & Greet + Luxury Transfer">⭐ Meet &amp; Greet + Luxury Transfer</option>
         </select>
 
-        <button type="submit" class="btn" style="margin-top: 14px;" onclick="prepareSubmit()">Search Transfers</button>
+        <button type="submit" class="btn" style="margin-top: 14px;" onclick="return prepareSubmit()">Search Transfers</button>
     </form>
 </div>
 
@@ -223,6 +225,25 @@ function prepareSubmit() {
     const postcode = document.getElementById("addr-postcode").value.trim();
     const county = document.getElementById("addr-county").value.trim();
     const country = document.getElementById("addr-country").value.trim();
+
+    const errorBox = document.getElementById("js-error");
+    errorBox.style.display = "none";
+    errorBox.textContent = "";
+
+    const missing = [];
+    if (!airport) missing.push("Airport");
+    if (!addr1) missing.push("Address Line 1");
+    if (!city) missing.push("Town / City");
+    if (!postcode) missing.push("Postcode");
+    if (!country) missing.push("Country");
+
+    if (missing.length > 0) {
+        errorBox.textContent = "Please fill in the following required fields: " + missing.join(", ");
+        errorBox.style.display = "block";
+        errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+        event.preventDefault();
+        return false;
+    }
 
     const addressParts = [addr1, addr2, city, postcode, county, country].filter(Boolean);
     const fullAddress = addressParts.join(", ");

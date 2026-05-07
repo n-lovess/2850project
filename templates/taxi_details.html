@@ -13,52 +13,50 @@
     {% endif %}
 {% endwith %}
 
-<div class="card" style="margin-bottom: 20px; background: #eef4ff;">
-    <p style="margin: 0;">
-        <strong>{{ option.icon }} {{ option.name }}</strong> &nbsp;|&nbsp;
-        {{ results.pickup if results.pickup else '' }} → {{ results.dropoff if results.dropoff else '' }} &nbsp;|&nbsp;
-        <strong>£{{ option.price }}</strong>
+<div class="card" style="background: #eef4ff; border: 1px solid #c7d7f5; margin-bottom: 24px;">
+    <p style="margin: 0; font-size: 15px;">
+        <strong>{{ option.icon }} {{ option.name }}</strong>
+        {% if results.get('pickup') %}&nbsp;|&nbsp; {{ results.pickup }} → {{ results.dropoff }}{% endif %}
+        &nbsp;|&nbsp; <strong style="color: #1f3c88;">£{{ option.price }}</strong>
     </p>
 </div>
 
-<div class="card" style="max-width: 620px;">
-    <form method="POST">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-            <div>
-                <label>First Name <span style="color:red;">*</span></label>
-                <input type="text" name="first_name" value="{{ prefill.get('first_name', '') }}" required style="width:100%; box-sizing:border-box;">
-            </div>
-            <div>
-                <label>Last Name <span style="color:red;">*</span></label>
-                <input type="text" name="last_name" value="{{ prefill.get('last_name', '') }}" required style="width:100%; box-sizing:border-box;">
-            </div>
+<div class="card">
+    <form method="POST" class="form-grid">
+
+        <div>
+            <label>First Name <span style="color: #c93b2c;">*</span></label>
+            <input type="text" name="first_name" value="{{ prefill.get('first_name', '') }}" required>
+        </div>
+        <div>
+            <label>Last Name <span style="color: #c93b2c;">*</span></label>
+            <input type="text" name="last_name" value="{{ prefill.get('last_name', '') }}" required>
         </div>
 
-        <div style="margin-bottom: 14px;">
-            <label>Email Address <span style="color:red;">*</span></label>
-            <input type="email" name="email" value="{{ prefill.get('email', '') }}" required style="width:100%; box-sizing:border-box;">
+        <div class="full-width">
+            <label>Email Address <span style="color: #c93b2c;">*</span></label>
+            <input type="email" name="email" value="{{ prefill.get('email', '') }}" required>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-            <div>
-                <label>Mobile Number <span style="color:red;">*</span></label>
-                <input type="tel" name="phone" value="{{ prefill.get('phone', '') }}" required style="width:100%; box-sizing:border-box;">
-            </div>
-            <div>
-                <label>Alternative Number <span style="color:#888; font-size:13px;">(optional)</span></label>
-                <input type="tel" name="alt_phone" value="{{ prefill.get('alt_phone', '') }}" style="width:100%; box-sizing:border-box;">
-            </div>
+        <div>
+            <label>Mobile Number <span style="color: #c93b2c;">*</span></label>
+            <input type="tel" name="phone" value="{{ prefill.get('phone', '') }}" required>
+        </div>
+        <div>
+            <label>Alternative Number <span style="color: var(--text-secondary); font-weight: 400; font-size: 13px;">(optional)</span></label>
+            <input type="tel" name="alt_phone" value="{{ prefill.get('alt_phone', '') }}">
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <label>Special Requests <span style="color:#888; font-size:13px;">(optional)</span></label>
-            <textarea name="special_requests" rows="3" placeholder="e.g. wheelchair access, child seat, extra luggage..." style="width:100%; box-sizing:border-box; resize:vertical;"></textarea>
+        <div class="full-width">
+            <label>Special Requests <span style="color: var(--text-secondary); font-weight: 400; font-size: 13px;">(optional)</span></label>
+            <textarea name="special_requests" rows="3" placeholder="e.g. wheelchair access, child seat, extra luggage..."></textarea>
         </div>
 
-        <div style="display: flex; gap: 12px;">
+        <div class="full-width" style="display: flex; gap: 12px; margin-top: 4px;">
             <a href="{{ url_for('taxi_results') }}" class="btn secondary-btn">← Back</a>
             <button type="submit" class="btn">Continue to Payment →</button>
         </div>
+
     </form>
 </div>
 
