@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Payment - AirGo{% endblock %}
+{% block title %}{{ t.payment }} - AirGo{% endblock %}
 {% block content %}
 
-<h1>Payment</h1>
+<h1>{{ t.payment }}</h1>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -13,155 +13,343 @@
 {% endwith %}
 
 <div class="card">
-    <h2>Fare Details</h2>
-    <p><strong>Transfer:</strong> {{ option.icon }} {{ option.name }}</p>
-    <p><strong>From:</strong> {{ pickup }}</p>
-    <p><strong>To:</strong> {{ dropoff }}</p>
-    <p><strong>Distance:</strong> {{ results.distance }} km &nbsp;|&nbsp; <strong>Travel Time:</strong> {{ results.duration }}</p>
+    <h2>{{ t.fare_details }}</h2>
+
+    <p><strong>{{ t.transfer_type }}:</strong> {{ option.icon }} {{ option.name|tv }}</p>
+
+    <p><strong>{{ t.from_label }}:</strong> {{ pickup }}</p>
+
+    <p><strong>{{ t.dropoff }}:</strong> {{ dropoff }}</p>
+
+    <p>
+        <strong>{{ t.distance }}:</strong> {{ results.distance }} km
+        &nbsp;|&nbsp;
+        <strong>{{ t.travel_time }}:</strong> {{ results.duration }}
+    </p>
 
     <p id="points-discount-row" style="display: none;">
-        <strong>Points discount:</strong> -£<span id="points-discount-amount">0.00</span>
+        <strong>{{ t.points_discount }}:</strong>
+        -£<span id="points-discount-amount">0.00</span>
     </p>
+
     <hr>
+
     <p style="font-size: 18px; font-weight: bold;">
-        Total: £<span id="display-total">{{ "%.2f"|format(total_price) }}</span>
+        {{ t.total }}:
+        £<span id="display-total">{{ "%.2f"|format(total_price) }}</span>
     </p>
 </div>
 
 {% if point_options %}
 <div class="card">
-    <h2>Use Points</h2>
-    <p><strong>Your points:</strong> {{ available_points }}</p>
-    <p class="small-text">100 points = £1 discount</p>
+    <h2>{{ t.use_points }}</h2>
+
+    <p>
+        <strong>{{ t.your_points }}:</strong>
+        {{ available_points }}
+    </p>
+
+    <p class="small-text">
+        100 {{ t.points }} = £1 {{ t.discount }}
+    </p>
+
     <div class="points-options">
+
         {% for opt in point_options %}
             <label class="points-option">
-                <input type="radio" name="points_to_use_display" value="{{ opt.points }}"
+                <input
+                    type="radio"
+                    name="points_to_use_display"
+                    value="{{ opt.points }}"
                     data-discount="{{ "%.2f"|format(opt.discount) }}"
-                    data-total="{{ "%.2f"|format(total_price) }}">
-                <strong>£{{ "%.2f"|format(opt.discount) }} off</strong>
-                <span>{{ opt.points }} points</span>
+                    data-total="{{ "%.2f"|format(total_price) }}"
+                >
+
+                <strong>
+                    £{{ "%.2f"|format(opt.discount) }}
+                    {{ t.off }}
+                </strong>
+
+                <span>
+                    {{ opt.points }} {{ t.points }}
+                </span>
             </label>
         {% endfor %}
+
         <label class="points-option">
-            <input type="radio" name="points_to_use_display" value="0"
-                data-discount="0" data-total="{{ "%.2f"|format(total_price) }}" checked>
-            <strong>No points</strong>
-            <span>Pay full price</span>
+            <input
+                type="radio"
+                name="points_to_use_display"
+                value="0"
+                data-discount="0"
+                data-total="{{ "%.2f"|format(total_price) }}"
+                checked
+            >
+
+            <strong>{{ t.no_points }}</strong>
+
+            <span>{{ t.pay_full_price }}</span>
         </label>
+
     </div>
 </div>
 {% endif %}
 
 <div class="card summary-card">
-    <h2>Booking Summary</h2>
+    <h2>{{ t.booking_summary }}</h2>
+
     <div class="manage-note">
-        <strong>{{ option.icon }} {{ option.name }}</strong><br>
-        <strong>Passenger:</strong> {{ passenger.first_name }} {{ passenger.last_name }}<br>
-        <strong>Email:</strong> {{ passenger.email }}<br>
-        <strong>Phone:</strong> {{ passenger.phone }}<br>
-        {% if passenger.alt_phone %}<strong>Alt Phone:</strong> {{ passenger.alt_phone }}<br>{% endif %}
-        <strong>Pickup:</strong> {{ pickup }}<br>
-        <strong>Dropoff:</strong> {{ dropoff }}
+
+        <strong>{{ option.icon }} {{ option.name|tv }}</strong><br>
+
+        <strong>{{ t.passenger_label }}:</strong>
+        {{ passenger.first_name }} {{ passenger.last_name }}<br>
+
+        <strong>{{ t.email }}:</strong>
+        {{ passenger.email }}<br>
+
+        <strong>{{ t.phone_number }}:</strong>
+        {{ passenger.phone }}<br>
+
+        {% if passenger.alt_phone %}
+            <strong>{{ t.alternative_number }}:</strong>
+            {{ passenger.alt_phone }}<br>
+        {% endif %}
+
+        <strong>{{ t.pickup }}:</strong>
+        {{ pickup }}<br>
+
+        <strong>{{ t.dropoff }}:</strong>
+        {{ dropoff }}
+
     </div>
 </div>
 
 <div class="card">
     <form method="POST" class="form-grid">
-        <input type="hidden" id="hidden-points-to-use" name="points_to_use" value="0">
+
+        <input
+            type="hidden"
+            id="hidden-points-to-use"
+            name="points_to_use"
+            value="0"
+        >
 
         <div class="full-width">
-            <label for="card_name">Name on Card</label>
-            <input type="text" id="card_name" name="card_name" required>
+            <label for="card_name">
+                {{ t.name_on_card }}
+            </label>
+
+            <input
+                type="text"
+                id="card_name"
+                name="card_name"
+                required
+            >
         </div>
 
         <div class="full-width">
-            <label for="card_number">Card Number</label>
-            <input type="text" id="card_number" name="card_number" maxlength="16" required>
+            <label for="card_number">
+                {{ t.card_number }}
+            </label>
+
+            <input
+                type="text"
+                id="card_number"
+                name="card_number"
+                maxlength="16"
+                required
+            >
         </div>
 
         <div>
-            <label for="expiry_date">Expiry Date</label>
-            <input type="month" id="expiry_date" name="expiry_date" required>
+            <label for="expiry_date">
+                {{ t.expiry_date }}
+            </label>
+
+            <input
+                type="month"
+                id="expiry_date"
+                name="expiry_date"
+                required
+            >
         </div>
 
         <div>
             <label for="cvv">CVV</label>
-            <input type="password" id="cvv" name="cvv" maxlength="4" required>
+
+            <input
+                type="password"
+                id="cvv"
+                name="cvv"
+                maxlength="4"
+                required
+            >
         </div>
 
         <div class="full-width terms-box">
+
             <label class="checkbox-row">
-                <input type="checkbox" id="accept_terms" name="accept_terms" required>
-                <span>I agree to the
-                    <a href="{{ url_for('terms') }}" class="terms-link" id="open-terms-modal">Terms & Conditions</a>
+                <input
+                    type="checkbox"
+                    id="accept_terms"
+                    name="accept_terms"
+                    required
+                >
+
+                <span>
+                    {{ t.i_agree_terms }}
+
+                    <a
+                        href="{{ url_for('terms') }}"
+                        class="terms-link"
+                        id="open-terms-modal"
+                    >
+                        {{ t.terms_conditions }}
+                    </a>
                 </span>
             </label>
+
             <label class="checkbox-row">
                 <input type="checkbox" name="subscribe_offers">
-                <span>I would like to receive offers and updates</span>
+
+                <span>
+                    {{ t.receive_offers }}
+                </span>
             </label>
+
         </div>
 
         <div class="full-width">
-            <button type="submit" class="btn">Complete Booking</button>
+            <button type="submit" class="btn">
+                {{ t.complete_booking }}
+            </button>
         </div>
+
     </form>
 </div>
 
 <div id="terms-modal" class="modal-overlay" style="display: none;">
     <div class="modal-box">
-        <button type="button" id="close-terms-modal" class="modal-close">×</button>
-        <h2>Terms & Conditions</h2>
+
+        <button
+            type="button"
+            id="close-terms-modal"
+            class="modal-close"
+        >
+            ×
+        </button>
+
+        <h2>{{ t.terms_conditions }}</h2>
+
         <div class="terms-modal-body">
-            <h3>Booking Terms</h3>
-            <p>By completing a booking with AirGo, you confirm that all passenger details provided are accurate and complete.</p>
-            <h3>Payments</h3>
-            <p>All payments must be completed in full before a booking is confirmed.</p>
-            <h3>Changes and Cancellations</h3>
-            <p>Changes and cancellations are subject to the transfer type and may incur additional fees.</p>
-            <h3>Passenger Responsibility</h3>
-            <p>Passengers are responsible for being ready at the agreed pickup location at the correct time.</p>
+
+            <h3>{{ t.booking_terms }}</h3>
+
+            <p>{{ t.booking_terms_text }}</p>
+
+            <h3>{{ t.payments }}</h3>
+
+            <p>{{ t.payments_text }}</p>
+
+            <h3>{{ t.changes_cancellations }}</h3>
+
+            <p>{{ t.changes_cancellations_text }}</p>
+
+            <h3>{{ t.passenger_responsibility }}</h3>
+
+            <p>{{ t.passenger_responsibility_text }}</p>
+
         </div>
     </div>
 </div>
 
 <style>
-.terms-link { text-decoration: underline; font-weight: 600; cursor: pointer; }
+.terms-link {
+    text-decoration: underline;
+    font-weight: 600;
+    cursor: pointer;
+}
+
 .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-    display: none; align-items: center; justify-content: center; z-index: 9999; padding: 20px;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
 }
+
 .modal-box {
-    background: white; width: min(850px, 95%); height: 80vh;
-    border-radius: 18px; overflow: hidden; position: relative;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.25); padding: 30px; overflow-y: auto;
+    background: white;
+    width: min(850px, 95%);
+    height: 80vh;
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    padding: 30px;
+    overflow-y: auto;
 }
+
 .modal-close {
-    position: absolute; top: 10px; right: 16px; font-size: 30px;
-    border: none; background: white; cursor: pointer; z-index: 10; line-height: 1;
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    font-size: 30px;
+    border: none;
+    background: white;
+    cursor: pointer;
+    z-index: 10;
+    line-height: 1;
 }
 </style>
 
 <script>
 document.querySelectorAll('input[name="points_to_use_display"]').forEach(function(radio) {
+
     radio.addEventListener("change", function() {
+
         var total = parseFloat(this.dataset.total);
         var discount = parseFloat(this.dataset.discount);
+
         var newTotal = Math.max(0, total - discount);
+
         document.getElementById("display-total").textContent = newTotal.toFixed(2);
+
         document.getElementById("points-discount-amount").textContent = discount.toFixed(2);
+
         document.getElementById("hidden-points-to-use").value = this.value;
-        document.getElementById("points-discount-row").style.display = discount > 0 ? "block" : "none";
+
+        document.getElementById("points-discount-row").style.display =
+            discount > 0 ? "block" : "none";
     });
 });
 
 var termsModal = document.getElementById("terms-modal");
+
 var openBtn = document.getElementById("open-terms-modal");
+
 var closeBtn = document.getElementById("close-terms-modal");
-if (openBtn) openBtn.addEventListener("click", function(e) { e.preventDefault(); termsModal.style.display = "flex"; });
-if (closeBtn) closeBtn.addEventListener("click", function() { termsModal.style.display = "none"; });
-if (termsModal) termsModal.addEventListener("click", function(e) { if (e.target === termsModal) termsModal.style.display = "none"; });
+
+if (openBtn)
+    openBtn.addEventListener("click", function(e) {
+        e.preventDefault();
+        termsModal.style.display = "flex";
+    });
+
+if (closeBtn)
+    closeBtn.addEventListener("click", function() {
+        termsModal.style.display = "none";
+    });
+
+if (termsModal)
+    termsModal.addEventListener("click", function(e) {
+        if (e.target === termsModal)
+            termsModal.style.display = "none";
+    });
 </script>
 
 {% endblock %}
