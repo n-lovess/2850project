@@ -2095,6 +2095,7 @@ body[dir="rtl"] {
 
 .passenger-details-form .form-grid {
     align-items: start;
+}
 
 /* animated clouds on confirmation page */
 .confirm-sky {
@@ -2353,4 +2354,130 @@ body[dir="rtl"] {
         justify-content: space-between;
         padding: 20px;
     }
+}
+
+.bp-ticket {
+    display: flex;
+    max-width: 900px;
+    margin: 40px auto;
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+}
+
+.bp-header {
+    width: 280px;
+    background: linear-gradient(135deg, #244a9b, #1d3474);
+    color: white;
+    padding: 32px;
+    text-align: center;
+}
+
+.bp-airline {
+    font-size: 22px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.bp-route-big {
+    font-size: 30px;
+    font-weight: bold;
+    margin: 28px 0;
+}
+
+.bp-plane-icon {
+    margin: 0 10px;
+}
+
+.bp-status-pill {
+    display: inline-block;
+    padding: 8px 18px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.2);
+    font-weight: bold;
+}
+
+.bp-scheduled {
+    background: #dff5e6;
+    color: #166534;
+}
+
+.bp-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.bp-changed {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.bp-details {
+    flex: 1;
+    padding: 34px;
+}
+
+.bp-row {
+    display: flex;
+    gap: 28px;
+    margin-bottom: 24px;
+}
+
+.bp-field {
+    flex: 1;
+}
+
+.bp-label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6b7280;
+    margin-bottom: 6px;
+}
+
+.bp-val {
+    display: block;
+    font-size: 20px;
+    font-weight: bold;
+    color: #1f2937;
+}
+
+.bp-small {
+    display: block;
+    font-size: 14px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+.bp-barcode {
+    margin-top: 28px;
+    border-top: 1px dashed #cbd5e1;
+    padding-top: 22px;
+    text-align: center;
+}
+
+.bp-bars {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 3px;
+    height: 55px;
+}
+
+.bp-bar {
+    width: 4px;
+    background: #111827;
+}
+
+.bp-barcode-text {
+    margin-top: 8px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.button-group {
+    text-align: center;
+    margin: 30px 0;
 }
