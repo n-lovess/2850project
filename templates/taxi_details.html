@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Passenger Details - AirGo{% endblock %}
+{% block title %}{{ t.passenger_details }} - AirGo{% endblock %}
 {% block content %}
 
-<h1>Passenger Details</h1>
-<p class="subtitle">Confirm your details for the transfer booking.</p>
+<h1>{{ t.passenger_details }}</h1>
+<p class="subtitle">{{ t.confirm_transfer_details }}</p>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -15,9 +15,11 @@
 
 <div class="card" style="background: #eef4ff; border: 1px solid #c7d7f5; margin-bottom: 24px;">
     <p style="margin: 0; font-size: 15px;">
-        <strong>{{ option.icon }} {{ option.name }}</strong>
-        {% if results.get('pickup') %}&nbsp;|&nbsp; {{ results.pickup }} → {{ results.dropoff }}{% endif %}
-        &nbsp;|&nbsp; <strong style="color: #1f3c88;">{{ selected_currency }} {{ convert_price(option.price, selected_currency) }}</strong>
+        <strong>{{ option.icon }} {{ option.name|tv }}</strong>
+        {% if results.get('pickup') %}
+            &nbsp;|&nbsp; {{ results.pickup }} → {{ results.dropoff }}
+        {% endif %}
+        &nbsp;|&nbsp; <strong style="color: #1f3c88;">£{{ option.price }}</strong>
     </p>
 </div>
 
@@ -25,36 +27,48 @@
     <form method="POST" class="form-grid">
 
         <div>
-            <label>First Name <span style="color: #c93b2c;">*</span></label>
+            <label>{{ t.first_name }} <span style="color: #c93b2c;">*</span></label>
             <input type="text" name="first_name" value="{{ prefill.get('first_name', '') }}" required>
         </div>
+
         <div>
-            <label>Last Name <span style="color: #c93b2c;">*</span></label>
+            <label>{{ t.last_name }} <span style="color: #c93b2c;">*</span></label>
             <input type="text" name="last_name" value="{{ prefill.get('last_name', '') }}" required>
         </div>
 
         <div class="full-width">
-            <label>Email Address <span style="color: #c93b2c;">*</span></label>
+            <label>{{ t.email_address }} <span style="color: #c93b2c;">*</span></label>
             <input type="email" name="email" value="{{ prefill.get('email', '') }}" required>
         </div>
 
         <div>
-            <label>Mobile Number <span style="color: #c93b2c;">*</span></label>
+            <label>{{ t.mobile_number }} <span style="color: #c93b2c;">*</span></label>
             <input type="tel" name="phone" value="{{ prefill.get('phone', '') }}" required>
         </div>
+
         <div>
-            <label>Alternative Number <span style="color: var(--text-secondary); font-weight: 400; font-size: 13px;">(optional)</span></label>
+            <label>
+                {{ t.alternative_number }}
+                <span style="color: var(--text-secondary); font-weight: 400; font-size: 13px;">
+                    ({{ t.optional }})
+                </span>
+            </label>
             <input type="tel" name="alt_phone" value="{{ prefill.get('alt_phone', '') }}">
         </div>
 
         <div class="full-width">
-            <label>Special Requests <span style="color: var(--text-secondary); font-weight: 400; font-size: 13px;">(optional)</span></label>
-            <textarea name="special_requests" rows="3" placeholder="e.g. wheelchair access, child seat, extra luggage..."></textarea>
+            <label>
+                {{ t.special_requests }}
+                <span style="color: var(--text-secondary); font-weight: 400; font-size: 13px;">
+                    ({{ t.optional }})
+                </span>
+            </label>
+            <textarea name="special_requests" rows="3" placeholder="{{ t.special_requests_placeholder }}"></textarea>
         </div>
 
         <div class="full-width" style="display: flex; gap: 12px; margin-top: 4px;">
-            <a href="{{ url_for('taxi_details') }}" class="btn secondary-btn">← Back</a>
-            <button type="submit" class="btn">Continue to Payment →</button>
+            <a href="{{ url_for('taxi_results') }}" class="btn secondary-btn">← {{ t.back }}</a>
+            <button type="submit" class="btn">{{ t.continue_payment }} →</button>
         </div>
 
     </form>
