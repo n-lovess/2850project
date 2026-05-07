@@ -2095,6 +2095,7 @@ body[dir="rtl"] {
 
 .passenger-details-form .form-grid {
     align-items: start;
+}
 
 /* animated clouds on confirmation page */
 .confirm-sky {
