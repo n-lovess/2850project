@@ -58,6 +58,10 @@ translations = {
         "choose_destination": "Choose a destination to fill your search instantly and start booking faster.",
         "uk": "United Kingdom",
         "usa": "United States",
+        "tr": "Türkiye",
+        "lba": "Leeds",
+        "jfk": "New York",
+        "ist": "Istanbul",
 
         "passenger_details_title": "Passenger Details",
         "selected_flight": "Selected Flight",
@@ -331,7 +335,7 @@ translations = {
     "second_flight": "Deuxième vol",
     "passengers": "Passagers",
     "class_label": "Classe",
-    "example_departure": "ex: Londres ou LHR",
+    "example_departure": "Aéroport de départ",
     "example_arrival": "Aéroport d’arrivée",
 
     "return_trip": "Aller-retour",
@@ -343,6 +347,10 @@ translations = {
     "choose_destination": "Choisissez une destination pour remplir votre recherche plus rapidement.",
     "uk": "Royaume-Uni",
     "usa": "États-Unis",
+    "tr": "Turqie",
+    "lba": "Leeds",
+    "jfk": "New York",
+    "ist": "Istanbul",
 
     "passenger_details_title": "Détails du passager",
     "selected_flight": "Vol sélectionné",
@@ -661,7 +669,7 @@ translations = {
     "second_flight": "الرحلة الثانية",
     "passengers": "المسافرون",
     "class_label": "الدرجة",
-    "example_departure": "مثال: لندن أو LHR",
+    "example_departure":" مطار المغادرة",
     "example_arrival": "مطار الوصول",
 
     "return_trip": "ذهاب وعودة",
@@ -673,6 +681,10 @@ translations = {
     "choose_destination": "اختر وجهة لملء البحث بسرعة.",
     "uk": "المملكة المتحدة",
     "usa": "الولايات المتحدة",
+    "tr": "تركيا",
+    "lba": "ليدز",
+    "jfk": "نيو يورك",
+    "ist": "اسطنبول",
 
     "passenger_details_title": "تفاصيل المسافر",
     "selected_flight": "الرحلة المحددة",
@@ -972,6 +984,27 @@ translations = {
 "no_flights_text": "لم نجد أي رحلات تطابق بحثك. حاول تعديل معايير البحث.",
 }
 }
+
+def apply_class_price(flight, ticket_class):
+    base_price = float(flight.get("price", 120))
+
+    class_multipliers = {
+        "Economy": 1,
+        "Premium Economy": 1.6,
+        "Business": 3.2,
+        "First": 5.5
+    }
+
+    if ticket_class == "Any":
+        return flight
+
+    multiplier = class_multipliers.get(ticket_class, 1)
+
+    flight["class"] = ticket_class
+    flight["price"] = round(base_price * multiplier, 2)
+
+    return flight
+
 def get_translation():
     lang = session.get("lang", "en")
     base = translations["en"].copy()
@@ -2164,6 +2197,25 @@ def airport_suggestions():
 
     return jsonify(unique_matches[:10])
 
+def apply_class_price(flight, ticket_class):
+    base_price = float(flight.get("price", 120))
+
+    class_multipliers = {
+        "Economy": 1,
+        "Premium Economy": 1.6,
+        "Business": 3.2,
+        "First": 5.5
+    }
+
+    if ticket_class == "Any":
+        return flight
+
+    multiplier = class_multipliers.get(ticket_class, 1)
+
+    flight["class"] = ticket_class
+    flight["price"] = round(base_price * multiplier, 2)
+
+    return flight
 
 @app.route("/results", methods=["GET", "POST"])
 def results():
@@ -2248,8 +2300,10 @@ def results():
             }
 
         if ticket_class != "Any":
-            for flight in matching_flights:
-                flight["class"] = ticket_class
+            matching_flights = [
+                apply_class_price(flight, ticket_class)
+                for flight in matching_flights
+            ]
 
         session["search_data"] = search_data
         session["last_flights"] = matching_flights
@@ -2336,6 +2390,14 @@ def return_results():
         return_date
     )
 
+    ticket_class = search_data.get("ticket_class", "Any")
+
+    if ticket_class != "Any":
+        matching_flights = [
+            apply_class_price(flight, ticket_class)
+            for flight in matching_flights
+        ]
+
     session["last_flights"] = matching_flights
     session["current_selection_stage"] = "return"
 
@@ -2382,6 +2444,14 @@ def multi_city_results():
         destination_airport["code"],
         next_leg.get("depart_date", "")
     )
+
+    ticket_class = search_data.get("ticket_class", "Any")
+
+    if ticket_class != "Any":
+        matching_flights = [
+            apply_class_price(flight, ticket_class)
+            for flight in matching_flights
+        ]
 
     session["last_flights"] = matching_flights
     session["current_selection_stage"] = f"multi_city_{next_index + 1}"
