@@ -243,6 +243,7 @@ input[type="password"],
 input[type="date"],
 input[type="month"],
 input[type="number"],
+input[type="tel"],
 select,
 textarea {
     width: 100%;
@@ -2077,6 +2078,24 @@ body[dir="rtl"] {
 [dir="rtl"] textarea {
     text-align: right;
 }
+
+.assistance-section {
+    margin-top: 24px;
+    clear: both;
+}
+.phone-input {
+    width: 100%;
+    padding: 14px 14px;
+    border-radius: 12px;
+    border: 1px solid #cfd8ea;
+    background: white;
+    color: #1f1f1f;
+    font: inherit;
+}
+
+.passenger-details-form .form-grid {
+    align-items: start;
+
 /* animated clouds on confirmation page */
 .confirm-sky {
     position: relative;
