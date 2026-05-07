@@ -272,8 +272,8 @@ translations = {
 
 "hotel_results_title": "Hotel Results",
 "available_hotels_in": "Available Hotels in",
-"night": "night",
-"nights": "nights",
+"night": "Night",
+"nights": "Nights",
 "price_per_night": "Price per night",
 "book_hotel": "Book Hotel",
 "no_hotels_found": "No hotels found for this destination.",
@@ -419,7 +419,6 @@ translations = {
 "Other": "Other",
 "CONFIRMED": "CONFIRMED",
     },
-
     "fr": {
     "welcome": "Bienvenue sur AirGo",
     "subtitle": "Réservez et gérez vos vols directement avec notre compagnie",
@@ -710,8 +709,8 @@ translations = {
 
 "hotel_results_title": "Résultats des hôtels",
 "available_hotels_in": "Hôtels disponibles à",
-"night": "nuit",
-"nights": "nuits",
+"night": "Nuit",
+"nights": "Nuits",
 "price_per_night": "Prix par nuit",
 "book_hotel": "Réserver l’hôtel",
 "no_hotels_found": "Aucun hôtel trouvé pour cette destination.",
@@ -1514,7 +1513,7 @@ def get_real_flights(dep_iata, arr_iata, flight_date):
 
     return flights
 
-RAPIDAPI_KEY = "635e61545emsh5e22e7e26ba6a77p1a3778jsn679f87fcf2f1"
+RAPIDAPI_KEY = "1eec09a005msh7d00af27156f33bp1fe125jsn7320708169bb"
 RAPIDAPI_HOST = "booking-com15.p.rapidapi.com"
 
 def get_real_hotels(destination, check_in, check_out, guests=1):
@@ -1532,10 +1531,6 @@ def get_real_hotels(destination, check_in, check_out, guests=1):
         timeout=10
     )
     destination_data = destination_response.json()
-
-    print("DESTINATION STATUS:", destination_response.status_code)
-    print("DESTINATION RAW:", destination_response.text[:2000])
-    print("DESTINATION DATA:", destination_data)
 
     destination_results = (
         destination_data.get("data", [])
@@ -1571,10 +1566,6 @@ def get_real_hotels(destination, check_in, check_out, guests=1):
 
     hotel_data = hotel_response.json()
 
-    print("HOTEL STATUS:", hotel_response.status_code)
-    print("HOTEL RAW:", hotel_response.text[:3000])
-    print("HOTEL DATA:", hotel_data)
-
     raw_hotels = (
         hotel_data.get("data", {}).get("hotels")
         or hotel_data.get("data", {}).get("result")
@@ -1605,15 +1596,26 @@ def get_real_hotels(destination, check_in, check_out, guests=1):
             or 0
         )
 
+        address = (
+            property_data.get("address")
+            or property_data.get("address_trans")
+            or property_data.get("district")
+            or property_data.get("wishlistName")
+            or destination
+        )
+
         hotels.append({
             "id": index,
             "name": hotel_name,
-            "city": destination,
-            "country": "",
+            "city": property_data.get("city") or property_data.get("wishlistName") or destination,
+            "country": property_data.get("country") or property_data.get("countryCode", ""),
+            "address": address,
+            "latitude": property_data.get("latitude"),
+            "longitude": property_data.get("longitude"),
             "stars": property_data.get("propertyClass", 4),
-            "price_per_night": round(float(price or 0), 2),
+            "total_price": round(float(price or 0), 2),
             "room_types": ["Standard", "Deluxe", "Suite"],
-            "description": property_data.get("wishlistName") or property_data.get("reviewScoreWord") or "Hotel available for your trip"
+            "description": property_data.get("reviewScoreWord") or "Hotel available for your trip"
         })
 
     return hotels
@@ -4157,20 +4159,20 @@ def taxi_details():
         session["post_login_redirect"] = url_for("taxi_details")
         flash("Please log in to book a transfer.", "error")
         return redirect(url_for("login"))
-
+ 
     results = session.get("taxi_results")
     if not results or not results.get("options"):
         return redirect(url_for("taxis"))
-
+ 
     option = results["options"][0]
-
+ 
     conn = get_db_connection()
     existing_booking = conn.execute("""
         SELECT * FROM bookings WHERE user_id = ? ORDER BY id DESC LIMIT 1
     """, (session["user_id"],)).fetchone()
     user = conn.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],)).fetchone()
     conn.close()
-
+ 
     prefill = {}
     if existing_booking:
         prefill["first_name"] = existing_booking["first_name"]
@@ -4183,18 +4185,18 @@ def taxi_details():
         prefill["last_name"] = name_parts[1] if len(name_parts) > 1 else ""
         prefill["email"] = user["email"]
         prefill["phone"] = ""
-
+ 
     if request.method == "POST":
         first_name = request.form.get("first_name", "").strip()
         last_name = request.form.get("last_name", "").strip()
         phone = request.form.get("phone", "").strip()
         alt_phone = request.form.get("alt_phone", "").strip()
         email = request.form.get("email", "").strip()
-
+ 
         if not first_name or not last_name or not phone or not email:
             flash("Please fill in all required fields.", "error")
             return render_template("taxi_details.html", prefill=request.form, option=option, results=results, t=t)
-
+ 
         session["taxi_passenger"] = {
             "first_name": first_name,
             "last_name": last_name,
@@ -4203,13 +4205,14 @@ def taxi_details():
             "email": email
         }
         return redirect(url_for("taxi_payment"))
-
+ 
     return render_template("taxi_details.html", prefill=prefill, option=option, results=results, t=t)
 
 
 @app.route("/taxi/payment", methods=["GET", "POST"])
 def taxi_payment():
     t = get_translation()
+
     if not session.get("user_id"):
         session["post_login_redirect"] = url_for("taxi_payment")
         flash("Please log in to complete your booking.", "error")
@@ -4224,45 +4227,90 @@ def taxi_payment():
         return redirect(url_for("taxis"))
 
     option = results["options"][0]
-    total_price = option["price"]
+    total_price = float(option["price"])
 
     conn = get_db_connection()
     available_points = conn.execute("""
-        SELECT COALESCE(SUM(points_earned), 0) AS total_points FROM bookings WHERE user_id = ?
+        SELECT COALESCE(SUM(points_earned), 0) AS total_points
+        FROM bookings
+        WHERE user_id = ?
     """, (session["user_id"],)).fetchone()["total_points"]
     conn.close()
 
     max_discount = min(available_points // 100, int(total_price))
-    point_options = [{"points": d * 100, "discount": d} for d in range(5, max_discount + 1, 5)]
+
+    point_options = []
+    for discount in range(5, max_discount + 1, 5):
+        point_options.append({
+            "points": discount * 100,
+            "discount": discount
+        })
+
+    def render_taxi_payment(points_used=0, points_discount=0, final_price=None):
+        return render_template(
+            "taxi_payment.html",
+            option=option,
+            pickup=pickup,
+            dropoff=dropoff,
+            passenger=passenger,
+            total_price=total_price,
+            final_price=final_price if final_price is not None else total_price,
+            available_points=available_points,
+            point_options=point_options,
+            points_used=points_used,
+            points_discount=points_discount,
+            results=results,
+            current_month=datetime.now().strftime("%Y-%m"),
+            selected_currency=session.get("currency", "GBP"),
+            t=t
+        )
 
     if request.method == "POST":
+        points_used = int(request.form.get("points_to_use", 0) or 0)
+
+        if points_used < 0:
+            points_used = 0
+
+        if points_used > available_points:
+            flash("You do not have enough points for that discount.", "error")
+            return render_taxi_payment()
+
+        points_discount = points_used / 100
+        final_price = max(0, total_price - points_discount)
+
         card_name = request.form.get("card_name", "").strip()
         card_number = request.form.get("card_number", "").strip()
         expiry_date = request.form.get("expiry_date", "").strip()
         cvv = request.form.get("cvv", "").strip()
-        points_used = int(request.form.get("points_to_use", 0) or 0)
 
         if not request.form.get("accept_terms"):
             flash("You must accept the Terms & Conditions before completing your booking.", "error")
-            return redirect(url_for("taxi_payment"))
+            return render_taxi_payment(points_used, points_discount, final_price)
 
         if not all([card_name, card_number, expiry_date, cvv]):
             flash("Please fill in all payment fields.", "error")
-            return redirect(url_for("taxi_payment"))
+            return render_taxi_payment(points_used, points_discount, final_price)
 
-        if points_used > available_points:
-            flash("You do not have enough points for that discount.", "error")
-            return redirect(url_for("taxi_payment"))
+        if not re.match(r"^[A-Za-z\s'-]+$", card_name):
+            flash("Name on card must only contain letters.", "error")
+            return render_taxi_payment(points_used, points_discount, final_price)
 
-        points_discount = points_used / 100
-        final_price = max(0, total_price - points_discount)
+        if not card_number.isdigit() or len(card_number) != 16:
+            flash("Card number must be exactly 16 digits.", "error")
+            return render_taxi_payment(points_used, points_discount, final_price)
+
+        if not cvv.isdigit() or len(cvv) not in [3, 4]:
+            flash("CVV must be 3 or 4 digits.", "error")
+            return render_taxi_payment(points_used, points_discount, final_price)
+
         booking_reference = generate_booking_reference()
 
         conn = get_db_connection()
         conn.execute("""
             INSERT INTO taxi_bookings (
                 user_id, booking_reference, first_name, last_name, phone, alt_phone,
-                email, transfer_type, pickup, dropoff, distance_km, duration, price, booking_date, status
+                email, transfer_type, pickup, dropoff, distance_km, duration,
+                price, booking_date, status
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             session["user_id"],
@@ -4272,7 +4320,7 @@ def taxi_payment():
             passenger["phone"],
             passenger.get("alt_phone", ""),
             passenger["email"],
-            session.get("taxi_class", "Standard Taxi"),
+            session.get("taxi_class", option["name"]),
             pickup,
             dropoff,
             results["distance"],
@@ -4286,20 +4334,10 @@ def taxi_payment():
 
         session["taxi_booking_reference"] = booking_reference
         session["taxi_booking_price"] = final_price
+
         return redirect(url_for("taxi_confirmation"))
 
-    return render_template("taxi_payment.html",
-        option=option,
-        pickup=pickup,
-        dropoff=dropoff,
-        passenger=passenger,
-        total_price=total_price,
-        available_points=available_points,
-        point_options=point_options,
-        results=results,
-        t=t
-    )
-
+    return render_taxi_payment()
 
 @app.route("/taxi/confirmation")
 def taxi_confirmation():
@@ -4805,8 +4843,6 @@ def hotel_book(hotel_id):
         "flight_booking_id": request.args.get("flight_booking_id", "")
     }
 
-    from datetime import datetime
-
     try:
         check_in_date = datetime.strptime(booking_details["check_in"], "%Y-%m-%d")
         check_out_date = datetime.strptime(booking_details["check_out"], "%Y-%m-%d")
@@ -4814,24 +4850,26 @@ def hotel_book(hotel_id):
     except:
         nights = 1
 
-    base_price = hotel["price_per_night"] * nights
+    base_price = float(hotel.get("total_price", 0))
 
     if request.method == "POST":
         room_type = request.form.get("room_type", "Standard")
-
-        # get price from hidden input (JS updated value)
         total_price = float(request.form.get("total_price", base_price))
 
-        return redirect(url_for(
-            "hotel_confirmation",
-            hotel_name=hotel["name"],
-            city=hotel["city"],
-            check_in=booking_details["check_in"],
-            check_out=booking_details["check_out"],
-            guests=booking_details["guests"],
-            room_type=room_type,
-            total_price=total_price
-        ))
+        session["pending_hotel_booking"] = {
+            "hotel_name": hotel.get("name", ""),
+            "hotel_address": hotel.get("address", ""),
+            "hotel_city": hotel.get("city", ""),
+            "hotel_country": hotel.get("country", ""),
+            "check_in": booking_details["check_in"],
+            "check_out": booking_details["check_out"],
+            "guests": booking_details["guests"],
+            "room_type": room_type,
+            "total_price": total_price,
+            "flight_booking_id": booking_details["flight_booking_id"]
+        }
+
+        return redirect(url_for("hotel_payment"))
 
     return render_template(
         "hotel_booking.html",
@@ -4839,62 +4877,161 @@ def hotel_book(hotel_id):
         booking_details=booking_details,
         nights=nights,
         total_price=base_price,
-        selected_currency=session.get("currency", "GBP")
+        selected_currency=session.get("currency", "GBP"),
+        t=get_translation()
     )
+
+@app.route("/hotel-payment", methods=["GET", "POST"])
+def hotel_payment():
+    t = get_translation()
+
+    if not session.get("user_id"):
+        session["post_login_redirect"] = url_for("hotel_payment")
+        flash("Please log in to complete your hotel booking.", "error")
+        return redirect(url_for("login"))
+
+    booking = session.get("pending_hotel_booking")
+
+    if not booking:
+        flash("Please choose a hotel first.", "error")
+        return redirect(url_for("hotels"))
+
+    total_price = float(booking.get("total_price", 0))
+
+    conn = get_db_connection()
+    available_points = conn.execute("""
+        SELECT COALESCE(SUM(points_earned), 0) AS total_points
+        FROM bookings
+        WHERE user_id = ?
+    """, (session["user_id"],)).fetchone()["total_points"]
+    conn.close()
+
+    max_discount = min(available_points // 100, int(total_price))
+
+    point_options = []
+    for discount in range(5, max_discount + 1, 5):
+        point_options.append({
+            "points": discount * 100,
+            "discount": discount
+        })
+
+    def render_hotel_payment(points_used=0, points_discount=0, final_price=None):
+        return render_template(
+            "hotel_payment.html",
+            booking=booking,
+            total_price=total_price,
+            final_price=final_price if final_price is not None else total_price,
+            available_points=available_points,
+            point_options=point_options,
+            points_used=points_used,
+            points_discount=points_discount,
+            current_month=datetime.now().strftime("%Y-%m"),
+            selected_currency=session.get("currency", "GBP"),
+            t=t
+        )
+
+    if request.method == "POST":
+        points_used = int(request.form.get("points_to_use", 0) or 0)
+
+        if points_used < 0:
+            points_used = 0
+
+        if points_used > available_points:
+            flash("You do not have enough points for that discount.", "error")
+            return render_hotel_payment()
+
+        points_discount = points_used / 100
+        final_price = max(0, total_price - points_discount)
+
+        card_name = request.form.get("card_name", "").strip()
+        card_number = request.form.get("card_number", "").strip()
+        expiry_date = request.form.get("expiry_date", "").strip()
+        cvv = request.form.get("cvv", "").strip()
+
+        if not request.form.get("accept_terms"):
+            flash("You must accept the Terms & Conditions before completing your booking.", "error")
+            return render_hotel_payment(points_used, points_discount, final_price)
+
+        if not all([card_name, card_number, expiry_date, cvv]):
+            flash("Please fill in all payment fields.", "error")
+            return render_hotel_payment(points_used, points_discount, final_price)
+
+        if not re.match(r"^[A-Za-z\s'-]+$", card_name):
+            flash("Name on card must only contain letters.", "error")
+            return render_hotel_payment(points_used, points_discount, final_price)
+
+        if not card_number.isdigit() or len(card_number) != 16:
+            flash("Card number must be exactly 16 digits.", "error")
+            return render_hotel_payment(points_used, points_discount, final_price)
+
+        if not cvv.isdigit() or len(cvv) not in [3, 4]:
+            flash("CVV must be 3 or 4 digits.", "error")
+            return render_hotel_payment(points_used, points_discount, final_price)
+
+        booking_reference = generate_booking_reference()
+
+        conn = get_db_connection()
+        conn.execute("""
+            INSERT INTO hotel_bookings (
+                user_id,
+                hotel_name,
+                hotel_city,
+                hotel_country,
+                check_in,
+                check_out,
+                guests,
+                room_type,
+                total_price,
+                booking_reference,
+                status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            session["user_id"],
+            booking["hotel_name"],
+            booking["hotel_city"],
+            booking["hotel_country"],
+            booking["check_in"],
+            booking["check_out"],
+            int(booking["guests"]),
+            booking["room_type"],
+            final_price,
+            booking_reference,
+            "CONFIRMED"
+        ))
+        conn.commit()
+        conn.close()
+
+        session["hotel_confirmed_booking"] = {
+            **booking,
+            "booking_reference": booking_reference,
+            "total_price": final_price,
+            "status": "CONFIRMED"
+        }
+
+        session.pop("pending_hotel_booking", None)
+
+        return redirect(url_for("hotel_confirmation"))
+
+    return render_hotel_payment()
 
 @app.route("/hotel-confirmation")
 def hotel_confirmation():
     if not session.get("user_id"):
-        flash("Please log in to confirm your hotel booking.", "error")
+        flash("Please log in to view your hotel confirmation.", "error")
         return redirect(url_for("login"))
 
-    booking_reference = generate_booking_reference()
+    booking = session.get("hotel_confirmed_booking")
 
-    booking = {
-        "booking_reference": booking_reference,
-        "hotel_name": request.args.get("hotel_name", ""),
-        "hotel_city": request.args.get("city", ""),
-        "hotel_country": request.args.get("country", ""),
-        "check_in": request.args.get("check_in", ""),
-        "check_out": request.args.get("check_out", ""),
-        "guests": request.args.get("guests", "1"),
-        "room_type": request.args.get("room_type", "Standard"),
-        "total_price": float(request.args.get("total_price", 0) or 0),
-        "status": "CONFIRMED"
-    }
+    if not booking:
+        flash("No hotel booking found.", "error")
+        return redirect(url_for("hotels"))
 
-    conn = get_db_connection()
-    conn.execute("""
-        INSERT INTO hotel_bookings (
-            user_id,
-            hotel_name,
-            hotel_city,
-            hotel_country,
-            check_in,
-            check_out,
-            guests,
-            room_type,
-            total_price,
-            booking_reference,
-            status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        session["user_id"],
-        booking["hotel_name"],
-        booking["hotel_city"],
-        booking["hotel_country"],
-        booking["check_in"],
-        booking["check_out"],
-        int(booking["guests"]),
-        booking["room_type"],
-        booking["total_price"],
-        booking["booking_reference"],
-        booking["status"]
-    ))
-    conn.commit()
-    conn.close()
-
-    return render_template("hotel_confirmation.html", booking=booking)
+    return render_template(
+        "hotel_confirmation.html",
+        booking=booking,
+        selected_currency=session.get("currency", "GBP"),
+        t=get_translation()
+    )
 
 @app.route("/request-hotel-refund/<int:hotel_booking_id>", methods=["POST"])
 def request_hotel_refund(hotel_booking_id):
@@ -5114,8 +5251,6 @@ def admin_update_hotel_change_status(hotel_booking_id):
             price_per_night = matching_hotel["price_per_night"]
         else:
             price_per_night = 120
-
-        new_total_price = price_per_night * new_nights
 
         conn.execute("""
             UPDATE hotel_bookings

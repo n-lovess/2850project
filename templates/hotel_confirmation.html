@@ -5,6 +5,7 @@
 {% block content %}
 <div class="card confirmation-card">
     <div class="confirm-tick">&#10003;</div>
+
     <h1>{{ t.hotel_booking_confirmed }}</h1>
     <p class="success-message">{{ t.hotel_success_message }}</p>
 
@@ -15,20 +16,43 @@
 
     <div style="text-align: left; margin-top: 20px;">
         <p><strong>{{ t.hotel }}:</strong> {{ booking.hotel_name }}</p>
-        <p><strong>{{ t.location }}:</strong>{{ booking.hotel_city }}, {{ booking.hotel_country }}</p>
-        <p><strong>{{ t.check_in }}:</strong>{{ booking.check_in }}</p>
-        <p><strong>{{ t.check_out }}:</strong>{{ booking.check_out }}</p>
+
+        <p>
+            <strong>{{ t.location }}:</strong>
+            {% if booking.hotel_address %}
+                {{ booking.hotel_address }}
+            {% elif booking.hotel_city %}
+                {{ booking.hotel_city }}
+            {% else %}
+                {{ t.not_assigned if t.not_assigned is defined else 'Not available' }}
+            {% endif %}
+
+            {% if booking.hotel_country %}
+                , {{ booking.hotel_country|upper }}
+            {% endif %}
+        </p>
+
+        <p><strong>{{ t.check_in }}:</strong> {{ booking.check_in }}</p>
+        <p><strong>{{ t.check_out }}:</strong> {{ booking.check_out }}</p>
         <p><strong>{{ t.guests }}:</strong> {{ booking.guests }}</p>
         <p><strong>{{ t.room_type }}:</strong> {{ booking.room_type }}</p>
-        <p><strong>{{ t.total_paid }}:</strong> {{ convert_price(booking.total_price, selected_currency) }} {{ selected_currency }}</p>
-        <p><strong>{{ t.status }}:</strong>{{ booking.status }}</p>
+
+        <p>
+            <strong>{{ t.total_paid }}:</strong>
+            {{ "%.2f"|format(convert_price(booking.total_price, selected_currency)) }}
+            {{ selected_currency }}
+        </p>
+
+        <p><strong>{{ t.status }}:</strong> {{ booking.status }}</p>
     </div>
 
     {% if booking.flight_booking_id %}
-    <div class="hotel-booking-card" style="margin-top: 24px;">
-        <p style="margin: 0;"><strong>{{ t.linked_booking }}</strong></p>
-        <a href="{{ url_for('bookings') }}" style="color: #0369a1; font-weight: 600; margin-top: 8px; display: inline-block;">{{ t.view_linked_flight }}</a>
-    </div>
+        <div class="hotel-booking-card" style="margin-top: 24px;">
+            <p style="margin: 0;"><strong>{{ t.linked_booking }}</strong></p>
+            <a href="{{ url_for('bookings') }}" style="color: #0369a1; font-weight: 600; margin-top: 8px; display: inline-block;">
+                {{ t.view_linked_flight }}
+            </a>
+        </div>
     {% endif %}
 
     <div class="button-group" style="margin-top: 24px;">

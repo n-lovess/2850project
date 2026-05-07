@@ -3,7 +3,6 @@
 {% block content %}
 
 <div style="text-align: center; padding: 40px 0 20px;">
-    <div style="font-size: 64px;">✅</div>
     <h1 style="color: #1f3c88; margin-top: 10px;">Transfer Booked!</h1>
     <p class="subtitle">Your airport transfer has been confirmed.</p>
 </div>
@@ -21,7 +20,8 @@
         <strong>Transfer Type:</strong> {{ transfer_type }}<br>
         <strong>From:</strong> {{ pickup }}<br>
         <strong>To:</strong> {{ dropoff }}<br>
-        <strong>Total Paid:</strong> £{{ "%.2f"|format(price) }}
+        <strong>Total Paid:</strong>
+            {{ selected_currency }}{{ "%.2f"|format(convert_price(price, selected_currency)) }}
     </div>
 </div>
 

@@ -17,7 +17,7 @@
     <p style="margin: 0; font-size: 15px;">
         <strong>{{ option.icon }} {{ option.name }}</strong>
         {% if results.get('pickup') %}&nbsp;|&nbsp; {{ results.pickup }} → {{ results.dropoff }}{% endif %}
-        &nbsp;|&nbsp; <strong style="color: #1f3c88;">£{{ option.price }}</strong>
+        &nbsp;|&nbsp; <strong style="color: #1f3c88;">{{ selected_currency }} {{ convert_price(option.price, selected_currency) }}</strong>
     </p>
 </div>
 
@@ -53,7 +53,7 @@
         </div>
 
         <div class="full-width" style="display: flex; gap: 12px; margin-top: 4px;">
-            <a href="{{ url_for('taxi_results') }}" class="btn secondary-btn">← Back</a>
+            <a href="{{ url_for('taxi_details') }}" class="btn secondary-btn">← Back</a>
             <button type="submit" class="btn">Continue to Payment →</button>
         </div>
 

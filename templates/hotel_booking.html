@@ -3,93 +3,155 @@
 {% block title %}Book Hotel - AirGo{% endblock %}
 
 {% block content %}
+
 <h2>{{ t.book_hotel }}</h2>
 
 <div class="hotel-booking-container">
+
     <div class="hotel-details-panel">
         <h3>{{ hotel.name }}</h3>
 
         <div class="hotel-stars">
-            {% for i in range(hotel.stars|int) %}★{% endfor %}
+            {% for i in range(hotel.stars|int) %}
+                ★
+            {% endfor %}
         </div>
-<<<<<<< HEAD
-        
-        <p><span class="hotel-info-label">{{ t.location }}:</span> {{ hotel.city }}, {{ hotel.country }}</p>
-=======
 
-        <p><span class="hotel-info-label">Location:</span> {{ hotel.city }}, {{ hotel.country }}</p>
->>>>>>> origin/main
+        <p>
+            <span class="hotel-info-label">{{ t.location }}:</span>
+
+            {% if hotel.address %}
+                {{ hotel.address }}
+            {% elif hotel.city %}
+                {{ hotel.city }}
+            {% else %}
+                {{ t.not_assigned if t.not_assigned is defined else 'Not available' }}
+            {% endif %}
+
+            {% if hotel.country %}
+                , {{ hotel.country|upper }}
+            {% endif %}
+        </p>
+
         <p>{{ hotel.description }}</p>
 
         <div class="hotel-summary-box">
-            <p><span class="hotel-info-label">{{ t.check_in }}:</span> {{ booking_details.check_in }}</p>
-            <p><span class="hotel-info-label">{{ t.check_out }}:</span> {{ booking_details.check_out }}</p>
-            <p><span class="hotel-info-label">{{ t.guests }}:</span> {{ booking_details.guests }}</p>
-            <p><span class="hotel-info-label">{{ t.nights }}:</span> {{ nights }}</p>
+            <p>
+                <span class="hotel-info-label">{{ t.check_in }}:</span>
+                {{ booking_details.check_in }}
+            </p>
+
+            <p>
+                <span class="hotel-info-label">{{ t.check_out }}:</span>
+                {{ booking_details.check_out }}
+            </p>
+
+            <p>
+                <span class="hotel-info-label">{{ t.guests }}:</span>
+                {{ booking_details.guests }}
+            </p>
+
+            <p>
+                <span class="hotel-info-label">{{ t.nights }}:</span>
+                {{ nights }}
+            </p>
         </div>
     </div>
 
     <div class="hotel-details-panel">
-<<<<<<< HEAD
+
         <h3>{{ t.booking_details }}</h3>
-        
-        <form method="POST" class="booking-form">
-            <div class="form-group">
-                <label for="room_type">{{ t.room_type }}</label>
-                <select id="room_type" name="room_type" required>
-                    {% for room_type in hotel.room_types %}
-                    <option value="{{ room_type }}">{{ room_type }}</option>
-                    {% endfor %}
-=======
-        <h3>Booking Details</h3>
 
         <form method="POST" class="booking-form">
+
             <div class="form-group">
-                <label for="room_type">Room Type</label>
-                <select name="room_type" id="room_type">
-                    <option value="Standard" data-multiplier="1">Standard</option>
-                    <option value="Deluxe" data-multiplier="1.25">Deluxe</option>
-                    <option value="Suite" data-multiplier="1.6">Suite</option>
->>>>>>> origin/main
+                <label for="room_type">{{ t.room_type }}</label>
+
+                <select id="room_type" name="room_type" required>
+                    <option value="Standard" data-multiplier="1">
+                        Standard
+                    </option>
+
+                    <option value="Deluxe" data-multiplier="1.25">
+                        Deluxe
+                    </option>
+
+                    <option value="Suite" data-multiplier="1.6">
+                        Suite
+                    </option>
                 </select>
             </div>
 
-            <input type="hidden" name="check_in" value="{{ booking_details.check_in }}">
-            <input type="hidden" name="check_out" value="{{ booking_details.check_out }}">
-            <input type="hidden" name="guests" value="{{ booking_details.guests }}">
-            <input type="hidden" name="total_price" id="total_price" value="{{ total_price }}">
+            <input
+                type="hidden"
+                name="check_in"
+                value="{{ booking_details.check_in }}"
+            >
+
+            <input
+                type="hidden"
+                name="check_out"
+                value="{{ booking_details.check_out }}"
+            >
+
+            <input
+                type="hidden"
+                name="guests"
+                value="{{ booking_details.guests }}"
+            >
+
+            <input
+                type="hidden"
+                name="total_price"
+                id="total_price"
+                value="{{ total_price }}"
+            >
 
             {% if booking_details.flight_booking_id %}
-                <input type="hidden" name="flight_booking_id" value="{{ booking_details.flight_booking_id }}">
+                <input
+                    type="hidden"
+                    name="flight_booking_id"
+                    value="{{ booking_details.flight_booking_id }}"
+                >
             {% endif %}
 
             <div class="hotel-total-block">
-<<<<<<< HEAD
-                <div class="hotel-total-label">{{ t.total_price }}</div>
-                <div class="hotel-total-value">{{ convert_price(total_price, selected_currency) }} {{ selected_currency }}</div>
 
-                <div class="hotel-total-label">Total Price</div>
+                <div class="hotel-total-label">
+                    {{ t.total_price }}
+                </div>
+
                 <div class="hotel-total-value" id="display_total">
-                    {{ convert_price(total_price, selected_currency) }} {{ selected_currency }}
+                    {{ "%.2f"|format(convert_price(total_price, selected_currency)) }}
+                    {{ selected_currency }}
                 </div>
 
             </div>
 
             <div style="margin-top: 24px;">
+
                 <p style="margin: 0 0 12px 0; color: #666; font-size: 14px;">
                     {{ t.booking_payment_message }}
                 </p>
-                <button type="submit" class="btn btn-primary btn-full">{{ t.confirm_booking }}</button>
-            </div>
-        </form>
-<<<<<<< HEAD
-        
-        <a href="{{ referrer }}" class="btn secondary-btn btn-full mt-2" style="margin-top: 12px;">{{ t.back_to_results }}</a>
-=======
 
-        <a href="{{ referrer }}" class="btn secondary-btn btn-full mt-2" style="margin-top: 12px;">Back to results</a>
->>>>>>> origin/main
+                <button type="submit" class="btn btn-primary btn-full">
+                    {{ t.continue_payment }}
+                </button>
+
+            </div>
+
+        </form>
+
+        <a
+            href="{{ referrer }}"
+            class="btn secondary-btn btn-full mt-2"
+            style="margin-top: 12px;"
+        >
+            {{ t.back_to_results }}
+        </a>
+
     </div>
+
 </div>
 
 <script>
@@ -102,17 +164,32 @@
     const hiddenTotal = document.getElementById("total_price");
 
     function updateRoomPrice() {
-        const selectedOption = roomTypeSelect.options[roomTypeSelect.selectedIndex];
-        const multiplier = Number(selectedOption.dataset.multiplier);
 
-        const newTotalGBP = baseTotalGBP * multiplier;
-        const newTotalConverted = newTotalGBP * conversionRate;
+        const selectedOption =
+            roomTypeSelect.options[roomTypeSelect.selectedIndex];
 
-        hiddenTotal.value = newTotalGBP.toFixed(2);
-        displayTotal.textContent = `${newTotalConverted.toFixed(2)} ${selectedCurrency}`;
+        const multiplier =
+            Number(selectedOption.dataset.multiplier);
+
+        const newTotalGBP =
+            baseTotalGBP * multiplier;
+
+        const newTotalConverted =
+            newTotalGBP * conversionRate;
+
+        hiddenTotal.value =
+            newTotalGBP.toFixed(2);
+
+        displayTotal.textContent =
+            `${newTotalConverted.toFixed(2)} ${selectedCurrency}`;
     }
 
-    roomTypeSelect.addEventListener("change", updateRoomPrice);
+    roomTypeSelect.addEventListener(
+        "change",
+        updateRoomPrice
+    );
+
     updateRoomPrice();
 </script>
+
 {% endblock %}

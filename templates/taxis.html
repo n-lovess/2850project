@@ -31,7 +31,7 @@
             <label id="airport-label">From — Airport</label>
             <div class="autocomplete-wrapper" style="margin-bottom: 8px;">
                 <input type="text" id="airport-input"
-                    placeholder="e.g. Heathrow, LHR, London"
+                    placeholder="Airport"
                     value="{{ booking.departure_airport if booking else '' }}"
                     autocomplete="off">
                 <div id="airport-suggestions" class="suggestions-box"></div>
@@ -94,7 +94,7 @@
                     </div>
                     <div style="text-align: right; min-width: 100px;">
                         <div style="font-size: 13px; color: #666;">Estimated</div>
-                        <div style="font-size: 24px; font-weight: 700; color: #1f3c88;">£{{ option.price }}</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #1f3c88;">{{ selected_currency }} {{ convert_price(option.price, selected_currency) }}</div>
                     </div>
                 </div>
 
