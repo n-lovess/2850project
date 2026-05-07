@@ -2354,3 +2354,84 @@ body[dir="rtl"] {
         padding: 20px;
     }
 }
+.rewards-card {
+    background: linear-gradient(135deg, #081120 0%, #10213d 100%);
+    color: white;
+    border: none;
+}
+
+.rewards-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 12px;
+}
+
+.rewards-label {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 12px;
+    opacity: 0.7;
+    margin-bottom: 6px;
+}
+
+.points-balance {
+    text-align: right;
+}
+
+.points-balance span {
+    display: block;
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.points-balance strong {
+    font-size: 28px;
+}
+
+.rewards-subtitle {
+    opacity: 0.85;
+    margin-bottom: 24px;
+}
+
+.premium-points {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 16px;
+}
+
+.premium-option {
+    position: relative;
+}
+
+.premium-option input {
+    display: none;
+}
+
+.points-card-content {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 18px;
+    transition: 0.25s ease;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+}
+
+.points-card-content strong {
+    display: block;
+    font-size: 20px;
+    margin-bottom: 6px;
+}
+
+.points-card-content span {
+    opacity: 0.85;
+    font-size: 14px;
+}
+
+.premium-option input:checked + .points-card-content {
+    border: 2px solid white;
+    transform: translateY(-3px);
+    background: rgba(255,255,255,0.16);
+}

@@ -3,8 +3,8 @@
 {% block title %}Airport Transfers - AirGo{% endblock %}
 
 {% block content %}
-<h1>Airport Transfers</h1>
-<p class="subtitle">Book a transfer between an airport and your destination address.</p>
+<h1>{{ t.airport_transfers }}</h1>
+<p class="subtitle">{{ t.book_transfer_between }}</p>
 
 
 
@@ -19,19 +19,19 @@
         <!-- direction toggle -->
         <div class="direction-toggle" style="margin-bottom: 20px;">
             <button type="button" id="btn-airport-to-address" class="direction-btn active" onclick="setDirection('airport-to-address')">
-                ✈ Airport → Address
+               ✈ {{ t.airport_to_address }}
             </button>
             <button type="button" id="btn-address-to-airport" class="direction-btn" onclick="setDirection('address-to-airport')">
-                🏠 Address → Airport
+               🏠 {{ t.address_to_airport }}
             </button>
         </div>
 
         <!-- airport section -->
         <div id="airport-section">
-            <label id="airport-label">From — Airport</label>
+            <label id="airport-label">{{ t.from_airport }}</label>
             <div class="autocomplete-wrapper" style="margin-bottom: 8px;">
                 <input type="text" id="airport-input"
-                    placeholder="e.g. Heathrow, LHR, London"
+                    placeholder="{{ t.example_departure }}"
                     value="{{ booking.departure_airport if booking else '' }}"
                     autocomplete="off">
                 <div id="airport-suggestions" class="suggestions-box"></div>
@@ -44,30 +44,30 @@
 
         <!-- address section -->
         <div id="address-section">
-            <label id="address-label">To — Destination Address</label>
+            <label id="address-label">{{ t.destination_address }}</label>
             <div class="address-form">
-                <input type="text" id="addr1" placeholder="Address Line 1" style="margin-bottom: 8px;">
-                <input type="text" id="addr2" placeholder="Address Line 2 (optional)" style="margin-bottom: 8px;">
+                <input type="text" id="addr1"placeholder="{{ t.address_line_1 }}" style="margin-bottom: 8px;">
+                <input type="text" id="addr2" placeholder="{{ t.address_line_2 }}" (optional)" style="margin-bottom: 8px;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                    <input type="text" id="addr-city" placeholder="Town / City">
-                    <input type="text" id="addr-postcode" placeholder="Postcode">
+                    <input type="text" id="addr-city" placeholder="{{ t.town_city }}">
+                    <input type="text" id="addr-postcode" placeholder="{{ t.postcode }}">
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <input type="text" id="addr-county" placeholder="County">
-                    <input type="text" id="addr-country" placeholder="Country" value="United Kingdom">
+                    <input type="text" id="addr-county" placeholder="{{ t.county }}">
+                    <input type="text" id="addr-country" placeholder="{{ t.country }}" value="{{ t.uk }}">
                 </div>
             </div>
         </div>
 
-        <label style="margin-top: 16px; display: block; font-weight: 600;">Transfer Type</label>
+        <label style="margin-top: 16px; display: block; font-weight: 600;">{{ t.transfer_type }}</label>
         <select name="transfer_type" style="margin-bottom: 14px; font-size: 15px; padding: 10px 14px; width: 100%; border-radius: 10px; border: 1px solid #c7d7f5;">
-            <option value="Standard Taxi">🚕 Standard Taxi — up to 4 passengers</option>
+            <option value="Standard Taxi">🚕 {{ t.standard_taxi or 'Standard Taxi' }} — {{ t.up_to_4_passengers or 'up to 4 passengers' }}</option>
             <option value="Minivan">🚐 Minivan — up to 7 passengers</option>
             <option value="Luxury Car">🚘 Luxury Car — Mercedes S-Class, up to 4</option>
             <option value="Meet & Greet + Luxury Transfer">⭐ Meet &amp; Greet + Luxury Transfer</option>
         </select>
 
-        <button type="submit" class="btn" style="margin-top: 14px;" onclick="return prepareSubmit()">Search Transfers</button>
+        <button type="submit" class="btn" style="margin-top: 14px;" onclick="return prepareSubmit()">{{ t.search_transfers }}</button>
     </form>
 </div>
 
@@ -89,8 +89,8 @@
                 <div style="display: flex; align-items: flex-start; gap: 16px;">
                     <div style="font-size: 36px; min-width: 50px; text-align: center;">{{ option.icon }}</div>
                     <div style="flex: 1;">
-                        <h3 style="margin-bottom: 6px;">{{ option.name }}</h3>
-                        <p style="margin: 0; color: #555; font-size: 14px;">{{ option.desc }}</p>
+                        <h3 style="margin-bottom: 6px;">{{ option.name|tv }}</h3>
+                        <p style="margin: 0; color: #555; font-size: 14px;">{{ option.desc|tv }}</p>
                     </div>
                     <div style="text-align: right; min-width: 100px;">
                         <div style="font-size: 13px; color: #666;">Estimated</div>
@@ -205,13 +205,13 @@ function setDirection(dir) {
     const btn2 = document.getElementById("btn-address-to-airport");
 
     if (dir === "airport-to-address") {
-        airportLabel.textContent = "From — Airport";
-        addressLabel.textContent = "To — Destination Address";
+        airportLabel.textContent = "{{ t.from_airport }}";
+        addressLabel.textContent = "{{ t.destination_address }}";
         btn1.classList.add("active");
         btn2.classList.remove("active");
     } else {
-        airportLabel.textContent = "To — Airport";
-        addressLabel.textContent = "From — Your Address";
+        airportLabel.textContent = "{{ t.to_airport }}";
+        addressLabel.textContent = "{{ t.your_address }}";
         btn1.classList.remove("active");
         btn2.classList.add("active");
     }

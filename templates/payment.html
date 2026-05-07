@@ -18,9 +18,9 @@
 <div class="card">
     <h2>{{ t.fare_details if t.fare_details is defined else 'Fare Details' }}</h2>
 
-    <p><strong>Base fares:</strong> {{ selected_currency }} {{ convert_price(base_fare, selected_currency) }} <span class="small-text">({{ passengers|length }} passengers)</span></p>
-    <p><strong>Baggage:</strong> {{ selected_currency }} {{ convert_price(baggage_price, selected_currency) }}</p>
-    <p><strong>Seat selection:</strong> {{ selected_currency }} {{ convert_price(seat_price, selected_currency) }}</p>
+    <p><strong>{{ t.base_fares }}:</strong> {{ selected_currency }} {{ convert_price(base_fare, selected_currency) }} <span class="small-text">({{ passengers|length }} {{ t.passengers }})</span></p>
+    <p><strong>{{ t.baggage }}:</strong> {{ selected_currency }} {{ convert_price(baggage_price, selected_currency) }}</p>
+    <p><strong>{{ t.seat_selection_price }}:</strong> {{ selected_currency }} {{ convert_price(seat_price, selected_currency) }}</p>
     <p><strong>{{ t.travel_insurance if t.travel_insurance is defined else 'Travel Insurance' }}:</strong> {{ selected_currency }} {{ convert_price(insurance_price, selected_currency) }}</p>
 
     <p id="points-discount-row" style="display:none;">
@@ -35,14 +35,28 @@
     </p>
 </div>
 
-<div class="card">
-    <h2>Use Points</h2>
-    <p><strong>Your points:</strong> {{ available_points }}</p>
-    <p class="small-text">100 points = {{ selected_currency }} {{ convert_price(1, selected_currency) }} discount</p>
+<div class="card rewards-card">
+    <div class="rewards-header">
+        <div>
+            <p class="rewards-label">{{ t.airgo_rewards or 'AirGo Rewards' }}</p>
+            <h2>{{ t.use_points or 'Use Points' }}</h2>
+        </div>
 
-    <div class="points-options">
+        <div class="points-balance">
+            <span>{{ t.available_points or 'Available Points' }}</span>
+            <strong>{{ available_points }}</strong>
+        </div>
+    </div>
+
+    <p class="rewards-subtitle">
+        100 {{ t.points }} = 
+        {{ selected_currency }} {{ convert_price(1, selected_currency) }}
+        {{ t.discount or 'discount' }}
+    </p>
+
+    <div class="points-options premium-points">
         {% for option in point_options %}
-            <label class="points-option">
+            <label class="points-option premium-option">
                 <input
                     type="radio"
                     name="points_to_use"
@@ -50,12 +64,20 @@
                     data-discount="{{ convert_price(option.discount, selected_currency) }}"
                     data-total="{{ convert_price(total_price, selected_currency) }}"
                 >
-                <strong>{{ selected_currency }} {{ convert_price(option.discount, selected_currency) }} off</strong>
-                <span>{{ option.points }} points</span>
+
+                <div class="points-card-content">
+                    <strong>
+                        {{ selected_currency }}
+                        {{ convert_price(option.discount, selected_currency) }}
+                        {{ t.off or 'OFF' }}
+                    </strong>
+
+                    <span>{{ option.points }} {{ t.points or 'points' }}</span>
+                </div>
             </label>
         {% endfor %}
 
-        <label class="points-option">
+        <label class="points-option premium-option">
             <input
                 type="radio"
                 name="points_to_use"
@@ -64,8 +86,11 @@
                 data-total="{{ convert_price(total_price, selected_currency) }}"
                 checked
             >
-            <strong>No points</strong>
-            <span>Pay full price</span>
+
+            <div class="points-card-content">
+                <strong>{{ t.no_points or 'No points' }}</strong>
+                <span>{{ t.pay_full_price or 'Pay full price' }}</span>
+            </div>
         </label>
     </div>
 </div>
@@ -73,7 +98,7 @@
 <div class="card summary-card">
     <h2>{{ t.booking_summary if t.booking_summary is defined else 'Booking Summary' }}</h2>
 
-    <p><strong>Flight{% if flights_to_show|length > 1 %}s{% endif %}:</strong></p>
+    <p><strong>{{ t.flight }}{% if flights_to_show|length > 1 %}s{% endif %}:</strong></p>
 
     {% for selected in flights_to_show %}
         {% set flight_index = loop.index0 %}
@@ -81,10 +106,10 @@
             <strong>{{ selected.airline }}</strong><br>
             <strong>{{ t.route if t.route is defined else 'Route' }}:</strong>
             {{ selected.from }} ({{ selected.from_code }}) → {{ selected.to }} ({{ selected.to_code }})<br>
-            <strong>Time:</strong> {{ selected.departure_time }} - {{ selected.arrival_time }}<br>
-            <strong>{{ t.class_label if t.class_label is defined else 'Class' }}:</strong> {{ selected.class }}<br>
+            <strong>{{ t.time }}:</strong> {{ selected.departure_time }} - {{ selected.arrival_time }}<br>
+           <strong>{{ t.class_label if t.class_label is defined else 'Class' }}:</strong> {{ selected.class|tv }} <br>
 
-            <strong>Seat:</strong>
+            <strong>{{ t.seat }}:</strong>
             {% if selected_seats_by_flight is defined and selected_seats_by_flight %}
                 {% set seats_for_this_flight = selected_seats_by_flight[flight_index] %}
                 {% if seats_for_this_flight is string %}
@@ -103,10 +128,10 @@
     {% for passenger in passengers %}
         {% set passenger_index = loop.index0 %}
         <div class="manage-note">
-            <strong>Passenger {{ loop.index }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}<br>
-            <strong>Email:</strong> {{ passenger.email }}<br>
+           <strong>{{ t.passenger_label }} {{ loop.index }}:</strong>{{ passenger.first_name }} {{ passenger.last_name }}<br>
+            <strong>{{ t.email_label }}:</strong>{{ passenger.email }}<br>
 
-            <strong>Seats:</strong>
+            <strong>{{ t.selected_seats }}:</strong>
             {% if selected_seats_by_flight is defined and selected_seats_by_flight %}
                 {% for flight_seats in selected_seats_by_flight %}
                     {% if flight_seats is string %}
@@ -126,14 +151,14 @@
             {% if extra %}
                 <strong>Baggage:</strong>
                 {% if "1 checked bag" in extra.baggage %}
-                    1 checked bag (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})
+                    {{ "1 checked bag"|tv }} (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})
                 {% elif "2 checked bags" in extra.baggage %}
-                    2 checked bags (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})
+                    {{ "2 checked bags"|tv }} (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})
                 {% else %}
                     {{ extra.baggage }}
                 {% endif %}
                 <br>
-                <strong>Meal:</strong> {{ extra.meal_choice }}
+               <strong>{{ t.meal }}:</strong> {{ extra.meal_choice|tv }}
             {% endif %}
         </div>
     {% endfor %}
