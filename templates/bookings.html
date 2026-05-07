@@ -443,7 +443,9 @@
                 <strong>Phone:</strong> {{ tb.phone }}<br>
                 <strong>Email:</strong> {{ tb.email }}<br>
                 <strong>Date Booked:</strong> {{ tb.booking_date }}<br>
-                <strong>Price Paid:</strong> £{{ "%.2f"|format(tb.price) }}<br>
+                <strong>Price Paid:</strong>
+                {{ selected_currency }}
+                {{ "%.2f"|format(convert_price(tb.price, selected_currency)) }}<br>
                 <strong>Status:</strong>
                 <span style="display:inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;
                     background: {% if tb.status == 'Confirmed' %}#d1fae5{% else %}#fee2e2{% endif %};

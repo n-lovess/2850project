@@ -3,7 +3,6 @@
 {% block content %}
 
 <div style="text-align: center; padding: 40px 0 20px;">
-    <div style="font-size: 64px;">✅</div>
     <h1 style="color: #1f3c88; margin-top: 10px;">{{ t.transfer_booked }}</h1>
     <p class="subtitle">{{ t.transfer_confirmed }}</p>
 </div>
@@ -21,8 +20,10 @@
         <strong>{{ t.transfer_type }}:</strong> {{ transfer_type|tv }}<br>
         <strong>{{ t.from_label }}:</strong> {{ pickup }}<br>
         <strong>{{ t.dropoff }}:</strong> {{ dropoff }}<br>
-        <strong>{{ t.total_paid }}:</strong> £{{ "%.2f"|format(price) }}
-    </div>
+        <strong>{{ t.total_paid }}:</strong>
+        {{ selected_currency }}
+        {{ "%.2f"|format(convert_price(price, selected_currency)) }}
+            </div>
 </div>
 
 <div class="card" style="max-width: 580px; margin: 0 auto 20px;">

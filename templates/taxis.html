@@ -31,7 +31,7 @@
             <label id="airport-label">{{ t.from_airport }}</label>
             <div class="autocomplete-wrapper" style="margin-bottom: 8px;">
                 <input type="text" id="airport-input"
-                    placeholder="e.g. Heathrow, LHR, London"
+                    placeholder="Airport"
                     value="{{ booking.departure_airport if booking else '' }}"
                     autocomplete="off">
                 <div id="airport-suggestions" class="suggestions-box"></div>

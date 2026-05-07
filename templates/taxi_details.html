@@ -19,7 +19,7 @@
         {% if results.get('pickup') %}
             &nbsp;|&nbsp; {{ results.pickup }} → {{ results.dropoff }}
         {% endif %}
-        &nbsp;|&nbsp; <strong style="color: #1f3c88;">£{{ option.price }}</strong>
+        &nbsp;|&nbsp; <strong style="color: #1f3c88;">{{ selected_currency }} {{ convert_price(option.price, selected_currency) }}</strong>
     </p>
 </div>
 

@@ -16,9 +16,7 @@
     <h2>{{ t.fare_details }}</h2>
 
     <p><strong>{{ t.transfer_type }}:</strong> {{ option.icon }} {{ option.name|tv }}</p>
-
     <p><strong>{{ t.from_label }}:</strong> {{ pickup }}</p>
-
     <p><strong>{{ t.dropoff }}:</strong> {{ dropoff }}</p>
 
     <p>
@@ -29,14 +27,17 @@
 
     <p id="points-discount-row" style="display: none;">
         <strong>{{ t.points_discount }}:</strong>
-        -£<span id="points-discount-amount">0.00</span>
+        -{{ selected_currency }} <span id="points-discount-amount">0.00</span>
     </p>
 
     <hr>
 
     <p style="font-size: 18px; font-weight: bold;">
         {{ t.total }}:
-        £<span id="display-total">{{ "%.2f"|format(total_price) }}</span>
+        {{ selected_currency }}
+        <span id="display-total">
+            {{ "%.2f"|format(convert_price(total_price, selected_currency)) }}
+        </span>
     </p>
 </div>
 
@@ -50,7 +51,9 @@
     </p>
 
     <p class="small-text">
-        100 {{ t.points }} = £1 {{ t.discount }}
+        100 {{ t.points }} =
+        {{ selected_currency }} {{ "%.2f"|format(convert_price(1, selected_currency)) }}
+        {{ t.discount }}
     </p>
 
     <div class="points-options">
@@ -61,12 +64,13 @@
                     type="radio"
                     name="points_to_use_display"
                     value="{{ opt.points }}"
-                    data-discount="{{ "%.2f"|format(opt.discount) }}"
-                    data-total="{{ "%.2f"|format(total_price) }}"
+                    data-discount="{{ "%.2f"|format(convert_price(opt.discount, selected_currency)) }}"
+                    data-total="{{ "%.2f"|format(convert_price(total_price, selected_currency)) }}"
                 >
 
                 <strong>
-                    £{{ "%.2f"|format(opt.discount) }}
+                    {{ selected_currency }}
+                    {{ "%.2f"|format(convert_price(opt.discount, selected_currency)) }}
                     {{ t.off }}
                 </strong>
 
@@ -82,12 +86,11 @@
                 name="points_to_use_display"
                 value="0"
                 data-discount="0"
-                data-total="{{ "%.2f"|format(total_price) }}"
+                data-total="{{ "%.2f"|format(convert_price(total_price, selected_currency)) }}"
                 checked
             >
 
             <strong>{{ t.no_points }}</strong>
-
             <span>{{ t.pay_full_price }}</span>
         </label>
 
@@ -99,7 +102,6 @@
     <h2>{{ t.booking_summary }}</h2>
 
     <div class="manage-note">
-
         <strong>{{ option.icon }} {{ option.name|tv }}</strong><br>
 
         <strong>{{ t.passenger_label }}:</strong>
@@ -121,90 +123,40 @@
 
         <strong>{{ t.dropoff }}:</strong>
         {{ dropoff }}
-
     </div>
 </div>
 
 <div class="card">
     <form method="POST" class="form-grid">
 
-        <input
-            type="hidden"
-            id="hidden-points-to-use"
-            name="points_to_use"
-            value="0"
-        >
+        <input type="hidden" id="hidden-points-to-use" name="points_to_use" value="0">
 
         <div class="full-width">
-            <label for="card_name">
-                {{ t.name_on_card }}
-            </label>
-
-            <input
-                type="text"
-                id="card_name"
-                name="card_name"
-                required
-            >
+            <label for="card_name">{{ t.name_on_card }}</label>
+            <input type="text" id="card_name" name="card_name" required>
         </div>
 
         <div class="full-width">
-            <label for="card_number">
-                {{ t.card_number }}
-            </label>
-
-            <input
-                type="text"
-                id="card_number"
-                name="card_number"
-                maxlength="16"
-                required
-            >
+            <label for="card_number">{{ t.card_number }}</label>
+            <input type="text" id="card_number" name="card_number" maxlength="16" required>
         </div>
 
         <div>
-            <label for="expiry_date">
-                {{ t.expiry_date }}
-            </label>
-
-            <input
-                type="month"
-                id="expiry_date"
-                name="expiry_date"
-                required
-            >
+            <label for="expiry_date">{{ t.expiry_date }}</label>
+            <input type="month" id="expiry_date" name="expiry_date" required>
         </div>
 
         <div>
             <label for="cvv">CVV</label>
-
-            <input
-                type="password"
-                id="cvv"
-                name="cvv"
-                maxlength="4"
-                required
-            >
+            <input type="password" id="cvv" name="cvv" maxlength="4" required>
         </div>
 
         <div class="full-width terms-box">
-
             <label class="checkbox-row">
-                <input
-                    type="checkbox"
-                    id="accept_terms"
-                    name="accept_terms"
-                    required
-                >
-
+                <input type="checkbox" id="accept_terms" name="accept_terms" required>
                 <span>
                     {{ t.i_agree_terms }}
-
-                    <a
-                        href="{{ url_for('terms') }}"
-                        class="terms-link"
-                        id="open-terms-modal"
-                    >
+                    <a href="{{ url_for('terms') }}" class="terms-link" id="open-terms-modal">
                         {{ t.terms_conditions }}
                     </a>
                 </span>
@@ -212,12 +164,8 @@
 
             <label class="checkbox-row">
                 <input type="checkbox" name="subscribe_offers">
-
-                <span>
-                    {{ t.receive_offers }}
-                </span>
+                <span>{{ t.receive_offers }}</span>
             </label>
-
         </div>
 
         <div class="full-width">
@@ -231,35 +179,22 @@
 
 <div id="terms-modal" class="modal-overlay" style="display: none;">
     <div class="modal-box">
-
-        <button
-            type="button"
-            id="close-terms-modal"
-            class="modal-close"
-        >
-            ×
-        </button>
+        <button type="button" id="close-terms-modal" class="modal-close">×</button>
 
         <h2>{{ t.terms_conditions }}</h2>
 
         <div class="terms-modal-body">
-
             <h3>{{ t.booking_terms }}</h3>
-
             <p>{{ t.booking_terms_text }}</p>
 
             <h3>{{ t.payments }}</h3>
-
             <p>{{ t.payments_text }}</p>
 
             <h3>{{ t.changes_cancellations }}</h3>
-
             <p>{{ t.changes_cancellations_text }}</p>
 
             <h3>{{ t.passenger_responsibility }}</h3>
-
             <p>{{ t.passenger_responsibility_text }}</p>
-
         </div>
     </div>
 </div>
@@ -309,18 +244,13 @@
 
 <script>
 document.querySelectorAll('input[name="points_to_use_display"]').forEach(function(radio) {
-
     radio.addEventListener("change", function() {
-
         var total = parseFloat(this.dataset.total);
         var discount = parseFloat(this.dataset.discount);
-
         var newTotal = Math.max(0, total - discount);
 
         document.getElementById("display-total").textContent = newTotal.toFixed(2);
-
         document.getElementById("points-discount-amount").textContent = discount.toFixed(2);
-
         document.getElementById("hidden-points-to-use").value = this.value;
 
         document.getElementById("points-discount-row").style.display =
@@ -329,27 +259,29 @@ document.querySelectorAll('input[name="points_to_use_display"]').forEach(functio
 });
 
 var termsModal = document.getElementById("terms-modal");
-
 var openBtn = document.getElementById("open-terms-modal");
-
 var closeBtn = document.getElementById("close-terms-modal");
 
-if (openBtn)
+if (openBtn) {
     openBtn.addEventListener("click", function(e) {
         e.preventDefault();
         termsModal.style.display = "flex";
     });
+}
 
-if (closeBtn)
+if (closeBtn) {
     closeBtn.addEventListener("click", function() {
         termsModal.style.display = "none";
     });
+}
 
-if (termsModal)
+if (termsModal) {
     termsModal.addEventListener("click", function(e) {
-        if (e.target === termsModal)
+        if (e.target === termsModal) {
             termsModal.style.display = "none";
+        }
     });
+}
 </script>
 
 {% endblock %}
