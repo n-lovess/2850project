@@ -4,11 +4,11 @@
 
 {% block content %}
 <h1>{{ t.extras_title or 'Choose Your Extras' }}</h1>
-<p class="subtitle">Choose baggage and meal preferences for each passenger.</p>
+<p class="subtitle">{{ t.baggage_and_extras }}</p>
 
 <div class="card summary-card">
     <h2>
-        Your Flight{% if selected_flights|length > 1 %}s{% endif %}
+        {{ t.your_flight }}{% if selected_flights|length > 1 %}s{% endif %}
     </h2>
 
     {% for selected in selected_flights %}
@@ -17,7 +17,7 @@
             <p><strong>{{ t.route or 'Route' }}:</strong> {{ selected.from }} → {{ selected.to }}</p>
             <p><strong>{{ t.time or 'Time' }}:</strong> {{ selected.departure_time }} - {{ selected.arrival_time }}</p>
             <p><strong>{{ t.class_label or 'Class' }}:</strong> {{ selected.class }}</p>
-            <p><strong>{{ t.base_price or 'Base Price' }}:</strong> {{ selected_currency }} {{ convert_price(selected.price, selected_currency) }} per passenger</p>
+            <p><strong>{{ t.base_price or 'Base Price' }}:</strong> {{ selected_currency }} {{ convert_price(selected.price, selected_currency) }} {{ t.per_passenger }}</p>
         </div>
     {% endfor %}
 
@@ -28,7 +28,7 @@
     <form method="POST" class="form-grid">
         {% for passenger in passengers %}
             <div class="full-width passenger-extra-card manage-note">
-                <h2>Passenger {{ loop.index }} Extras</h2>
+                <h2>{{ t.passenger }} {{ loop.index }} {{ t.extras }}</h2>
                 <p><strong>{{ passenger.first_name }} {{ passenger.last_name }}</strong></p>
 
                 <label for="baggage_{{ loop.index }}">{{ t.checked_baggage or 'Checked Baggage' }}</label>

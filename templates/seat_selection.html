@@ -5,7 +5,7 @@
 {% block content %}
 <h1>{{ t.choose_seat if t.choose_seat is defined else 'Choose your seat' }}</h1>
 <p class="subtitle">
-    Choose {{ passenger_count }} seat{% if passenger_count > 1 %}s{% endif %} for each flight.
+    Choose {{ passenger_count }} seat{% if passenger_count > 1 %}s{% endif %} for each flight
 </p>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -90,7 +90,7 @@
 
                     <div class="cabin-section">
                         <h2 style="margin-bottom: 16px;">
-                            Seats for {{ flight.from_code }} → {{ flight.to_code }}
+                            {{ t.seats_for }} {{ flight.from_code }} → {{ flight.to_code }}
                         </h2>
 
                         {% set seat_sections = seat_maps[flight_loop.index0] %}

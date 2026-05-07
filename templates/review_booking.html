@@ -47,10 +47,16 @@
 <div class="card">
     <h2>{{ t.selected_extras if t.selected_extras is defined else 'Selected Extras' }}</h2>
 
-    <p>
-        <strong>{{ t.travel_insurance if t.travel_insurance is defined else 'Travel Insurance' }}:</strong>
-        {{ extras.get('insurance', t.no_insurance if t.no_insurance is defined else 'No Travel Insurance') }}
-    </p>
+<p>
+    <strong>{{ t.travel_insurance if t.travel_insurance is defined else 'Travel Insurance' }}:</strong>
+
+    {% if extras.get('insurance') and 'Insurance' in extras.get('insurance') %}
+        {{ t.travel_insurance if t.travel_insurance is defined else 'Travel Insurance' }}
+        (+{{ selected_currency }} {{ convert_price(25, selected_currency) }})
+    {% else %}
+        {{ t.no_insurance if t.no_insurance is defined else 'No Travel Insurance' }}
+    {% endif %}
+</p>
 
     {% for item in extras.get('passenger_extras', []) %}
         <div class="manage-note">
