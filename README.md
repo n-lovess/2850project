@@ -85,7 +85,7 @@ All API responses follow this format:
 
 This contribution implements:
 
-### ✅ Database Improvements
+### Database Improvements
 1. **New `flights` table** - flights migrated from hardcoded Python list to database
 2. **Foreign key constraints** enabled and enforced for `bookings.user_id`
 3. **Performance indexes**:
@@ -94,20 +94,20 @@ This contribution implements:
 4. **Database initialization script** for clean setup
 5. **Backward compatible** - all existing templates and routes work unchanged
 
-### ✅ JSON API Endpoints
+### JSON API Endpoints
 1. 5 new REST API endpoints for flights and bookings
 2. Proper authentication and ownership checks
 3. Standard JSON response format
 4. Correct HTTP status codes (200, 401, 403, 404)
 5. No breaking changes to existing HTML interface
 
-### ✅ Admin Reporting
+### Admin Reporting
 1. 3 new admin analytics endpoints
 2. Booking counts per flight
 3. Most popular routes ranking
 4. Peak booking time analysis
 
-### ✅ Tests
+### Tests
 1. Added 10 new tests for all API endpoints
 2. Fixed test teardown foreign key issues
 3. 64 total tests covering all functionality

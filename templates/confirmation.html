@@ -5,6 +5,15 @@
 {% block content %}
 {% set flights_to_show = selected_flights if selected_flights is defined and selected_flights else [flight] %}
 
+<div class="confirm-sky">
+    <div class="clouds">
+        <div class="cloud cloud1"></div>
+        <div class="cloud cloud2"></div>
+        <div class="cloud cloud3"></div>
+        <div class="cloud cloud4"></div>
+    </div>
+</div>
+
 <div class="card confirmation-card">
     <div class="confirm-tick">&#10003;</div>
 
