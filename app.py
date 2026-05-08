@@ -631,13 +631,6 @@ translations = {
 
 "minute": "min",
 "minutes": "mins",
-"choose_baggage_meal": "Choose baggage and meal preferences for each passenger.",
-"your_flight": "Your Flight",
-"your_flights": "Your Flights",
-"per_passenger": "per passenger",
-"Travel Insurance (+£25)": "Travel Insurance (+£25)",
-
-
     },
     "fr": {
     "welcome": "Bienvenue sur AirGo",
@@ -1306,11 +1299,6 @@ translations = {
 
 "minute": "min",
 "minutes": "min",
-"choose_baggage_meal": "Choisissez les bagages et préférences de repas pour chaque passager.",
-"your_flight": "Votre vol",
-"your_flights": "Vos vols",
-"per_passenger": "par passager",
-"Travel Insurance (+£25)": "Assurance voyage (+£25)",
 },
 
     "ar": {
@@ -1980,11 +1968,6 @@ translations = {
 
 "minute": "min",
 "minutes": "min",
-"choose_baggage_meal": "اختر الأمتعة وتفضيلات الوجبات لكل مسافر.",
-"your_flight": "رحلتك",
-"your_flights": "رحلاتك",
-"per_passenger": "لكل مسافر",
-"Travel Insurance (+£25)": "تأمين السفر (+£25)",
 }
 }
 
@@ -5556,7 +5539,7 @@ def hotel_book(hotel_id):
             "flight_booking_id": booking_details["flight_booking_id"]
         }
 
-        return redirect(url_for("hotel_payment"))
+        return redirect(url_for("hotel_details"))
 
     return render_template(
         "hotel_booking.html",
@@ -5566,6 +5549,89 @@ def hotel_book(hotel_id):
         total_price=base_price,
         selected_currency=session.get("currency", "GBP"),
         t=get_translation()
+    )
+
+@app.route("/hotel-details", methods=["GET", "POST"])
+def hotel_details():
+    t = get_translation()
+
+    if not session.get("user_id"):
+        session["post_login_redirect"] = url_for("hotel_details")
+        flash("Please log in to enter guest details.", "error")
+        return redirect(url_for("login"))
+
+    booking = session.get("pending_hotel_booking")
+
+    if not booking:
+        flash("Please choose a hotel first.", "error")
+        return redirect(url_for("hotels"))
+
+    guest_count = int(booking.get("guests", 1) or 1)
+    guest_count = max(1, guest_count)
+
+    if request.method == "POST":
+        guests = []
+
+        for i in range(1, guest_count + 1):
+            guest = {
+                "first_name": request.form.get(f"first_name_{i}", "").strip(),
+                "last_name": request.form.get(f"last_name_{i}", "").strip(),
+                "email": request.form.get(f"email_{i}", "").strip(),
+                "phone": request.form.get(f"phone_{i}", "").strip(),
+                "special_requests": request.form.get(f"special_requests_{i}", "").strip()
+            }
+
+            if not guest["first_name"] or not guest["last_name"] or not guest["email"] or not guest["phone"]:
+                flash(f"Please fill in all required details for guest {i}.", "error")
+                return render_template(
+                    "hotel_details.html",
+                    booking=booking,
+                    guest_count=guest_count,
+                    selected_currency=session.get("currency", "GBP"),
+                    t=t
+                )
+
+            if not re.match(r"^[A-Za-zÀ-ÿ\s'-]+$", guest["first_name"]):
+                flash(f"Guest {i} first name must only contain letters.", "error")
+                return render_template(
+                    "hotel_details.html",
+                    booking=booking,
+                    guest_count=guest_count,
+                    selected_currency=session.get("currency", "GBP"),
+                    t=t
+                )
+
+            if not re.match(r"^[A-Za-zÀ-ÿ\s'-]+$", guest["last_name"]):
+                flash(f"Guest {i} last name must only contain letters.", "error")
+                return render_template(
+                    "hotel_details.html",
+                    booking=booking,
+                    guest_count=guest_count,
+                    selected_currency=session.get("currency", "GBP"),
+                    t=t
+                )
+
+            if not re.match(r"^0[0-9]{8,14}$", guest["phone"]):
+                flash(f"Guest {i} phone number must start with 0 and contain 9 to 15 digits.", "error")
+                return render_template(
+                    "hotel_details.html",
+                    booking=booking,
+                    guest_count=guest_count,
+                    selected_currency=session.get("currency", "GBP"),
+                    t=t
+                )
+
+            guests.append(guest)
+
+        session["pending_hotel_guests"] = guests
+        return redirect(url_for("hotel_payment"))
+
+    return render_template(
+        "hotel_details.html",
+        booking=booking,
+        guest_count=guest_count,
+        selected_currency=session.get("currency", "GBP"),
+        t=t
     )
 
 @app.route("/hotel-payment", methods=["GET", "POST"])
@@ -5578,10 +5644,15 @@ def hotel_payment():
         return redirect(url_for("login"))
 
     booking = session.get("pending_hotel_booking")
-
+    hotel_guests = session.get("pending_hotel_guests")
+    
     if not booking:
         flash("Please choose a hotel first.", "error")
         return redirect(url_for("hotels"))
+
+    if not hotel_guests:
+        flash("Please enter guest details first.", "error")
+        return redirect(url_for("hotel_details"))
 
     total_price = float(booking.get("total_price", 0))
 
@@ -5606,6 +5677,7 @@ def hotel_payment():
         return render_template(
             "hotel_payment.html",
             booking=booking,
+            hotel_guests=hotel_guests,
             total_price=total_price,
             final_price=final_price if final_price is not None else total_price,
             available_points=available_points,
@@ -5690,12 +5762,14 @@ def hotel_payment():
 
         session["hotel_confirmed_booking"] = {
             **booking,
+            "hotel_guests": hotel_guests,
             "booking_reference": booking_reference,
             "total_price": final_price,
             "status": "CONFIRMED"
         }
 
         session.pop("pending_hotel_booking", None)
+        session.pop("pending_hotel_guests", None)
 
         return redirect(url_for("hotel_confirmation"))
 
