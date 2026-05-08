@@ -149,13 +149,13 @@
 
             {% set extra = extras.get('passenger_extras', [])[passenger_index] if extras.get('passenger_extras') and extras.get('passenger_extras')|length > passenger_index else None %}
             {% if extra %}
-                <strong>Baggage:</strong>
+               <strong>Baggage:</strong>
                 {% if "1 checked bag" in extra.baggage %}
                     {{ "1 checked bag"|tv }} (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})
                 {% elif "2 checked bags" in extra.baggage %}
                     {{ "2 checked bags"|tv }} (+{{ selected_currency }} {{ convert_price(60, selected_currency) }})
                 {% else %}
-                    {{ extra.baggage }}
+                    {{ extra.baggage|tv }}
                 {% endif %}
                 <br>
                <strong>{{ t.meal }}:</strong> {{ extra.meal_choice|tv }}
@@ -305,6 +305,31 @@
     cursor: pointer;
     z-index: 10;
     line-height: 1;
+}
+.rewards-card {
+    background: #ffffff;
+    border: 1px solid #dbe7ff;
+    box-shadow: 0 14px 34px rgba(31, 60, 136, 0.12);
+    color: #10203f;
+}
+
+.rewards-card .rewards-label,
+.rewards-card h2,
+.rewards-card .rewards-subtitle,
+.rewards-card .points-balance span,
+.rewards-card .points-balance strong {
+    color: #1f3c88;
+}
+
+.rewards-card .premium-option {
+    background: #f8fbff;
+    border: 1px solid #dbe7ff;
+    color: #10203f;
+}
+
+.rewards-card .premium-option strong,
+.rewards-card .premium-option span {
+    color: #10203f;
 }
 </style>
 

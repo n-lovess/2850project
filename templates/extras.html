@@ -4,12 +4,16 @@
 
 {% block content %}
 <h1>{{ t.extras_title or 'Choose Your Extras' }}</h1>
-<p class="subtitle">Choose baggage and meal preferences for each passenger.</p>
+<p class="subtitle">{{ t.choose_baggage_meal }}</p>
 
 <div class="card summary-card">
-    <h2>
-        Your Flight{% if selected_flights|length > 1 %}s{% endif %}
-    </h2>
+   <h2>
+    {% if selected_flights|length > 1 %}
+        {{ t.your_flights }}
+    {% else %}
+        {{ t.your_flight }}
+    {% endif %}
+   </h2>
 
     {% for selected in selected_flights %}
         <div class="manage-note" style="margin-bottom: 14px;">
@@ -17,7 +21,7 @@
             <p><strong>{{ t.route or 'Route' }}:</strong> {{ selected.from }} → {{ selected.to }}</p>
             <p><strong>{{ t.time or 'Time' }}:</strong> {{ selected.departure_time }} - {{ selected.arrival_time }}</p>
             <p><strong>{{ t.class_label or 'Class' }}:</strong> {{ selected.class }}</p>
-            <p><strong>{{ t.base_price or 'Base Price' }}:</strong> {{ selected_currency }} {{ convert_price(selected.price, selected_currency) }} per passenger</p>
+            <p><strong>{{ t.base_price or 'Base Price' }}:</strong> {{ selected_currency }} {{ convert_price(selected.price, selected_currency) }} {{ t.per_passenger }}</p>
         </div>
     {% endfor %}
 

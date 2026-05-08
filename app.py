@@ -631,6 +631,13 @@ translations = {
 
 "minute": "min",
 "minutes": "mins",
+"choose_baggage_meal": "Choose baggage and meal preferences for each passenger.",
+"your_flight": "Your Flight",
+"your_flights": "Your Flights",
+"per_passenger": "per passenger",
+"Travel Insurance (+£25)": "Travel Insurance (+£25)",
+
+
     },
     "fr": {
     "welcome": "Bienvenue sur AirGo",
@@ -1299,6 +1306,11 @@ translations = {
 
 "minute": "min",
 "minutes": "min",
+"choose_baggage_meal": "Choisissez les bagages et préférences de repas pour chaque passager.",
+"your_flight": "Votre vol",
+"your_flights": "Vos vols",
+"per_passenger": "par passager",
+"Travel Insurance (+£25)": "Assurance voyage (+£25)",
 },
 
     "ar": {
@@ -1968,6 +1980,11 @@ translations = {
 
 "minute": "min",
 "minutes": "min",
+"choose_baggage_meal": "اختر الأمتعة وتفضيلات الوجبات لكل مسافر.",
+"your_flight": "رحلتك",
+"your_flights": "رحلاتك",
+"per_passenger": "لكل مسافر",
+"Travel Insurance (+£25)": "تأمين السفر (+£25)",
 }
 }
 

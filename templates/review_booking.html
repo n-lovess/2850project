@@ -27,9 +27,9 @@
             </p>
 
             <p><strong>{{ t.time if t.time is defined else 'Time' }}:</strong> {{ flight.departure_time }} - {{ flight.arrival_time }}</p>
-            <p><strong>{{ t.class_label if t.class_label is defined else 'Class' }}:</strong> {{ flight.class }}</p>
+            <p><strong>{{ t.class_label if t.class_label is defined else 'Class' }}:</strong> {{ flight.class|tv }}</p>
 
-            <p><strong>{{ t.seats if t.seats is defined else 'Seats' }}:</strong>
+            <p><strong>{{ t.seat if t.seat is defined else 'Seat' }}:</strong>
                 {% if selected_seats_by_flight %}
                     {{ selected_seats_by_flight[flight_index] | join(', ') }}
                 {% else %}
@@ -49,7 +49,7 @@
 
     <p>
         <strong>{{ t.travel_insurance if t.travel_insurance is defined else 'Travel Insurance' }}:</strong>
-        {{ extras.get('insurance', t.no_insurance if t.no_insurance is defined else 'No Travel Insurance') }}
+        {{ extras.get('insurance', t.no_insurance if t.no_insurance is defined else 'No Travel Insurance')|tv }}
     </p>
 
     {% for item in extras.get('passenger_extras', []) %}
@@ -58,11 +58,11 @@
             {{ item.first_name }} {{ item.last_name }}<br>
 
             <strong>{{ t.baggage if t.baggage is defined else 'Baggage' }}:</strong>
-            {{ item.baggage }}
+           {{ item.baggage|tv }}
             <br>
 
             <strong>{{ t.meal if t.meal is defined else 'Meal' }}:</strong>
-            {{ item.meal_choice }}
+            {{ item.meal_choice|tv }}
         </div>
     {% endfor %}
 </div>
