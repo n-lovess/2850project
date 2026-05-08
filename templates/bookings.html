@@ -423,36 +423,82 @@
 {% endif %}
 
 {% if taxi_bookings %}
-    <h3 style="margin-top: 36px; margin-bottom: 16px;">Airport Transfers</h3>
+    <h3 style="margin-top: 36px; margin-bottom: 16px;">
+        {{ t.airport_transfers }}
+    </h3>
+
     {% for tb in taxi_bookings %}
         <div class="card manage-card">
+
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+
                 <div>
-                    <h3 style="margin-bottom: 6px;">🚗 {{ tb.transfer_type }}</h3>
+                    <h3 style="margin-bottom: 6px;">
+                        🚗 {{ tb.transfer_type|tv }}
+                    </h3>
+
                     <p style="margin: 0; color: #64748b; font-size: 14px;">
                         {{ tb.pickup }} → {{ tb.dropoff }}
                     </p>
                 </div>
+
                 <div style="text-align: right;">
-                    <div style="font-size: 13px; color: #64748b;">Booking Ref</div>
-                    <div style="font-size: 18px; font-weight: 700; color: #1f3c88;">{{ tb.booking_reference }}</div>
+                    <div style="font-size: 13px; color: #64748b;">
+                        {{ t.booking_reference }}
+                    </div>
+
+                    <div style="font-size: 18px; font-weight: 700; color: #1f3c88;">
+                        {{ tb.booking_reference }}
+                    </div>
                 </div>
+
             </div>
+
             <div class="manage-note" style="margin-top: 14px;">
-                <strong>Passenger:</strong> {{ tb.first_name }} {{ tb.last_name }}<br>
-                <strong>Phone:</strong> {{ tb.phone }}<br>
-                <strong>Email:</strong> {{ tb.email }}<br>
-                <strong>Date Booked:</strong> {{ tb.booking_date }}<br>
-                <strong>Price Paid:</strong>
+
+                <strong>{{ t.passenger_label }}:</strong>
+                {{ tb.first_name }} {{ tb.last_name }}<br>
+
+                <strong>{{ t.phone_number }}:</strong>
+                {{ tb.phone }}<br>
+
+                <strong>{{ t.email_address }}:</strong>
+                {{ tb.email }}<br>
+
+                <strong>{{ t.date_booked }}:</strong>
+                {{ tb.booking_date }}<br>
+
+                <strong>{{ t.price_paid }}:</strong>
                 {{ selected_currency }}
                 {{ "%.2f"|format(convert_price(tb.price, selected_currency)) }}<br>
-                <strong>Status:</strong>
-                <span style="display:inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;
-                    background: {% if tb.status == 'Confirmed' %}#d1fae5{% else %}#fee2e2{% endif %};
-                    color: {% if tb.status == 'Confirmed' %}#065f46{% else %}#991b1b{% endif %};">
-                    {{ tb.status }}
+
+                <strong>{{ t.status }}:</strong>
+
+                <span style="
+                    display:inline-block;
+                    padding: 2px 10px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 700;
+                    background:
+                    {% if tb.status == 'Confirmed' %}
+                        #d1fae5
+                    {% else %}
+                        #fee2e2
+                    {% endif %};
+
+                    color:
+                    {% if tb.status == 'Confirmed' %}
+                        #065f46
+                    {% else %}
+                        #991b1b
+                    {% endif %};
+                ">
+                    {{ tb.status|tv if tb.status else t.confirmed }}
                 </span>
+
             </div>
+
         </div>
     {% endfor %}
 {% endif %}

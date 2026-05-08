@@ -14,11 +14,30 @@
     </div>
     <div style="background: #eef4ff; border: 1px solid #c7d7f5; border-radius: 10px; padding: 14px 20px; flex: 1; min-width: 180px;">
         <div style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">{{ t.travel_time }}</div>
-        <div style="font-size: 22px; font-weight: 700; color: #1f3c88;">{{ results.duration }}</div>
+        <div style="font-size: 22px; font-weight: 700; color: #1f3c88;">{{ results.duration.replace("mins", "").replace("min", "").strip() }} {{ t.minutes }}</div>
     </div>
     <div style="background: #eef4ff; border: 1px solid #c7d7f5; border-radius: 10px; padding: 14px 20px; flex: 1; min-width: 180px;">
         <div style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">{{ t.transfer_type }}</div>
-        <div style="font-size: 22px; font-weight: 700; color: #1f3c88;">{{ ticket_class|tv }}</div>
+        <div style="font-size: 22px; font-weight: 700; color: #1f3c88;">
+
+    {% if ticket_class == "Standard Taxi" %}
+        {{ t.standard_taxi }}
+
+    {% elif ticket_class == "Minivan" %}
+        {{ t.minivan }}
+
+    {% elif ticket_class == "Luxury Car" %}
+        {{ t.luxury_car }}
+
+    {% elif ticket_class == "Meet & Greet + Luxury Transfer" %}
+        {{ t.meet_greet_luxury_transfer }}
+
+    {% else %}
+        {{ ticket_class|tv }}
+
+    {% endif %}
+
+</div>
     </div>
 </div>
 
@@ -116,7 +135,7 @@
                 <div style="display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
                     <div style="flex: 1;">
                         <h3 style="color: #f0d060; margin-bottom: 6px; font-size: 20px;">{{ option.icon }} {{ option.name|tv }}</h3>
-                        <p style="margin: 0; color: #b8c8f0; font-size: 14px;">{{ option.desc|tv }}</p>
+                        <p style="margin: 0; color: #b8c8f0; font-size: 14px;">{{ option.desc|tv if option.desc else "" }}</p>
                     </div>
                 </div>
 
