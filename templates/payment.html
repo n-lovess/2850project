@@ -149,7 +149,7 @@
 
             {% set extra = extras.get('passenger_extras', [])[passenger_index] if extras.get('passenger_extras') and extras.get('passenger_extras')|length > passenger_index else None %}
             {% if extra %}
-               <strong>Baggage:</strong>
+               <strong>{{ t.baggage }}:</strong>
                 {% if "1 checked bag" in extra.baggage %}
                     {{ "1 checked bag"|tv }} (+{{ selected_currency }} {{ convert_price(30, selected_currency) }})
                 {% elif "2 checked bags" in extra.baggage %}

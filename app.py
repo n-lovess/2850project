@@ -631,6 +631,7 @@ translations = {
 
 "minute": "min",
 "minutes": "mins",
+<<<<<<< HEAD
 "enter_details_for_all": "Enter details for all",
 "selected_flights": "Selected Flights",
 "choose_seats_for_each_flight_start": "Choose",
@@ -638,6 +639,23 @@ translations = {
 "plural_s": "s",
 "seats_for": "Seats for",
 "please_choose_seats_alert": "Please choose seats for every flight before continuing. Passengers:",
+=======
+"need_transfer": "Need a transfer from the airport?",
+"transfer_suggestion_text": "Book a taxi or luxury transfer to your destination.",
+"book_airport_transfer": "Book Airport Transfer",
+"need_hotel_in": "Need a hotel in",
+"hotel_suggestion_text": "Find available hotels matching your travel dates at your destination.",
+"find_hotels_for_trip": "Find hotels for this trip",
+"guest_details": "Guest Details",
+"hotel_guest_details_subtitle": "Enter details for all guests staying at the hotel.",
+"guest_special_requests": "Guest Special Requests",
+"guest_special_requests_placeholder": "Add any requests for this guest...",
+"continue_to_hotel_payment": "Continue to Hotel Payment",
+"continue_guest_details": "Continue to Guest Details",
+"selected_flights": "Selected Flights",
+"seats_for": "Seats For",
+"per_passenger": "Per Passenger",
+>>>>>>> 4b446d46dc475c3831deb317bcd77dae800f209c
     },
     "fr": {
     "welcome": "Bienvenue sur AirGo",
@@ -1306,6 +1324,7 @@ translations = {
 
 "minute": "min",
 "minutes": "min",
+<<<<<<< HEAD
 "enter_details_for_all": "Entrez les informations pour",
 "selected_flights": "Vols sélectionnés",
 "choose_seats_for_each_flight_start": "Choisissez",
@@ -1313,6 +1332,23 @@ translations = {
 "plural_s": "s",
 "seats_for": "Sièges pour",
 "please_choose_seats_alert": "Veuillez choisir des sièges pour chaque vol avant de continuer. Passagers :",
+=======
+"need_transfer": "Besoin d’un transfert depuis l’aéroport ?",
+"transfer_suggestion_text": "Réservez un taxi ou un transfert de luxe vers votre destination.",
+"book_airport_transfer": "Réserver un transfert aéroport",
+"need_hotel_in": "Besoin d’un hôtel à",
+"hotel_suggestion_text": "Trouvez des hôtels disponibles correspondant à vos dates de voyage à destination.",
+"find_hotels_for_trip": "Trouver des hôtels pour ce voyage",
+"guest_details": "Détails des voyageurs",
+"hotel_guest_details_subtitle": "Entrez les informations de tous les clients séjournant à l’hôtel.",
+"guest_special_requests": "Demandes spéciales du client",
+"guest_special_requests_placeholder": "Ajoutez des demandes pour ce client...",
+"continue_to_hotel_payment": "Continuer vers le paiement de l’hôtel",
+"continue_guest_details": "Continuer vers les détails des voyageurs",
+"selected_flights": "Vols Sélectionnés",
+"seats_for": "Places Pour",
+"per_passenger": "Par Passager",
+>>>>>>> 4b446d46dc475c3831deb317bcd77dae800f209c
 },
 
     "ar": {
@@ -1982,6 +2018,7 @@ translations = {
 
 "minute": "min",
 "minutes": "min",
+<<<<<<< HEAD
 "enter_details_for_all": "أدخل التفاصيل لجميع",
 "selected_flights": "الرحلات المختارة",
 "choose_seats_for_each_flight_start": "اختر",
@@ -1990,6 +2027,23 @@ translations = {
 "seats_for": "المقاعد للرحلة",
 "please_choose_seats_alert": "يرجى اختيار المقاعد لكل رحلة قبل المتابعة. عدد المسافرين:",
 
+=======
+"need_transfer": "تحتاج نقل من المطار؟",
+"transfer_suggestion_text": "احجز تاكسي أو نقل فاخر لوجهتك.",
+"book_airport_transfer": "احجز نقل من المطار",
+"need_hotel_in": "تحتاج فندق في",
+"hotel_suggestion_text": "لقّى فنادق متوفرة توافق تواريخ سفرك في وجهتك.",
+"find_hotels_for_trip": "لقّى فنادق لهذا السفر",
+"guest_details": "تفاصيل الضيوف",
+"hotel_guest_details_subtitle": "دخل معلومات جميع الضيوف اللي راهم حابين يقيمو في الفندق.",
+"guest_special_requests": "طلبات خاصة للضيف",
+"guest_special_requests_placeholder": "زيد أي طلبات خاصة لهذا الضيف...",
+"continue_to_hotel_payment": "واصل للدفع تاع الفندق",
+"continue_guest_details": "واصل لتفاصيل الضيوف",
+"selected_flights": "الرحلات المختارة",
+"seats_for": "مقاعد لـ",
+"per_passenger": "لكل مسافر",
+>>>>>>> 4b446d46dc475c3831deb317bcd77dae800f209c
 }
 }
 
