@@ -104,14 +104,33 @@ document.addEventListener("DOMContentLoaded", function () {
     let selectedValidCity = false;
     let timer;
 
-    checkIn.min = new Date().toISOString().split("T")[0];
+    const today = new Date().toISOString().split("T")[0];
 
-    checkIn.addEventListener("change", function () {
-        checkOut.min = this.value;
-        if (checkOut.value && checkOut.value <= this.value) {
-            checkOut.value = "";
+    checkIn.min = today;
+
+    function getNextDay(dateString) {
+        const date = new Date(dateString);
+        date.setDate(date.getDate() + 1);
+        return date.toISOString().split("T")[0];
+    }
+
+    function updateCheckoutMinimum() {
+        if (!checkIn.value) {
+            checkOut.min = today;
+            return;
         }
-    });
+
+        const minCheckout = getNextDay(checkIn.value);
+        checkOut.min = minCheckout;
+
+        if (!checkOut.value || checkOut.value < minCheckout) {
+            checkOut.value = minCheckout;
+        }
+    }
+
+    checkIn.addEventListener("change", updateCheckoutMinimum);
+
+    updateCheckoutMinimum();
 
     destination.addEventListener("input", function () {
         selectedValidCity = false;

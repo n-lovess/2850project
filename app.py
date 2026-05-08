@@ -2091,7 +2091,7 @@ SAMPLE_FLIGHTS = []
 
 SAMPLE_HOTELS = []
 
-AVIATIONSTACK_API_KEY = "270c5da71fd3c113cdafb2e0556f5864"
+AVIATIONSTACK_API_KEY = "96c825ec449994127cf418ff1869ab55"
 
 def get_airport_from_code(code):
     code = (code or "").upper()
@@ -2108,7 +2108,7 @@ def get_real_flights(dep_iata, arr_iata, flight_date):
     url = "http://api.aviationstack.com/v1/flights"
 
     params = {
-        "access_key": "270c5da71fd3c113cdafb2e0556f5864",
+        "access_key": "96c825ec449994127cf418ff1869ab55",
         "dep_iata": dep_iata,
         "arr_iata": arr_iata
     }
@@ -5293,7 +5293,10 @@ def hotel_search():
         try:
             check_in_date = datetime.strptime(check_in, "%Y-%m-%d")
             check_out_date = datetime.strptime(check_out, "%Y-%m-%d")
-            nights = max(1, (check_out_date - check_in_date).days)
+            if check_out_date <= check_in_date:
+                flash("Check out date must be at least one day after check in.", "error")
+                return redirect(url_for("hotels"))
+            nights = (check_out_date - check_in_date).days
         except:
             nights = 1
 
