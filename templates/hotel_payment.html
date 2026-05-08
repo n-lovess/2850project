@@ -1,290 +1,249 @@
 {% extends "base.html" %}
-
 {% block title %}{{ t.hotel_payment }} - AirGo{% endblock %}
-
 {% block content %}
-
 <h1>{{ t.hotel_payment }}</h1>
-
 {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            <div class="flash-message flash-{{ category }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
+   {% if messages %}
+       {% for category, message in messages %}
+<div class="flash-message flash-{{ category }}">{{ message }}</div>
+       {% endfor %}
+   {% endif %}
 {% endwith %}
-
 <div class="card summary-card">
-    <h2>{{ t.hotel_fare_details }}</h2>
-
-    <p><strong>{{ t.hotel }}:</strong> {{ booking.hotel_name }}</p>
-
-    <p>
-        <strong>{{ t.location }}:</strong>
-        {{ booking.hotel_city }}
-        {% if booking.hotel_country %}, {{ booking.hotel_country|upper }}{% endif %}
-    </p>
-
-    <p><strong>{{ t.check_in }}:</strong> {{ booking.check_in }}</p>
-
-    <p><strong>{{ t.check_out }}:</strong> {{ booking.check_out }}</p>
-
-    <p><strong>{{ t.guests }}:</strong> {{ booking.guests }}</p>
-
-    <p><strong>{{ t.room_type }}:</strong> {{ booking.room_type|tv }}</p>
-
-    {% if hotel_guests %}
-        <hr>
-        <h3>{{ t.guest_details }}</h3>
-
-        {% for guest in hotel_guests %}
-            <div class="manage-note" style="margin-bottom: 12px;">
-                <p><strong>{{ t.guest }} {{ loop.index }}:</strong> {{ guest.first_name }} {{ guest.last_name }}</p>
-                <p><strong>{{ t.email_address }}:</strong> {{ guest.email }}</p>
-                <p><strong>{{ t.phone_number }}:</strong> {{ guest.phone }}</p>
-
-                {% if guest.special_requests %}
-                    <p><strong>{{ t.special_requests }}:</strong> {{ guest.special_requests }}</p>
-                {% endif %}
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <p id="points-discount-row" style="display: none;">
-        <strong>{{ t.points_discount }}:</strong>
-
-        -<span id="points-discount-amount">
-            {{ selected_currency }} 0.00
-        </span>
-    </p>
-
-    <hr>
-
-    <p style="font-size: 18px; font-weight: bold;">
-        {{ t.total }}:
-
-        <span id="display-total">
-            {{ "%.2f"|format(convert_price(final_price, selected_currency)) }}
-        </span>
-
-        {{ selected_currency }}
-    </p>
+<h2>{{ t.hotel_fare_details }}</h2>
+<p><strong>{{ t.hotel }}:</strong> {{ booking.hotel_name }}</p>
+<p>
+<strong>{{ t.location }}:</strong>
+       {{ booking.hotel_city }}
+       {% if booking.hotel_country %}, {{ booking.hotel_country|upper }}{% endif %}
+</p>
+<p><strong>{{ t.check_in }}:</strong> {{ booking.check_in }}</p>
+<p><strong>{{ t.check_out }}:</strong> {{ booking.check_out }}</p>
+<p><strong>{{ t.guests }}:</strong> {{ booking.guests }}</p>
+<p><strong>{{ t.room_type }}:</strong> {{ booking.room_type|tv }}</p>
+   {% if hotel_guests %}
+<hr>
+<h3>{{ t.guest_details }}</h3>
+       {% for guest in hotel_guests %}
+<div class="manage-note" style="margin-bottom: 12px;">
+<p>
+<strong>{{ t.guest }} {{ loop.index }}:</strong>
+                   {{ guest.first_name }} {{ guest.last_name }}
+</p>
+<p>
+<strong>{{ t.email_address }}:</strong>
+                   {{ guest.email }}
+</p>
+<p>
+<strong>{{ t.phone_number }}:</strong>
+                   {{ guest.phone }}
+</p>
+               {% if guest.special_requests %}
+<p>
+<strong>{{ t.special_requests }}:</strong>
+                       {{ guest.special_requests }}
+</p>
+               {% endif %}
 </div>
-
+       {% endfor %}
+   {% endif %}
+<p id="points-discount-row" style="display:none;">
+<strong>{{ t.points_discount }}:</strong>
+       -<span id="points-discount-amount">
+           {{ selected_currency }} 0.00
+</span>
+</p>
+<hr>
+<p style="font-size:18px; font-weight:bold;">
+       {{ t.total }}:
+<span id="display-total">
+           {{ "%.2f"|format(convert_price(final_price, selected_currency)) }}
+</span>
+       {{ selected_currency }}
+</p>
+</div>
 {% if point_options %}
 <div class="card">
-
-    <h2>{{ t.use_points }}</h2>
-
-    <p>
-        <strong>{{ t.your_points }}:</strong>
-        {{ available_points }}
-    </p>
-
-    <p class="small-text">
-        100 {{ t.points }} = 1 GBP {{ t.discount }}
-    </p>
-
-    <div class="points-options">
-
-        {% for opt in point_options %}
-            <label class="points-option">
-
-                <input
-                    type="radio"
-                    name="points_to_use_display"
-                    value="{{ opt.points }}"
-                    data-discount-gbp="{{ "%.2f"|format(opt.discount) }}"
-                    data-total-gbp="{{ "%.2f"|format(total_price) }}"
-                >
-
-                <strong>
-                    {{ "%.2f"|format(convert_price(opt.discount, selected_currency)) }}
-                    {{ selected_currency }}
-                    {{ t.off }}
-                </strong>
-
-                <span>
-                    {{ opt.points }} {{ t.points }}
-                </span>
-
-            </label>
-        {% endfor %}
-
-        <label class="points-option">
-
-            <input
-                type="radio"
-                name="points_to_use_display"
-                value="0"
-                data-discount-gbp="0"
-                data-total-gbp="{{ "%.2f"|format(total_price) }}"
-                checked
-            >
-
-            <strong>{{ t.no_points }}</strong>
-
-            <span>{{ t.pay_full_price }}</span>
-
-        </label>
-
-    </div>
+<h2>{{ t.use_points }}</h2>
+<p>
+<strong>{{ t.your_points }}:</strong>
+       {{ available_points }}
+</p>
+<p class="small-text">
+       100 {{ t.points }} = 1 GBP {{ t.discount }}
+</p>
+<div class="points-options">
+       {% for opt in point_options %}
+<label class="points-option">
+<input
+                   type="radio"
+                   name="points_to_use_display"
+                   value="{{ opt.points }}"
+                   data-discount-gbp="{{ "%.2f"|format(opt.discount) }}"
+                   data-total-gbp="{{ "%.2f"|format(total_price) }}"
+>
+<strong>
+                   {{ "%.2f"|format(convert_price(opt.discount, selected_currency)) }}
+                   {{ selected_currency }}
+                   {{ t.off }}
+</strong>
+<span>
+                   {{ opt.points }} {{ t.points }}
+</span>
+</label>
+       {% endfor %}
+<label class="points-option">
+<input
+               type="radio"
+               name="points_to_use_display"
+               value="0"
+               data-discount-gbp="0"
+               data-total-gbp="{{ "%.2f"|format(total_price) }}"
+               checked
+>
+<strong>{{ t.no_points }}</strong>
+<span>{{ t.pay_full_price }}</span>
+</label>
+</div>
 </div>
 {% endif %}
-
 <div class="card">
-
-    <form method="POST" class="form-grid">
-
-        <input
-            type="hidden"
-            id="hidden-points-to-use"
-            name="points_to_use"
-            value="0"
-        >
-
-        <div class="full-width">
-
-            <label for="card_name">
-                {{ t.name_on_card }}
-            </label>
-
-            <input
-                type="text"
-                id="card_name"
-                name="card_name"
-                pattern="[A-Za-z\s'-]+"
-                title="{{ t.name_letters_only }}"
-                required
-            >
-
-        </div>
-
-        <div class="full-width">
-
-            <label for="card_number">
-                {{ t.card_number }}
-            </label>
-
-            <input
-                type="text"
-                id="card_number"
-                name="card_number"
-                maxlength="16"
-                minlength="16"
-                pattern="[0-9]{16}"
-                title="{{ t.card_number_validation }}"
-                required
-            >
-
-        </div>
-
-        <div>
-
-            <label for="expiry_date">
-                {{ t.expiry_date }}
-            </label>
-
-            <input
-                type="month"
-                id="expiry_date"
-                name="expiry_date"
-                min="{{ current_month }}"
-                required
-            >
-
-        </div>
-
-        <div>
-
-            <label for="cvv">CVV</label>
-
-            <input
-                type="password"
-                id="cvv"
-                name="cvv"
-                maxlength="4"
-                minlength="3"
-                pattern="[0-9]{3,4}"
-                title="{{ t.cvv_validation }}"
-                required
-            >
-
-        </div>
-
-        <div class="full-width terms-box">
-
-            <label class="checkbox-row">
-
-                <input
-                    type="checkbox"
-                    id="accept_terms"
-                    name="accept_terms"
-                    required
-                >
-
-                <span>
-                    {{ t.i_agree_terms }}
-
-                    <a href="{{ url_for('terms') }}" class="terms-link">
-                        {{ t.terms_conditions }}
-                    </a>
-                </span>
-
-            </label>
-
-            <label class="checkbox-row">
-
-                <input type="checkbox" name="subscribe_offers">
-
-                <span>
-                    {{ t.receive_offers }}
-                </span>
-
-            </label>
-
-        </div>
-
-        <div class="full-width">
-
-            <button type="submit" class="btn">
-                {{ t.complete_hotel_booking }}
-            </button>
-
-        </div>
-
-    </form>
+<form method="POST" class="form-grid">
+<input
+           type="hidden"
+           id="hidden-points-to-use"
+           name="points_to_use"
+           value="0"
+>
+<div class="full-width">
+<label for="card_name">{{ t.name_on_card }}</label>
+<input
+               type="text"
+               id="card_name"
+               name="card_name"
+               pattern="[A-Za-z\s'-]+"
+               title="{{ t.name_letters_only }}"
+               required
+>
 </div>
-
+<div class="full-width">
+<label for="card_number">{{ t.card_number }}</label>
+<input
+               type="text"
+               id="card_number"
+               name="card_number"
+               maxlength="16"
+               minlength="16"
+               pattern="[0-9]{16}"
+               title="{{ t.card_number_validation }}"
+               required
+>
+</div>
+<div>
+<label for="expiry_date">{{ t.expiry_date }}</label>
+<input
+               type="month"
+               id="expiry_date"
+               name="expiry_date"
+               min="{{ current_month }}"
+               required
+>
+</div>
+<div>
+<label for="cvv">CVV</label>
+<input
+               type="password"
+               id="cvv"
+               name="cvv"
+               maxlength="4"
+               minlength="3"
+               pattern="[0-9]{3,4}"
+               title="{{ t.cvv_validation }}"
+               required
+>
+</div>
+<div class="full-width terms-box">
+<label class="checkbox-row">
+<input
+                   type="checkbox"
+                   id="accept_terms"
+                   name="accept_terms"
+                   required
+>
+<span>
+                   {{ t.i_agree_terms }}
+<a href="{{ url_for('terms') }}" id="open-terms-modal" class="terms-link">
+                       {{ t.terms_conditions }}
+</a>
+</span>
+</label>
+<label class="checkbox-row">
+<input type="checkbox" name="subscribe_offers">
+<span>
+                   {{ t.receive_offers }}
+</span>
+</label>
+</div>
+<div class="full-width">
+<button type="submit" class="btn">
+               {{ t.complete_hotel_booking }}
+</button>
+</div>
+</form>
+</div>
+<div id="terms-modal" class="modal-overlay" style="display:none;">
+<div class="modal-box">
+<button type="button" id="close-terms-modal" class="modal-close">×</button>
+<h2>{{ t.terms_conditions }}</h2>
+<div class="terms-modal-body">
+<h3>{{ t.booking_terms }}</h3>
+<p>{{ t.booking_terms_text }}</p>
+<h3>{{ t.payments }}</h3>
+<p>{{ t.payments_text }}</p>
+<h3>{{ t.changes_cancellations }}</h3>
+<p>{{ t.changes_cancellations_text }}</p>
+<h3>{{ t.passenger_responsibility }}</h3>
+<p>{{ t.passenger_responsibility_text }}</p>
+<h3>{{ t.special_requests }}</h3>
+<p>{{ t.special_requests_text }}</p>
+<h3>{{ t.notifications_offers }}</h3>
+<p>{{ t.notifications_offers_text }}</p>
+</div>
+</div>
+</div>
 <script>
-    const conversionRate = Number({{ convert_price(1, selected_currency) }});
-    const selectedCurrency = "{{ selected_currency }}";
-
-    document.querySelectorAll('input[name="points_to_use_display"]').forEach(function(radio) {
-
-        radio.addEventListener("change", function() {
-
-            const totalGBP = parseFloat(this.dataset.totalGbp);
-            const discountGBP = parseFloat(this.dataset.discountGbp);
-
-            const newTotalGBP = Math.max(0, totalGBP - discountGBP);
-
-            const convertedTotal = newTotalGBP * conversionRate;
-            const convertedDiscount = discountGBP * conversionRate;
-
-            document.getElementById("display-total").textContent =
-                convertedTotal.toFixed(2);
-
-            document.getElementById("points-discount-amount").textContent =
-                selectedCurrency + " " + convertedDiscount.toFixed(2);
-
-            document.getElementById("hidden-points-to-use").value = this.value;
-
-            document.getElementById("points-discount-row").style.display =
-                discountGBP > 0 ? "block" : "none";
-        });
-
-    });
+const conversionRate = Number({{ convert_price(1, selected_currency) }});
+const selectedCurrency = "{{ selected_currency }}";
+document.querySelectorAll('input[name="points_to_use_display"]').forEach(function(radio) {
+   radio.addEventListener("change", function() {
+       const totalGBP = parseFloat(this.dataset.totalGbp);
+       const discountGBP = parseFloat(this.dataset.discountGbp);
+       const newTotalGBP = Math.max(0, totalGBP - discountGBP);
+       const convertedTotal = newTotalGBP * conversionRate;
+       const convertedDiscount = discountGBP * conversionRate;
+       document.getElementById("display-total").textContent =
+           convertedTotal.toFixed(2);
+       document.getElementById("points-discount-amount").textContent =
+           selectedCurrency + " " + convertedDiscount.toFixed(2);
+       document.getElementById("hidden-points-to-use").value = this.value;
+       document.getElementById("points-discount-row").style.display =
+           discountGBP > 0 ? "block" : "none";
+   });
+});
+const termsModal = document.getElementById("terms-modal");
+const openTermsModal = document.getElementById("open-terms-modal");
+const closeTermsModal = document.getElementById("close-terms-modal");
+openTermsModal.addEventListener("click", function(event) {
+   event.preventDefault();
+   termsModal.style.display = "flex";
+});
+closeTermsModal.addEventListener("click", function() {
+   termsModal.style.display = "none";
+});
+termsModal.addEventListener("click", function(event) {
+   if (event.target === termsModal) {
+       termsModal.style.display = "none";
+   }
+});
 </script>
-
 {% endblock %}
