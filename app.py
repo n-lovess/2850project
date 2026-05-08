@@ -646,6 +646,11 @@ translations = {
 "selected_flights": "Selected Flights",
 "seats_for": "Seats For",
 "per_passenger": "Per Passenger",
+"scheduled": "Scheduled",
+"boarding": "Boarding",
+"departed": "Departed",
+"landed": "Landed",
+"total_stay_price": "Total stay price",
     },
     "fr": {
     "welcome": "Bienvenue sur AirGo",
@@ -1329,6 +1334,11 @@ translations = {
 "selected_flights": "Vols Sélectionnés",
 "seats_for": "Places Pour",
 "per_passenger": "Par Passager",
+"scheduled": "Prévue",
+"boarding": "Embarquement",
+"departed": "Décollé",
+"landed": "Atterri",
+"total_stay_price": "Prix total du séjour",
 },
 
     "ar": {
@@ -2013,6 +2023,11 @@ translations = {
 "selected_flights": "الرحلات المختارة",
 "seats_for": "مقاعد لـ",
 "per_passenger": "لكل مسافر",
+"scheduled": "المجدولة",
+"boarding": "صعود",
+"departed": "أقلعَت",
+"landed": "هبوط",
+"total_stay_price": "السعر الإجمالي للإقامة",
 }
 }
 
