@@ -1,8 +1,7 @@
 # ✈️ AirGo Flight Booking System
 
-<div align="center">
 
-## COMP2850 Software Engineering Group Project  
+## COMP2850 Software Engineering Group Project 58
 ### University of Leeds – School of Computing
 
 A full-stack flight booking web application developed using **Flask**, **SQLite**, and modern software engineering practices.
