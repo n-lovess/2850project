@@ -41,7 +41,9 @@ Designed to support airline customers and administrators through an intuitive bo
 - [License](#-license)
 
 ---
+## 📚 Project Wiki
 
+[Flight Booking Wiki](https://wild-park-28a.notion.site/Flight-Booking-Wiki-35980bf06c3080a9880ff549d2fdda94)
 # 🚀 Project Overview
 
 AirGo is a web-based flight booking management system developed as part of the **COMP2850 Software Engineering Group Project** at the University of Leeds.
