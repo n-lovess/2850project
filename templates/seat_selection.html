@@ -25,7 +25,7 @@
             <p><strong>{{ t.route if t.route is defined else 'Route' }}:</strong> {{ selected.from }} ({{ selected.from_code }}) → {{ selected.to }} ({{ selected.to_code }})</p>
             <p><strong>{{ t.time if t.time is defined else 'Time' }}:</strong> {{ selected.departure_time }} - {{ selected.arrival_time }}</p>
             <p><strong>{{ t.class_label if t.class_label is defined else 'Class' }}:</strong> {{ selected.class }}</p>
-            <p><strong>{{ t.fare if t.fare is defined else 'Fare' }}:</strong> {{ selected_currency }} {{ convert_price(selected.price, selected_currency) }} per passenger</p>
+            <p><strong>{{ t.fare if t.fare is defined else 'Fare' }}:</strong> {{ selected_currency }} {{ convert_price(selected.price, selected_currency) }} {{ t.per_passenger }} </p>
         </div>
     {% endfor %}
 
@@ -90,7 +90,7 @@
 
                     <div class="cabin-section">
                         <h2 style="margin-bottom: 16px;">
-                            Seats for {{ flight.from_code }} → {{ flight.to_code }}
+                            {{ t.seats_for }} {{ flight.from_code }} → {{ flight.to_code }}
                         </h2>
 
                         {% set seat_sections = seat_maps[flight_loop.index0] %}
