@@ -43,7 +43,16 @@
 
         <div>
             <label>{{ t.mobile_number }} <span style="color: #c93b2c;">*</span></label>
-            <input type="tel" name="phone" value="{{ prefill.get('phone', '') }}" required>
+            <input
+                type="tel"
+                name="phone"
+                value="{{ prefill.get('phone', '') }}"
+                pattern="0[0-9]{8,14}"
+                inputmode="numeric"
+                placeholder="07123456789"
+                title="Phone number must start with 0 and contain 9 to 15 digits"
+                required
+            >
         </div>
 
         <div>
@@ -53,7 +62,15 @@
                     ({{ t.optional }})
                 </span>
             </label>
-            <input type="tel" name="alt_phone" value="{{ prefill.get('alt_phone', '') }}">
+            <input
+                type="tel"
+                name="alt_phone"
+                value="{{ prefill.get('alt_phone', '') }}"
+                pattern="0[0-9]{8,14}"
+                inputmode="numeric"
+                placeholder="07123456789"
+                title="Alternative phone number must start with 0 and contain 9 to 15 digits"
+            >
         </div>
 
         <div class="full-width">
