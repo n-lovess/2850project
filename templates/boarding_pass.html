@@ -12,8 +12,6 @@
             {% set seat_for_this_flight = passenger_seats[flight_index].strip() if passenger_seats|length > flight_index else segment.seat %}
 
             <div class="bp-ticket">
-
-                <!-- left coloured header -->
                 <div class="bp-header">
                     <img src="{{ url_for('static', filename='images/logo.png') }}" alt="AirGo" style="height: 50px; filter: brightness(0) invert(1);">
                     <div class="bp-airline">AirGo</div>
@@ -23,33 +21,36 @@
                         {{ segment.destination_code }}
                     </div>
                     <div class="bp-status-pill {% if passenger.status == 'Cancelled' %}bp-cancelled{% elif passenger.status == 'Changed' %}bp-changed{% else %}bp-scheduled{% endif %}">
-                        {% if passenger.status == "Cancelled" %}Cancelled
-                        {% elif passenger.status == "Changed" %}Changed
-                        {% else %}{{ booking.flight_status }}{% endif %}
+                        {% if passenger.status == "Cancelled" %}
+                            {{ "Cancelled"|tv }}
+                        {% elif passenger.status == "Changed" %}
+                            {{ "Changed"|tv }}
+                        {% else %}
+                            {{ booking.flight_status|tv }}
+                        {% endif %}
                     </div>
                 </div>
 
-                <!-- right details section -->
                 <div class="bp-details">
                     <div class="bp-row">
                         <div class="bp-field">
-                            <span class="bp-label">Passenger</span>
+                            <span class="bp-label">{{ t.passenger_label }}</span>
                             <span class="bp-val">{{ passenger.first_name }} {{ passenger.last_name }}</span>
                         </div>
                         <div class="bp-field">
-                            <span class="bp-label">Class</span>
-                            <span class="bp-val">{{ passenger.ticket_class if passenger.ticket_class else segment.ticket_class }}</span>
+                            <span class="bp-label">{{ t.class_label }}</span>
+                            <span class="bp-val">{{ (passenger.ticket_class if passenger.ticket_class else segment.ticket_class)|tv }}</span>
                         </div>
                     </div>
 
                     <div class="bp-row">
                         <div class="bp-field">
-                            <span class="bp-label">From</span>
+                            <span class="bp-label">{{ t.from_label }}</span>
                             <span class="bp-val">{{ segment.departure_city }}</span>
                             <span class="bp-small">{{ segment.departure_airport }}</span>
                         </div>
                         <div class="bp-field">
-                            <span class="bp-label">To</span>
+                            <span class="bp-label">{{ t.to_label }}</span>
                             <span class="bp-val">{{ segment.destination_city }}</span>
                             <span class="bp-small">{{ segment.destination_airport }}</span>
                         </div>
@@ -57,31 +58,30 @@
 
                     <div class="bp-row">
                         <div class="bp-field">
-                            <span class="bp-label">Date</span>
+                            <span class="bp-label">{{ t.date }}</span>
                             <span class="bp-val">{{ segment.flight_date }}</span>
                         </div>
                         <div class="bp-field">
-                            <span class="bp-label">Flight</span>
+                            <span class="bp-label">{{ t.flight }}</span>
                             <span class="bp-val">{{ segment.flight_number if segment.flight_number else "N/A" }}</span>
                         </div>
                         <div class="bp-field">
-                            <span class="bp-label">Seat</span>
+                            <span class="bp-label">{{ t.seat }}</span>
                             <span class="bp-val">{{ seat_for_this_flight }}</span>
                         </div>
                     </div>
 
                     <div class="bp-row">
                         <div class="bp-field">
-                            <span class="bp-label">Departure</span>
+                            <span class="bp-label">{{ t.departure }}</span>
                             <span class="bp-val">{{ segment.departure_time }}</span>
                         </div>
                         <div class="bp-field">
-                            <span class="bp-label">Arrival</span>
+                            <span class="bp-label">{{ t.arrival }}</span>
                             <span class="bp-val">{{ segment.arrival_time }}</span>
                         </div>
                     </div>
 
-                    <!-- fake barcode -->
                     <div class="bp-barcode">
                         <div class="bp-bars">
                             {% for i in range(40) %}
@@ -91,14 +91,13 @@
                         <div class="bp-barcode-text">{{ booking.booking_reference }}</div>
                     </div>
                 </div>
-
             </div>
         {% endfor %}
     {% endfor %}
 
     <div class="button-group">
-        <button onclick="window.print()" class="btn">{{ t.print_boarding_pass if t.print_boarding_pass is defined else 'Print Boarding Passes' }}</button>
-        <a href="{{ url_for('bookings') }}" class="btn secondary-btn">Back to Manage Booking</a>
+        <button onclick="window.print()" class="btn">{{ t.print_boarding_pass }}</button>
+        <a href="{{ url_for('bookings') }}" class="btn secondary-btn">{{ t.back_manage_booking }}</a>
     </div>
 </div>
 {% endblock %}
