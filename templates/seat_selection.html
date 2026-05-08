@@ -5,7 +5,7 @@
 {% block content %}
 <h1>{{ t.choose_seat if t.choose_seat is defined else 'Choose your seat' }}</h1>
 <p class="subtitle">
-    Choose {{ passenger_count }} seat{% if passenger_count > 1 %}s{% endif %} for each flight.
+    {{ t.choose_seats_for_each_flight_start }} {{ passenger_count }} {{ t.seat }}{% if passenger_count > 1 %}{{ t.plural_s }}{% endif %} {{ t.for_each_flight }}
 </p>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -17,15 +17,15 @@
 {% endwith %}
 
 <div class="card summary-card">
-    <h2>{{ t.your_flight if t.your_flight is defined else 'Your Flight' }}{% if selected_flights|length > 1 %}s{% endif %}</h2>
+    <h2>{% if selected_flights|length > 1 %}{{ t.your_flights }}{% else %}{{ t.your_flight }}{% endif %}</h2>
 
     {% for selected in selected_flights %}
         <div class="manage-note" style="margin-bottom: 14px;">
             <h3>{{ selected.airline }}</h3>
             <p><strong>{{ t.route if t.route is defined else 'Route' }}:</strong> {{ selected.from }} ({{ selected.from_code }}) → {{ selected.to }} ({{ selected.to_code }})</p>
             <p><strong>{{ t.time if t.time is defined else 'Time' }}:</strong> {{ selected.departure_time }} - {{ selected.arrival_time }}</p>
-            <p><strong>{{ t.class_label if t.class_label is defined else 'Class' }}:</strong> {{ selected.class }}</p>
-            <p><strong>{{ t.fare if t.fare is defined else 'Fare' }}:</strong> {{ selected_currency }} {{ convert_price(selected.price, selected_currency) }} per passenger</p>
+            <p><strong>{{ t.class_label if t.class_label is defined else 'Class' }}:</strong> {{ selected.class|tv }}</p>
+            <p><strong>{{ t.fare if t.fare is defined else 'Fare' }}:</strong>{{ selected_currency }} {{ convert_price(selected.price, selected_currency) }} {{ t.per_passenger }}</p>
         </div>
     {% endfor %}
 
@@ -90,7 +90,7 @@
 
                     <div class="cabin-section">
                         <h2 style="margin-bottom: 16px;">
-                            Seats for {{ flight.from_code }} → {{ flight.to_code }}
+                            {{ t.seats_for }} {{ flight.from_code }} → {{ flight.to_code }}
                         </h2>
 
                         {% set seat_sections = seat_maps[flight_loop.index0] %}
@@ -221,7 +221,7 @@
         for (let flightIndex = 0; flightIndex < flightCount; flightIndex++) {
             if (selectedSeatsByFlight[flightIndex].length !== passengerCount) {
                 event.preventDefault();
-                alert(`Please choose ${passengerCount} seat(s) for every flight before continuing.`);
+                alert(`{{ t.please_choose_seats_alert }} ${passengerCount}`);
                 return;
             }
         }

@@ -631,6 +631,13 @@ translations = {
 
 "minute": "min",
 "minutes": "mins",
+"enter_details_for_all": "Enter details for all",
+"selected_flights": "Selected Flights",
+"choose_seats_for_each_flight_start": "Choose",
+"for_each_flight": "for each flight.",
+"plural_s": "s",
+"seats_for": "Seats for",
+"please_choose_seats_alert": "Please choose seats for every flight before continuing. Passengers:",
     },
     "fr": {
     "welcome": "Bienvenue sur AirGo",
@@ -1299,6 +1306,13 @@ translations = {
 
 "minute": "min",
 "minutes": "min",
+"enter_details_for_all": "Entrez les informations pour",
+"selected_flights": "Vols sélectionnés",
+"choose_seats_for_each_flight_start": "Choisissez",
+"for_each_flight": "pour chaque vol.",
+"plural_s": "s",
+"seats_for": "Sièges pour",
+"please_choose_seats_alert": "Veuillez choisir des sièges pour chaque vol avant de continuer. Passagers :",
 },
 
     "ar": {
@@ -1968,6 +1982,14 @@ translations = {
 
 "minute": "min",
 "minutes": "min",
+"enter_details_for_all": "أدخل التفاصيل لجميع",
+"selected_flights": "الرحلات المختارة",
+"choose_seats_for_each_flight_start": "اختر",
+"for_each_flight": "لكل رحلة.",
+"plural_s": "",
+"seats_for": "المقاعد للرحلة",
+"please_choose_seats_alert": "يرجى اختيار المقاعد لكل رحلة قبل المتابعة. عدد المسافرين:",
+
 }
 }
 
