@@ -33,6 +33,23 @@
 
     <p><strong>{{ t.room_type }}:</strong> {{ booking.room_type|tv }}</p>
 
+    {% if hotel_guests %}
+        <hr>
+        <h3>{{ t.guest_details }}</h3>
+
+        {% for guest in hotel_guests %}
+            <div class="manage-note" style="margin-bottom: 12px;">
+                <p><strong>{{ t.guest }} {{ loop.index }}:</strong> {{ guest.first_name }} {{ guest.last_name }}</p>
+                <p><strong>{{ t.email_address }}:</strong> {{ guest.email }}</p>
+                <p><strong>{{ t.phone_number }}:</strong> {{ guest.phone }}</p>
+
+                {% if guest.special_requests %}
+                    <p><strong>{{ t.special_requests }}:</strong> {{ guest.special_requests }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% endif %}
+
     <p id="points-discount-row" style="display: none;">
         <strong>{{ t.points_discount }}:</strong>
 
