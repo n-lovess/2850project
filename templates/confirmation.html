@@ -25,7 +25,7 @@
         <div class="booking-ref-code">{{ booking_reference }}</div>
     </div>
 
-    <h2>Flight{% if flights_to_show|length > 1 %}s{% endif %}</h2>
+    <h2> {{ t.flight }} {% if flights_to_show|length > 1 %}s{% endif %}</h2>
 
     {% for selected in flights_to_show %}
         {% set flight_index = loop.index0 %}
@@ -36,7 +36,7 @@
             <strong>{{ t.departure_time_label if t.departure_time_label is defined else 'Departure Time' }}:</strong> {{ selected.departure_time }}<br>
             <strong>{{ t.arrival_time_label if t.arrival_time_label is defined else 'Arrival Time' }}:</strong> {{ selected.arrival_time }}<br>
             <strong>{{ t.ticket_class_label if t.ticket_class_label is defined else 'Ticket Class' }}:</strong> {{ selected.class }}<br>
-            <strong>Seat:</strong>
+            <strong>{{ t.seat }}:</strong>
             {% if selected_seats_by_flight is defined and selected_seats_by_flight %}
                 {% set seats_for_this_flight = selected_seats_by_flight[flight_index] %}
                 {% if seats_for_this_flight is string %}
@@ -58,7 +58,7 @@
         {% for passenger in passengers %}
             {% set passenger_index = loop.index0 %}
             <div class="manage-note">
-                <strong>Passenger {{ loop.index }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}<br>
+                <strong> Passenger {{ loop.index }}:</strong> {{ passenger.first_name }} {{ passenger.last_name }}<br>
                 <strong>Email:</strong> {{ passenger.email }}<br>
 
                 <strong>Seats:</strong>
