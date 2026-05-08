@@ -2180,7 +2180,7 @@ def get_real_flights(dep_iata, arr_iata, flight_date):
 
     return flights
 
-RAPIDAPI_KEY = "1eec09a005msh7d00af27156f33bp1fe125jsn7320708169bb"
+RAPIDAPI_KEY = "ca2a3e15f8msh8bce0676a86b200p15b567jsnd7a9be5f0a49"
 RAPIDAPI_HOST = "booking-com15.p.rapidapi.com"
 
 def get_real_hotels(destination, check_in, check_out, guests=1):
