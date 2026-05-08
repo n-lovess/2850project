@@ -18,24 +18,18 @@
 {% endwith %}
 
 <div class="card summary-card">
-<<<<<<< HEAD
     <h2>{{ t.selected_flights }}</h2>
-=======
-    <h2> {{t.selected_flights}} </h2>
->>>>>>> 4b446d46dc475c3831deb317bcd77dae800f209c
 
     {% for selected in selected_flights %}
         <div class="manage-note" style="margin-bottom: 14px;">
             <p><strong>{{ t.airline_label }}:</strong> {{ selected.airline }}</p>
             <p><strong>{{ t.route }}:</strong> {{ selected.from }} ({{ selected.from_code }}) → {{ selected.to }} ({{ selected.to_code }})</p>
             <p><strong>{{ t.time if t.time is defined else 'Time' }}:</strong> {{ selected.departure_time }} - {{ selected.arrival_time }}</p>
-<<<<<<< HEAD
+
             <p><strong>{{ t.class_label }}:</strong> {{ selected.class|tv }}</p>
             <p><strong>{{ t.price_label }}:</strong> {{ selected_currency }} {{ convert_price(selected.price, selected_currency) }} per passenger</p>
-=======
             <p><strong>{{ t.class_label }}:</strong> {{ selected.class }}</p>
             <p><strong>{{ t.price_label }}:</strong> {{ selected_currency }} {{ convert_price(selected.price, selected_currency) }} {{ t.per_passenger }} </p>
->>>>>>> 4b446d46dc475c3831deb317bcd77dae800f209c
         </div>
     {% endfor %}
 
